@@ -35,6 +35,7 @@ importers:
       tailwind-merge: ^1.14.0
       tailwindcss: 3.3.3
       tailwindcss-animate: ^1.0.6
+      tsconfig: workspace:*
       typescript: 5.1.6
     dependencies:
       '@radix-ui/react-accordion': 1.1.2_gltvt74xzh7f5lvw2hzxriz5bu
@@ -54,6 +55,7 @@ importers:
       tailwind-merge: 1.14.0
       tailwindcss: 3.3.3
       tailwindcss-animate: 1.0.6_tailwindcss@3.3.3
+      tsconfig: link:../../packages/tsconfig
       typescript: 5.1.6
 
   packages/eslint-config-custom:
