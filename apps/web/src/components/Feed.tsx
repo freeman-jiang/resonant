@@ -9,12 +9,12 @@ export const extractDomain = (url: string) => {
 const Entry = ({ title, url, excerpt }: ArticleLink) => {
   return (
     <div className="my-4">
-      <div className="items-center flex flex-row border-b border-slate-400 pb-2 justify-between">
+      <div className="flex flex-row items-center justify-between border-b border-slate-400 pb-2">
         <a href={url} className="cursor-pointer" target="_blank">
           <h2 className="scroll-m-20 text-xl font-semibold tracking-tight">
             {title}
           </h2>
-          <p className="text-slate-700 font-light text-sm">
+          <p className="text-sm font-light text-slate-700">
             {extractDomain(url)}
           </p>
         </a>

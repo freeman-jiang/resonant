@@ -16,15 +16,15 @@ export const FeedbackButton = (props: React.HTMLAttributes<HTMLDivElement>) => {
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem className="gap-2 cursor-pointer">
+          <DropdownMenuItem className="cursor-pointer gap-2">
             <Heart className="h-4 w-4" />
             Loved this
           </DropdownMenuItem>
-          <DropdownMenuItem className="gap-2 cursor-pointer">
+          <DropdownMenuItem className="cursor-pointer gap-2">
             <ThumbsUp className="h-4 w-4" />
             Liked this
           </DropdownMenuItem>
-          <DropdownMenuItem className="gap-2 cursor-pointer">
+          <DropdownMenuItem className="cursor-pointer gap-2">
             <Ban className="h-4 w-4" />
             Not interested
           </DropdownMenuItem>
