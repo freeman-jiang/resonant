@@ -187,14 +187,13 @@ def main():
     #         time.sleep(5)
 
 
-
 if __name__ == "__main__":
     main()
 
-def test_a():
-    url = Link(text ="", url = "https://nap.nationalacademies.org/collection/81/diversity-and-inclusion-in-stemm", parent_url = "")
-    response = requests.get(url.urlw).content
 
+def test_a():
+    url = Link(text="", url="https://nap.nationalacademies.org/collection/81/diversity-and-inclusion-in-stemm", parent_url="")
+    response = requests.get(url.urlw).content
 
     result = parse_html(response.decode('utf-8', errors='ignore'), url).content
     print(result)

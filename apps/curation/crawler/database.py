@@ -24,7 +24,8 @@ class Database:
             try:
                 txn.put(key_bytes, value_bytes)
             except lmdb.BadValsizeError:
-                print("Value too large to store in database", len(value_bytes), len(key_bytes))
+                print("Value too large to store in database",
+                      len(value_bytes), len(key_bytes))
                 import pdb
                 pdb.set_trace()
 
