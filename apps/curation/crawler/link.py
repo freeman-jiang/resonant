@@ -3,7 +3,7 @@ from urllib.parse import urlparse, urlunparse
 from pydantic import BaseModel, model_validator
 
 SUPPRESSED_DOMAINS = [
-    "wikipedia.org", "amazon.com", "youtube.com", "twitter.com", "facebook.com", "reddit.com", "instagram.com",'google.com/patent', 'wikimedia.org',
+    "wikipedia.org", "amazon.com", "youtube.com", "twitter.com", "facebook.com", "reddit.com", "instagram.com", 'google.com/patent', 'wikimedia.org',
     't.co', 'amzn.to', 'github.com', 'codeforces.com', 'tandfonline.com', 'wiley.com', 'oup.com', 'sagepub.com', 'sexbuzz.com', 'arxiv.org',
     'detnews.com', 'cbsnews.com', 'cnn.com', 'scholar.google.com', 'play.google.com', 'goo.gl', 'cnevpost.com', 'electrive.com', 'techcrunch.com',
     'ssrn.com', 'sciencedirect.com', 'springer.com', 'jstor.org', 'nature.com', 'sciencemag.org', 'sciencenews.org', 'sciencemuseum.org.uk',
@@ -11,6 +11,9 @@ SUPPRESSED_DOMAINS = [
     'pittsburghlive.com'
 ]
 
+
+def is_valid_url(url: str) -> bool:
+    return url.startswith("http://") or url.startswith("https://")
 
 
 class Link(BaseModel):
@@ -22,9 +25,8 @@ class Link(BaseModel):
 
     @model_validator(mode='after')
     def validate_url(self):
-        if not self.url.startswith("http://") and not self.url.startswith("https://"):
+        if not is_valid_url(self.url):
             raise ValueError("Invalid URL: " + self.url)
-
         return self
 
     def domain(self):
@@ -32,11 +34,12 @@ class Link(BaseModel):
         parsed_url = urlparse(self.url)
 
         # Create a new URL without the path
-        new_url = urlunparse((parsed_url.scheme, parsed_url.netloc, '', '', '', ''))
+        new_url = urlunparse(
+            (parsed_url.scheme, parsed_url.netloc, '', '', '', ''))
         return new_url
 
     def _child_link_inner(self, text: str, url: str):
-        if url.startswith("http://") or url.startswith("https://"):
+        if is_valid_url(url):
             return Link(text=text, url=url, parent_url=self.url, depth=self.depth + 1)
         elif url.startswith("#"):
             # Ignore anchor links
@@ -57,7 +60,7 @@ class Link(BaseModel):
             return Link(text=text, url=url, parent_url=self.url, depth=self.depth + 1)
 
     def child_link(self, text: str, url: str):
-        if url is None :
+        if url is None:
             return None
         if text is None:
             text = ""

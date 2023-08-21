@@ -20,7 +20,8 @@ class CrawlResult(BaseModel):
 
     @model_validator(mode='after')
     def validate(self):
-        assert len(self.content) < 2 ** 25, "Content too large to store in database"
+        assert len(
+            self.content) < 2 ** 25, "Content too large to store in database"
 
         return self
 
@@ -41,11 +42,12 @@ def parse_html_newspaper(html: str, url: Link) -> Optional[CrawlResult]:
     link_elements = tree.xpath('//a')
 
     # Extract href attribute and link text from each <a> tag
-    links = [url.child_link(element.text, element.get('href')) for element in link_elements]
+    links = [url.child_link(element.text, element.get('href'))
+             for element in link_elements]
     links = filter(lambda k: k is not None, links)
 
-    publish_date = article.publish_date.isoformat() if article.publish_date is not None else None
-
+    publish_date = article.publish_date.isoformat(
+    ) if article.publish_date is not None else None
 
     return CrawlResult(
         url=url,
@@ -89,7 +91,8 @@ def parse_html(html: str, url: Link) -> Optional[CrawlResult]:
 
 
 def extract_links_from_markdown(markdown_text: str, parent: Link) -> list[Link]:
-    link_pattern = r'\[([^\]]+)\]\(([^)]+)\)'  # Regular expression pattern for links
+    # Regular expression pattern for links
+    link_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
 
     links = []
 

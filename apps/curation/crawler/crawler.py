@@ -6,6 +6,10 @@ import time
 from queue import Empty
 
 from multiprocessing import Pool, JoinableQueue as Queue
+from typing import TypeAlias
+
+from multiprocessing.synchronize import Event
+from typing import List, TypeAlias
 
 import requests
 from aiohttp import ClientSession, ClientError
@@ -15,18 +19,18 @@ from asyncio import ensure_future
 
 from .database import Database
 from crawler.link import Link
-from crawler.parse import parse_html
+from crawler.parse import parse_html, CrawlResult
 from .root_urls import ROOT_URLS
 
-BLOCKED_DOMAINS = ["sexbuzz.com"]
 
 db = Database()
-db.dump()
+
+LinkQueue: TypeAlias = "Queue[Link]"
 
 
 class GlobalState:
-    work_queue: Queue
-    done_flag: multiprocessing.Event
+    work_queue: LinkQueue
+    done_flag: Event
 
     def __init__(self):
         self.work_queue = Queue()
@@ -34,18 +38,17 @@ class GlobalState:
 
 
 global_state: GlobalState = GlobalState()
-
 MAX_DEPTH = 8
 
 
-async def query_internal(url: Link, session):
-    print("Working on URL: ", url.model_dump())
-    async with session.get(url.url) as response:
+async def query_internal(link: Link, session: ClientSession, queue: LinkQueue) -> CrawlResult:
+    print("Working on URL: ", link.model_dump())
+    async with session.get(link.url) as response:
         if not response.ok:
             return None
         response = await response.read()
 
-        result = parse_html(response.decode('utf-8', errors='ignore'), url)
+        result = parse_html(response.decode('utf-8', errors='ignore'), link)
 
         if result is None:
             return
@@ -53,24 +56,22 @@ async def query_internal(url: Link, session):
         return result
 
 
-async def query(url: Link, session, queue: Queue):
-    existing = db.get(url.url, default=True)
-    if existing:
-        response = existing
-    else:
+async def query(link: Link, session: ClientSession, queue: LinkQueue):
+    response = db.get(link.url, allow_null=True)
+    if not response:
         try:
-            response = await query_internal(url, session)
+            response = await query_internal(link, session, queue)
         except ClientError as e:
-            print("Failed to connect to: " + url.url + " with error: " + str(e) + " with parent: ", url.parent_url)
+            print(f"Failed to connect to: `{link.url}` with error: `{e}`")
             return None
 
         if response is not None:
-            db.store(url.url, response)
+            db.store(link.url, response)
 
     if response is not None:
-        for links in response.outgoing_links:
-            if links.depth < MAX_DEPTH:
-                queue.put(links)
+        for link in response.outgoing_links:
+            if link.depth < MAX_DEPTH:
+                queue.put(link)
 
 
 class ExponentialBackoff:
@@ -91,20 +92,20 @@ def spoof_chrome_user_agent(session: ClientSession):
         'User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'
 
 
-async def run(url_queue: Queue):
-    tasks = []
+async def run(queue: LinkQueue):
+    tasks: List[asyncio.Task[None]] = []
 
     def check_tasks():
-        for f in tasks:
-            if f.done():
-                tasks.remove(f)
-                if f.exception():
+        for t in tasks:
+            if t.done():
+                tasks.remove(t)
+                if t.exception():
                     print("EXCEPTION!!")
-                    f.print_stack()
-                    f.result()
+                    t.print_stack()
+                    t.result()
                     global_state.done_flag.set()
 
-                url_queue.task_done()
+                queue.task_done()
 
     backoff = ExponentialBackoff()
     async with ClientSession() as session:
@@ -112,7 +113,7 @@ async def run(url_queue: Queue):
 
         while not global_state.done_flag.is_set():
             try:
-                url = url_queue.get(block=False)
+                link = queue.get(block=False)
             except Empty:
                 print("Queue empty...")
                 check_tasks()
@@ -120,18 +121,19 @@ async def run(url_queue: Queue):
                 continue
             backoff.reset()
             check_tasks()
-            task = ensure_future(query(url, session, url_queue))
+            task = ensure_future(query(link, session, queue))
             tasks.append(task)
         print("Exiting...")
 
-def async_loop(url_queue: Queue):
+
+def async_loop(url_queue: LinkQueue):
     loop = get_event_loop()
 
     future = ensure_future(run(url_queue))
     return loop.run_until_complete(future)
 
 
-def next_batch(queue: Queue) -> list[str]:
+def next_batch(queue: LinkQueue) -> list[str]:
     batch = []
 
     while True and len(batch) < 10:
