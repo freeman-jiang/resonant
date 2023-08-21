@@ -8,6 +8,10 @@ SUPPRESSED_DOMAINS = [
 ]
 
 
+def is_valid_url(url: str) -> bool:
+    return url.startswith("http://") or url.startswith("https://")
+
+
 class Link(BaseModel):
     text: str
     url: str
@@ -17,9 +21,8 @@ class Link(BaseModel):
 
     @model_validator(mode='after')
     def validate_url(self):
-        if not self.url.startswith("http://") and not self.url.startswith("https://"):
+        if not is_valid_url(self.url):
             raise ValueError("Invalid URL: " + self.url)
-
         return self
 
     def domain(self):
@@ -32,7 +35,7 @@ class Link(BaseModel):
         return new_url
 
     def _child_link_inner(self, text: str, url: str):
-        if url.startswith("http://") or url.startswith("https://"):
+        if is_valid_url(url):
             return Link(text=text, url=url, parent_url=self.url, depth=self.depth + 1)
         elif url.startswith("#"):
             # Ignore anchor links

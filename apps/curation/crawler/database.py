@@ -22,11 +22,11 @@ class Database:
                 return
             txn.put(key_bytes, value_bytes)
 
-    def get(self, key: str, default=False) -> Optional[CrawlResult]:
+    def get(self, key: str, allow_null: bool = False) -> Optional[CrawlResult]:
         with self.db.begin() as txn:
             key_bytes = key.encode('utf-8')
             value_bytes = txn.get(key_bytes)
-            if default and value_bytes is None:
+            if allow_null and value_bytes is None:
                 return None
             if value_bytes is None:
                 raise KeyError("Key not found: " + key)
