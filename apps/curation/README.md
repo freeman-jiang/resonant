@@ -21,8 +21,8 @@ python3 -m crawler.crawler
 
 ### Dump contents of LMDB
 
-To see the contents of the LMDB, run
-
 ```sh
 python3 -m crawler.dump
 ```
+
+This will dump the contents of the LMDB to `dump.txt`

@@ -1,4 +1,3 @@
 from crawler.database import Database
 
-db = Database()
-db.dump()
+Database().dump_to_file()
