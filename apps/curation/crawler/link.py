@@ -5,6 +5,10 @@ from pydantic import BaseModel, model_validator
 SUPPRESSED_DOMAINS = [
     "wikipedia.org", "amazon.com", "youtube.com", "twitter.com", "facebook.com", "reddit.com", "instagram.com",'google.com/patent', 'wikimedia.org',
     't.co', 'amzn.to', 'github.com', 'codeforces.com', 'tandfonline.com', 'wiley.com', 'oup.com', 'sagepub.com', 'sexbuzz.com', 'arxiv.org',
+    'detnews.com', 'cbsnews.com', 'cnn.com', 'scholar.google.com', 'play.google.com', 'goo.gl', 'cnevpost.com', 'electrive.com', 'techcrunch.com',
+    'ssrn.com', 'sciencedirect.com', 'springer.com', 'jstor.org', 'nature.com', 'sciencemag.org', 'sciencenews.org', 'sciencemuseum.org.uk',
+    'bloomberg.com', 'forbes.com', 'bbc.com', 'economist.com', 'ft.com', 'vimeo.com', 'youtube.com',
+    'pittsburghlive.com'
 ]
 
 
@@ -62,6 +66,6 @@ class Link(BaseModel):
         if link is None:
             return None
         for suppressed in SUPPRESSED_DOMAINS:
-            if suppressed in link.domain():
+            if suppressed in link.url:
                 return None
         return link

@@ -1,16 +1,19 @@
 import asyncio
+from multiprocessing import get_context
 import multiprocessing
 import random
 import time
 from queue import Empty
 
 from multiprocessing import Pool, JoinableQueue as Queue
+
+import requests
 from aiohttp import ClientSession, ClientError
 
 from asyncio import get_event_loop
 from asyncio import ensure_future
 
-from crawler.database import Database
+from .database import Database
 from crawler.link import Link
 from crawler.parse import parse_html
 from .root_urls import ROOT_URLS
@@ -18,7 +21,7 @@ from .root_urls import ROOT_URLS
 BLOCKED_DOMAINS = ["sexbuzz.com"]
 
 db = Database()
-# db.dump()
+db.dump()
 
 
 class GlobalState:
@@ -35,7 +38,7 @@ global_state: GlobalState = GlobalState()
 MAX_DEPTH = 8
 
 
-async def query_internal(url: Link, session, queue: Queue):
+async def query_internal(url: Link, session):
     print("Working on URL: ", url.model_dump())
     async with session.get(url.url) as response:
         if not response.ok:
@@ -56,9 +59,9 @@ async def query(url: Link, session, queue: Queue):
         response = existing
     else:
         try:
-            response = await query_internal(url, session, queue)
+            response = await query_internal(url, session)
         except ClientError as e:
-            print("Failed to connect to: " + url.url + " with error: " + str(e))
+            print("Failed to connect to: " + url.url + " with error: " + str(e) + " with parent: ", url.parent_url)
             return None
 
         if response is not None:
@@ -159,36 +162,37 @@ def main():
         global_state.work_queue.put(
             Link(text=root["title"], url=root["url"], parent_url="root"))
 
-    num_workers = 3
-    with Pool(num_workers, set_work_queue, (global_state,)) as pool:
-        workers = [pool.apply_async(worker_main) for _ in range(num_workers)]
-
-        while True:
-            for w in workers:
-                if w.ready():
-                    print("Worker is finished!")
-                    print(w.get())
-                    workers.remove(w)
-            if global_state.done_flag.is_set():
-                print("Done flag is set...")
-                break
-            if global_state.work_queue.empty():
-                time.sleep(5)
-                if global_state.work_queue.empty():
-                    print("Work queue empty, waiting for shutdown")
-                    global_state.done_flag.set()
-                    break
-            else:
-                print("Work queue not empty...sleeping")
-                time.sleep(5)
-
-        # global_state.work_queue.join()
-
-        print("Work done! waiting for shutdown")
-        pool.terminate()
-        pool.join()
+    set_work_queue(global_state)
+    worker_main()
+    #
+    # while True:
+    #     for w in workers:
+    #         if w.ready():
+    #             print("Worker is finished!")
+    #             print(w.get())
+    #             workers.remove(w)
+    #     if global_state.done_flag.is_set():
+    #         print("Done flag is set...")
+    #         break
+    #     if global_state.work_queue.empty():
+    #         time.sleep(5)
+    #         if global_state.work_queue.empty():
+    #             print("Work queue empty, waiting for shutdown")
+    #             global_state.done_flag.set()
+    #             break
+    #     else:
+    #         print("Work queue not empty...sleeping")
+    #         time.sleep(5)
 
 
-# logging.basicConfig(level=logging.ERROR)
+
 if __name__ == "__main__":
     main()
+
+def test_a():
+    url = Link(text ="", url = "https://nap.nationalacademies.org/collection/81/diversity-and-inclusion-in-stemm", parent_url = "")
+    response = requests.get(url.urlw).content
+
+
+    result = parse_html(response.decode('utf-8', errors='ignore'), url).content
+    print(result)

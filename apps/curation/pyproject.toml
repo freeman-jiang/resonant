@@ -12,6 +12,7 @@ trafilatura = "^1.6.1"
 aiohttp = "^3.8.5"
 lmdb = "^1.4.1"
 newspaper3k = "^0.2.8"
+pytest = "^7.4.0"
 
 
 [build-system]

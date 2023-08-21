@@ -17,7 +17,13 @@ class Database:
             if len(value_bytes) > 2 ** 25:
                 raise ValueError("Value too large to store in database", value_bytes)
                 return
-            txn.put(key_bytes, value_bytes)
+
+            try:
+                txn.put(key_bytes, value_bytes)
+            except lmdb.BadValsizeError:
+                print("Value too large to store in database", len(value_bytes), len(key_bytes))
+                import pdb
+                pdb.set_trace()
 
     def get(self, key: str, default=False) -> Optional[CrawlResult]:
         with self.db.begin() as txn:
@@ -44,4 +50,5 @@ class Database:
             # Iterate through the keys and print the values
             for key, value in cursor:
                 decoded_value = value.decode("utf-8")  # Convert bytes to string
-                print(f"Key: {key}, Value: {decoded_value}")
+                print(key)
+                # print(f"Key: {key}, Value: {decoded_value}")
