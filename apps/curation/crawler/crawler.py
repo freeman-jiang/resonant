@@ -121,6 +121,7 @@ async def run(url_queue: Queue):
             tasks.append(task)
         print("Exiting...")
 
+
 def async_loop(url_queue: Queue):
     loop = get_event_loop()
 
