@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 import lmdb
@@ -45,18 +46,6 @@ class Database:
             value_bytes = txn.get(key_bytes)
             return value_bytes is not None
 
-    def dump(self):
-        # Start a read transaction
-        with self.db.begin() as txn:
-            # Create a cursor to iterate through the keys
-            cursor = txn.cursor()
-
-            # Iterate through the keys and print the values
-            for key, value in cursor:
-                decoded_value = value.decode(
-                    "utf-8")  # Convert bytes to string
-                print(key)
-                # print(f"Key: {key}, Value: {decoded_value}")
 
     # Dump contents of the db in human readable format to "dump.txt"
     def dump_to_file(self):
@@ -67,3 +56,17 @@ class Database:
                 for key, value in cursor:
                     decoded_value = value.decode("utf-8")
                     f.write(f"Key: {key}\n\nValue: {decoded_value}\n\n\n")
+
+    def dump_json(self):
+        with self.db.begin() as txn:
+            cursor = txn.cursor()
+            js = {}
+            for key, value in cursor:
+                decoded_value = value.decode("utf-8")
+                decoded_key = key.decode("utf-8")
+                js[decoded_key] = decoded_value
+
+            json.dump(js, open("dump.json", "w"), indent=4)
+def test_dump_db():
+    db = Database()
+    db.dump_json()

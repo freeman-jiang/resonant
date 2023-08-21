@@ -3,3 +3,4 @@ __pycache__/
 # LMDB
 my_database/
 dump.txt
+dump.json
