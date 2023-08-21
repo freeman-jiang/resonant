@@ -1,5 +1,11 @@
 Ensure [poetry](https://python-poetry.org/docs/#installation) is installed
 
+If you use VSCode, to have Intellisense work with poetry, use
+
+```sh
+poetry config virtualenvs.in-project true
+```
+
 ### Install dependencies
 
 ```sh
