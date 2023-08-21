@@ -1,1 +1,4 @@
 __pycache__/
+
+# LMDB
+my_database/
