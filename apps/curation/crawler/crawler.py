@@ -143,11 +143,6 @@ async def worker_main():
         raise e
 
 
-def set_work_queue(global_state_new: GlobalState):
-    global global_state
-    global_state = global_state_new
-
-
 async def main():
     global global_state
 
@@ -155,7 +150,6 @@ async def main():
         global_state.work_queue.put(
             Link(text=root["title"], url=root["url"], parent_url="root"))
 
-    set_work_queue(global_state)
     await worker_main()
     #
     # while True:
