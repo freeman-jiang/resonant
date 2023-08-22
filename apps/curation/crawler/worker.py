@@ -64,7 +64,7 @@ async def process_link(link: Link, session: ClientSession, queue: LinkQueue):
         print(f"Failed crawl: {link.url} from {link.parent_url}\n")
         return
 
-    links_to_add = [r for r in response.outgoing_links if r.depth < MAX_DEPTH]
+    links_to_add = [l for l in response.outgoing_links if l.depth < MAX_DEPTH]
     for l in links_to_add:
         queue.put(l)
 

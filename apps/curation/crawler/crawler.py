@@ -1,6 +1,5 @@
 import asyncio
 
-from .database import Database
 from .root_urls import ROOT_URLS
 from .worker import GlobalState, worker_main
 from .link import Link
