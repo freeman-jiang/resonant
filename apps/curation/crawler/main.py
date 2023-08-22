@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import time
 
 from .root_urls import ROOT_URLS
 from .worker import CrawlerState, worker_main
@@ -15,6 +16,7 @@ def add_root_urls(gs: CrawlerState):
 
 
 async def main():
+    start_time = time.time()
     parser = argparse.ArgumentParser(prog="python3 -m crawler.main")
     parser.add_argument("--max_links", type=int,
                         help="The maximum number of links to crawl", default=DEFAULT_MAX_LINKS_TO_CRAWL)
@@ -26,6 +28,8 @@ async def main():
 
     print(f"Starting crawler with max_links: {max_links}\n")
     await worker_main(cs)
+    print(
+        f"Finished in {time.time() - start_time} seconds")
 
 
 if __name__ == "__main__":
