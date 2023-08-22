@@ -16,7 +16,7 @@ poetry install
 
 ```sh
 poetry shell
-python3 -m crawler.crawler
+python3 -m crawler.main
 ```
 
 ### Dump contents of LMDB
