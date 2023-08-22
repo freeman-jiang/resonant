@@ -138,38 +138,17 @@ async def worker_main():
         print("Worker started")
         await run(global_state.work_queue)
     except Exception as e:
-        print("Exception!", e)
+        print(f"Worker encountered exception: {e}")
         global_state.done_flag.set()
         raise e
 
 
 async def main():
-    global global_state
-
     for root in ROOT_URLS:
         global_state.work_queue.put(
             Link(text=root["title"], url=root["url"], parent_url="root"))
 
     await worker_main()
-    #
-    # while True:
-    #     for w in workers:
-    #         if w.ready():
-    #             print("Worker is finished!")
-    #             print(w.get())
-    #             workers.remove(w)
-    #     if global_state.done_flag.is_set():
-    #         print("Done flag is set...")
-    #         break
-    #     if global_state.work_queue.empty():
-    #         time.sleep(5)
-    #         if global_state.work_queue.empty():
-    #             print("Work queue empty, waiting for shutdown")
-    #             global_state.done_flag.set()
-    #             break
-    #     else:
-    #         print("Work queue not empty...sleeping")
-    #         time.sleep(5)
 
 
 if __name__ == "__main__":
