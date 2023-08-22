@@ -28,48 +28,29 @@ class GlobalState:
 async def worker_main(global_state: GlobalState):
     try:
         print("Worker started")
-        await run_worker(global_state)
+        await run_worker_sequential(global_state)
     except Exception as e:
         print(f"Worker encountered exception: {e}")
         global_state.done = True
         raise e
 
 
-async def run_worker(global_state: GlobalState):
+async def run_worker_sequential(global_state: GlobalState):
     queue = global_state.work_queue
-    tasks: list[asyncio.Task[None]] = []
-
-    def check_tasks():
-        for t in tasks:
-            if t.done():
-                tasks.remove(t)
-                if t.exception():
-                    print("EXCEPTION!!")
-                    t.print_stack()
-                    t.result()
-                    global_state.done = True
-
-                queue.task_done()
-
     async with ClientSession() as session:
         spoof_chrome_user_agent(session)
 
         while not global_state.done:
-            try:
-                link = queue.get(block=False)
-            except QueueEmpty:
-                print("Queue empty...")
-                check_tasks()
-                await asyncio.sleep(SLEEP_TIME)
-                print("Awake!")
-                continue
-            check_tasks()
-            task = asyncio.create_task(query(link, session, queue))
-            tasks.append(task)
+            print(f"Queue size: {queue.qsize()}")
+
+            link = queue.get()
+            await query(link, session, queue)
         print("Worker exiting...")
 
 
 async def query(link: Link, session: ClientSession, queue: LinkQueue):
+    """Given `link`, crawl, parse, then add outgoing links to `queue` queue"""
+    print(f"Working on URL: {link.url} from parent: {link.parent_url}")
     response = db.get(link.url, allow_null=True)
     if not response:
         try:
@@ -80,14 +61,19 @@ async def query(link: Link, session: ClientSession, queue: LinkQueue):
             print(f"Failed to connect to: `{link.url}` with error: `{e}`")
             return None
 
-    if response:
-        for link in response.outgoing_links:
-            if link.depth < MAX_DEPTH:
-                queue.put(link)
+    if not response:
+        print(f"Failed crawl: {link.url} from {link.parent_url}\n")
+        return
+
+    links_to_add = [r for r in response.outgoing_links if r.depth < MAX_DEPTH]
+    for l in links_to_add:
+        queue.put(l)
+
+    print(
+        f"Succeeded crawl: For {link.url} found {len(links_to_add)} outbond links to queue\n")
 
 
 async def query_internal(link: Link, session: ClientSession) -> Optional[CrawlResult]:
-    print(f"Working on URL: {link.model_dump()}")
     async with session.get(link.url) as response:
         if not response.ok:
             return None

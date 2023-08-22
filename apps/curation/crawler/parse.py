@@ -84,8 +84,6 @@ def parse_html(html: str, link: Link) -> Optional[CrawlResult]:
     a = parse_html_trafilatura(html, link)
     if a is None:
         a = parse_html_newspaper(html, link)
-        if a is None:
-            print(f"Failed to parse: {link.url} from {link.parent_url}")
     return a
 
 
