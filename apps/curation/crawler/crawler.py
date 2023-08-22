@@ -41,7 +41,7 @@ MAX_DEPTH = 8
 
 
 async def query_internal(link: Link, session: ClientSession, queue: LinkQueue) -> Optional[CrawlResult]:
-    print("Working on URL: ", link.model_dump())
+    print(f"Working on URL: {link.model_dump()}")
     async with session.get(link.url) as response:
         if not response.ok:
             return None
