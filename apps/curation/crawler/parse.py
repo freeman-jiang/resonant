@@ -61,7 +61,6 @@ def parse_html_newspaper(html: str, url: Link) -> Optional[CrawlResult]:
 
 def parse_html_trafilatura(html: str, url: Link) -> Optional[CrawlResult]:
     # html = sanitize(html)
-    html += "</body></html>"
     content = trafilatura.extract(html, url=url.url, include_links=True, include_tables=True, output_format='json',
                                   with_metadata=True)
 
