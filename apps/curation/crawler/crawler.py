@@ -6,10 +6,9 @@ import time
 from queue import Empty
 
 from multiprocessing import Pool, JoinableQueue as Queue
-from typing import TypeAlias
 
 from multiprocessing.synchronize import Event
-from typing import List, TypeAlias
+from typing import List, TypeAlias, Optional
 
 import requests
 from aiohttp import ClientSession, ClientError
@@ -41,7 +40,7 @@ global_state: GlobalState = GlobalState()
 MAX_DEPTH = 8
 
 
-async def query_internal(link: Link, session: ClientSession, queue: LinkQueue) -> CrawlResult:
+async def query_internal(link: Link, session: ClientSession, queue: LinkQueue) -> Optional[CrawlResult]:
     print("Working on URL: ", link.model_dump())
     async with session.get(link.url) as response:
         if not response.ok:
@@ -61,14 +60,13 @@ async def query(link: Link, session: ClientSession, queue: LinkQueue):
     if not response:
         try:
             response = await query_internal(link, session, queue)
+            if response:
+                db.store(link.url, response)
         except ClientError as e:
             print(f"Failed to connect to: `{link.url}` with error: `{e}`")
             return None
 
-        if response is not None:
-            db.store(link.url, response)
-
-    if response is not None:
+    if response:
         for link in response.outgoing_links:
             if link.depth < MAX_DEPTH:
                 queue.put(link)
