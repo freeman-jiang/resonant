@@ -124,13 +124,6 @@ async def run(queue: LinkQueue):
         print("Exiting...")
 
 
-def async_loop(url_queue: LinkQueue):
-    loop = get_event_loop()
-
-    future = ensure_future(run(url_queue))
-    return loop.run_until_complete(future)
-
-
 def next_batch(queue: LinkQueue) -> list[str]:
     batch = []
 
@@ -143,7 +136,7 @@ def next_batch(queue: LinkQueue) -> list[str]:
 def worker_main():
     try:
         print("Worker started")
-        async_loop(global_state.work_queue)
+        asyncio.run(run(global_state.work_queue))
     except Exception as e:
         print("Exception!", e)
         global_state.done_flag.set()
