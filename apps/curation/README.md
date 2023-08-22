@@ -22,7 +22,7 @@ python3 -m crawler.main
 ### Dump contents of LMDB
 
 ```sh
-python3 -m crawler.dump
+python3 -m crawler.dump --max_links {MAX_LINKS}
 ```
 
 This will dump the contents of the LMDB to `dump.txt`
