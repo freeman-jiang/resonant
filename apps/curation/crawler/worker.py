@@ -10,7 +10,6 @@ from .link import Link
 from .parse import CrawlResult, parse_html
 
 MAX_DEPTH = 8
-SLEEP_TIME = 1
 db = Database()
 LinkQueue: TypeAlias = "Queue[Link]"
 
@@ -44,17 +43,17 @@ async def run_worker_sequential(global_state: GlobalState):
             print(f"Queue size: {queue.qsize()}")
 
             link = queue.get()
-            await query(link, session, queue)
+            await process_link(link, session, queue)
         print("Worker exiting...")
 
 
-async def query(link: Link, session: ClientSession, queue: LinkQueue):
-    """Given `link`, crawl, parse, then add outgoing links to `queue` queue"""
+async def process_link(link: Link, session: ClientSession, queue: LinkQueue):
+    """Given `link`, this function crawls and attempts to parse it, then adds any outgoing links to `queue`"""
     print(f"Working on URL: {link.url} from parent: {link.parent_url}")
     response = db.get(link.url, allow_null=True)
     if not response:
         try:
-            response = await query_internal(link, session)
+            response = await crawl(link, session)
             if response:
                 db.store(link.url, response)
         except ClientError as e:
@@ -73,18 +72,13 @@ async def query(link: Link, session: ClientSession, queue: LinkQueue):
         f"Succeeded crawl: For {link.url} found {len(links_to_add)} outbond links to queue\n")
 
 
-async def query_internal(link: Link, session: ClientSession) -> Optional[CrawlResult]:
+async def crawl(link: Link, session: ClientSession) -> Optional[CrawlResult]:
+    """Crawl and parse the given `link`, returning a `CrawlResult` if successful, or `None` if not"""
     async with session.get(link.url) as response:
         if not response.ok:
             return None
         response = await response.read()
-
-        result = parse_html(response.decode('utf-8', errors='ignore'), link)
-
-        if result is None:
-            return
-
-        return result
+        return parse_html(response.decode('utf-8', errors='ignore'), link)
 
 
 def spoof_chrome_user_agent(session: ClientSession):
