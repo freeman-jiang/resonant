@@ -133,10 +133,10 @@ def next_batch(queue: LinkQueue) -> list[str]:
     return batch
 
 
-def worker_main():
+async def worker_main():
     try:
         print("Worker started")
-        asyncio.run(run(global_state.work_queue))
+        await run(global_state.work_queue)
     except Exception as e:
         print("Exception!", e)
         global_state.done_flag.set()
@@ -148,7 +148,7 @@ def set_work_queue(global_state_new: GlobalState):
     global_state = global_state_new
 
 
-def main():
+async def main():
     global global_state
 
     for root in ROOT_URLS:
@@ -156,7 +156,7 @@ def main():
             Link(text=root["title"], url=root["url"], parent_url="root"))
 
     set_work_queue(global_state)
-    worker_main()
+    await worker_main()
     #
     # while True:
     #     for w in workers:
@@ -179,7 +179,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
 
 
 def test_a():
