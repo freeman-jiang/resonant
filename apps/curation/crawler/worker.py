@@ -10,8 +10,8 @@ from .link import Link
 from .parse import CrawlResult, parse_html
 
 MAX_DEPTH = 8
+SLEEP_TIME = 1
 db = Database()
-
 LinkQueue: TypeAlias = "Queue[Link]"
 
 
@@ -51,7 +51,6 @@ async def run_worker(global_state: GlobalState):
 
                 queue.task_done()
 
-    backoff = ExponentialBackoff()
     async with ClientSession() as session:
         spoof_chrome_user_agent(session)
 
@@ -61,9 +60,9 @@ async def run_worker(global_state: GlobalState):
             except QueueEmpty:
                 print("Queue empty...")
                 check_tasks()
-                await asyncio.sleep(backoff.backoff())
+                await asyncio.sleep(SLEEP_TIME)
+                print("Awake!")
                 continue
-            backoff.reset()
             check_tasks()
             task = asyncio.create_task(query(link, session, queue))
             tasks.append(task)
@@ -100,18 +99,6 @@ async def query_internal(link: Link, session: ClientSession) -> Optional[CrawlRe
             return
 
         return result
-
-
-class ExponentialBackoff:
-    def __init__(self):
-        self.count = 1
-
-    def reset(self):
-        self.count = 1
-
-    def backoff(self):
-        self.count += 1
-        return min(2 ** self.count, 5)
 
 
 def spoof_chrome_user_agent(session: ClientSession):
