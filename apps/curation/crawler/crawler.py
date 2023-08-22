@@ -121,7 +121,7 @@ async def run(queue: LinkQueue):
                 continue
             backoff.reset()
             check_tasks()
-            task = ensure_future(query(link, session, queue))
+            task = asyncio.create_task(query(link, session, queue))
             tasks.append(task)
         print("Exiting...")
 
@@ -192,8 +192,10 @@ if __name__ == "__main__":
 
 
 def test_a():
-    url = Link(text="", url="https://nap.nationalacademies.org/collection/81/diversity-and-inclusion-in-stemm", parent_url="")
-    response = requests.get(url.urlw).content
+    link = Link(
+        text="", url="https://nap.nationalacademies.org/collection/81/diversity-and-inclusion-in-stemm", parent_url="")
+    response = requests.get(link.url).content
 
-    result = parse_html(response.decode('utf-8', errors='ignore'), url).content
+    result = parse_html(response.decode(
+        'utf-8', errors='ignore'), link).content
     print(result)
