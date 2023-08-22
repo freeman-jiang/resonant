@@ -84,11 +84,11 @@ ROOT_URLS = [
     {
         "url": "http://archagon.net/blog/2018/03/24/data-laced-with-history/",
         "title": "Data Laced with History: Causal Trees & Operational CRDTs",
-    }
+    },
     {
         "url": "https://www.henrikkarlsson.xyz/p/effort-pieces",
         "title": "When I have a slower publishing cadence my blog grows faster",
-    }
+    },
     {
         "url": "https://www.benkuhn.net/outliers/",
         "title": "Searching for outliers",
