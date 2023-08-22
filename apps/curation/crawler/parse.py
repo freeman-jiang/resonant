@@ -11,7 +11,7 @@ from crawler.link import Link
 
 
 class CrawlResult(BaseModel):
-    url: Link
+    link: Link
     title: Optional[str]
     date: Optional[str]
     author: Optional[str]
@@ -26,8 +26,8 @@ class CrawlResult(BaseModel):
         return self
 
 
-def parse_html_newspaper(html: str, url: Link) -> Optional[CrawlResult]:
-    article = newspaper.Article(url.url, keep_article_html=True)
+def parse_html_newspaper(html: str, link: Link) -> Optional[CrawlResult]:
+    article = newspaper.Article(link.url, keep_article_html=True)
     try:
         article.download()
         article.parse()
@@ -42,7 +42,7 @@ def parse_html_newspaper(html: str, url: Link) -> Optional[CrawlResult]:
     link_elements = tree.xpath('//a')
 
     # Extract href attribute and link text from each <a> tag
-    links = [url.child_link(element.text, element.get('href'))
+    links = [link.create_child_link(element.text, element.get('href'))
              for element in link_elements]
     links = filter(lambda k: k is not None, links)
 
@@ -50,7 +50,7 @@ def parse_html_newspaper(html: str, url: Link) -> Optional[CrawlResult]:
     ) if article.publish_date is not None else None
 
     return CrawlResult(
-        url=url,
+        link=link,
         title=article.title,
         date=publish_date,
         author=str(article.authors),
@@ -59,19 +59,19 @@ def parse_html_newspaper(html: str, url: Link) -> Optional[CrawlResult]:
     )
 
 
-def parse_html_trafilatura(html: str, url: Link) -> Optional[CrawlResult]:
+def parse_html_trafilatura(html: str, link: Link) -> Optional[CrawlResult]:
     # html = sanitize(html)
-    content = trafilatura.extract(html, url=url.url, include_links=True, include_tables=True, output_format='json',
+    content = trafilatura.extract(html, url=link.url, include_links=True, include_tables=True, output_format='json',
                                   with_metadata=True)
 
     if content is None:
         return None
     content = json.loads(content)
 
-    links = extract_links_from_markdown(content['text'], url)
+    links = extract_links_from_markdown(content['text'], link)
 
     return CrawlResult(
-        url=url,
+        link=link,
         title=content['title'],
         date=content['date'],
         author=content['author'],
@@ -80,12 +80,12 @@ def parse_html_trafilatura(html: str, url: Link) -> Optional[CrawlResult]:
     )
 
 
-def parse_html(html: str, url: Link) -> Optional[CrawlResult]:
-    a = parse_html_trafilatura(html, url)
+def parse_html(html: str, link: Link) -> Optional[CrawlResult]:
+    a = parse_html_trafilatura(html, link)
     if a is None:
-        a = parse_html_newspaper(html, url)
+        a = parse_html_newspaper(html, link)
         if a is None:
-            print("Failed to parse: " + url.url + " from" + url.parent_url)
+            print("Failed to parse: " + link.url + " from" + link.parent_url)
     return a
 
 
@@ -98,7 +98,7 @@ def extract_links_from_markdown(markdown_text: str, parent: Link) -> list[Link]:
     # Find all link matches using the pattern
     for match in re.findall(link_pattern, markdown_text):
         link_text, link_url = match
-        link = parent.child_link(link_text, link_url)
+        link = parent.create_child_link(link_text, link_url)
         if link:
             links.append(link)
 

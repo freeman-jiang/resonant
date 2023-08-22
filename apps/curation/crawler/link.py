@@ -1,3 +1,4 @@
+from typing import Optional, Self
 from urllib.parse import urlparse, urlunparse
 
 from pydantic import BaseModel, model_validator
@@ -59,7 +60,7 @@ class Link(BaseModel):
             url = self.url + '/' + url
             return Link(text=text, url=url, parent_url=self.url, depth=self.depth + 1)
 
-    def child_link(self, text: str, url: str):
+    def create_child_link(self, text: str, url: str) -> Optional[Self]:
         if url is None:
             return None
         if text is None:
