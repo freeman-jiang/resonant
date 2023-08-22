@@ -1,6 +1,4 @@
 import asyncio
-import multiprocessing
-from multiprocessing.synchronize import Event
 from queue import Empty as QueueEmpty
 from queue import Queue
 from typing import Optional, TypeAlias
@@ -19,11 +17,11 @@ LinkQueue: TypeAlias = "Queue[Link]"
 
 class GlobalState:
     work_queue: LinkQueue
-    done_flag: Event
+    done: bool
 
     def __init__(self):
         self.work_queue = Queue()
-        self.done_flag = multiprocessing.Event()
+        self.done = False
 
 
 # This is the entry point for the worker process which will take items from the global work queue, crawl and attempt to parse the pages and add any outgoing links to the work queue
@@ -33,7 +31,7 @@ async def worker_main(global_state: GlobalState):
         await run_worker(global_state)
     except Exception as e:
         print(f"Worker encountered exception: {e}")
-        global_state.done_flag.set()
+        global_state.done = True
         raise e
 
 
@@ -49,7 +47,7 @@ async def run_worker(global_state: GlobalState):
                     print("EXCEPTION!!")
                     t.print_stack()
                     t.result()
-                    global_state.done_flag.set()
+                    global_state.done = True
 
                 queue.task_done()
 
@@ -57,7 +55,7 @@ async def run_worker(global_state: GlobalState):
     async with ClientSession() as session:
         spoof_chrome_user_agent(session)
 
-        while not global_state.done_flag.is_set():
+        while not global_state.done:
             try:
                 link = queue.get(block=False)
             except QueueEmpty:
@@ -69,14 +67,14 @@ async def run_worker(global_state: GlobalState):
             check_tasks()
             task = asyncio.create_task(query(link, session, queue))
             tasks.append(task)
-        print("Exiting...")
+        print("Worker exiting...")
 
 
 async def query(link: Link, session: ClientSession, queue: LinkQueue):
     response = db.get(link.url, allow_null=True)
     if not response:
         try:
-            response = await query_internal(link, session, queue)
+            response = await query_internal(link, session)
             if response:
                 db.store(link.url, response)
         except ClientError as e:
@@ -89,7 +87,7 @@ async def query(link: Link, session: ClientSession, queue: LinkQueue):
                 queue.put(link)
 
 
-async def query_internal(link: Link, session: ClientSession, queue: LinkQueue) -> Optional[CrawlResult]:
+async def query_internal(link: Link, session: ClientSession) -> Optional[CrawlResult]:
     print(f"Working on URL: {link.model_dump()}")
     async with session.get(link.url) as response:
         if not response.ok:
