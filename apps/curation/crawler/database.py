@@ -1,18 +1,22 @@
 import json
-from typing import Optional
+from typing import Optional, TypeVar, Type
 
 import lmdb
+from pydantic import BaseModel
 
 from crawler.parse import CrawlResult
 
+T = TypeVar('T', bound=BaseModel)
 
 class Database:
     db: lmdb.Environment
+    value_type: T
 
-    def __init__(self):
-        self.db = lmdb.open("my_database", map_size=int(1e9))
+    def __init__(self, value_type: Type[T], name = "my_database"):
+        self.value_type = value_type
+        self.db = lmdb.open(name, map_size=int(1e9))
 
-    def store(self, key: str, value: CrawlResult):
+    def store(self, key: str, value: T):
         with self.db.begin(write=True) as txn:
             value_bytes = value.model_dump_json().encode('utf-8')
             key_bytes = key.encode('utf-8')
@@ -30,7 +34,7 @@ class Database:
                 import pdb
                 pdb.set_trace()
 
-    def get(self, key: str, allow_null: bool = False) -> Optional[CrawlResult]:
+    def get(self, key: str, allow_null: bool = False) -> Optional[T]:
         with self.db.begin() as txn:
             key_bytes = key.encode('utf-8')
             value_bytes = txn.get(key_bytes)
@@ -38,7 +42,7 @@ class Database:
                 return None
             if value_bytes is None:
                 raise KeyError("Key not found: " + key)
-            return CrawlResult.model_validate_json(value_bytes)
+            return self.value_type.model_validate_json(value_bytes)
 
     def contains(self, key: str):
         with self.db.begin() as txn:
@@ -68,5 +72,5 @@ class Database:
 
             json.dump(js, open("dump.json", "w"), indent=4)
 def test_dump_db():
-    db = Database()
+    db = Database(CrawlResult)
     db.dump_json()

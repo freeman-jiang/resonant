@@ -1,17 +1,42 @@
 import asyncio
 from queue import Empty as QueueEmpty
-from asyncio import Queue
-from typing import Optional, TypeAlias
+from asyncio import Queue, PriorityQueue
+from typing import Optional, TypeAlias, Tuple
 
 from aiohttp import ClientError, ClientSession
 
+from . import filters
 from .database import Database
 from .link import Link
 from .parse import CrawlResult, parse_html
 
 MAX_DEPTH = 8
-db = Database()
-LinkQueue: TypeAlias = "Queue[Link]"
+db = Database(CrawlResult, "my_database")
+seen_links = Database(Link, "seen_links")
+
+
+class LinkQueue:
+    # Allows us to crawl by priority in the future based on various metrics
+    queue: PriorityQueue[Tuple[int, Link]]
+
+    def __init__(self):
+        self.queue = PriorityQueue()
+
+    async def put(self, link: Link):
+        """Only put in links if they haven't been explored before"""
+        if not seen_links.contains(link.url):
+            seen_links.store(link.url, link)
+            await self.queue.put((link.depth, link))
+
+    # Implement empty, get, put, qsize
+    def empty(self):
+        return self.queue.empty()
+
+    def qsize(self):
+        return self.queue.qsize()
+
+    async def get(self) -> Link:
+        return (await self.queue.get())[1]
 
 
 class Worker:
@@ -44,7 +69,7 @@ class Worker:
         except Exception as e:
             print(f"Worker encountered exception: {e}")
             self.done = True
-            raise e
+            raise
 
     def print_status(self):
         print(f"Links processed: {self.done_queue.qsize()}")
@@ -99,8 +124,12 @@ class Worker:
                     await self.done_queue.put(True)
                     print(f"FAILED: Could not crawl {link.url}")
                     return None
-                db.store(link.url, response)
 
+                if filters.should_keep(response):
+                    print(f"SUCCESS: {link.url}")
+                    db.store(link.url, response)
+                else:
+                    print("WARN: Filtered out link: " + link.url, response.content)
             except ClientError as e:
                 print(
                     f"FAILED: Can't connect to `{link.url}`, error: `{e}`")
