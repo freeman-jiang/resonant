@@ -1,6 +1,6 @@
 import asyncio
 from queue import Empty as QueueEmpty
-from queue import Queue
+from asyncio import Queue
 from typing import Optional, TypeAlias
 
 from aiohttp import ClientError, ClientSession
@@ -20,15 +20,19 @@ class Worker:
     done: bool
     links_processed: int
 
-    def __init__(self, *, max_links: int, root_urls: list[Link]):
-        self.queue = Queue()
+    @classmethod
+    async def create(self, *, max_links: int, root_urls: list[Link], queue: LinkQueue):
+        self = Worker()
+        self.queue = queue
         self.max_links = max_links
         self.done = False
         self.links_processed = 0
 
         for root in root_urls:
-            self.queue.put(
+            await self.queue.put(
                 Link(text=root["title"], url=root["url"], parent_url="root"))
+
+        return self
 
     async def run(self):
         """
@@ -39,8 +43,8 @@ class Worker:
         try:
             print("Worker started")
             # for debugging
-            # await self.run_sequential()
-            await self.run_parallel()
+            await self.run_sequential()
+            # await self.run_parallel()
         except Exception as e:
             print(f"Worker encountered exception: {e}")
             self.done = True
@@ -61,7 +65,7 @@ class Worker:
 
                 # Get all the links that are currently in the queue and crawl them in parallel
                 while not self.queue.empty():
-                    link = self.queue.get(block=False)
+                    link = await self.queue.get()
                     tasks.append(asyncio.create_task(
                         self.process_link(link, session)))
 
@@ -80,7 +84,7 @@ class Worker:
 
             while not self.done:
                 self.print_status()
-                link = self.queue.get()
+                link = await self.queue.get()
                 print(
                     f"Working on: {link.url} from parent: {link.parent_url}")
                 await self.process_link(link, session)
@@ -116,7 +120,7 @@ class Worker:
             l for l in response.outgoing_links if l.depth < MAX_DEPTH
         ]
         for l in links_to_add:
-            self.queue.put(l)
+            await self.queue.put(l)
         print(
             f"SUCCESS: adding {len(links_to_add)} new links from: {link.url}")
         return len(links_to_add)

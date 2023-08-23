@@ -16,7 +16,10 @@ async def main():
                         help="The maximum number of links to crawl", default=DEFAULT_MAX_LINKS_TO_CRAWL)
     max_links = parser.parse_args().max_links
 
-    worker = Worker(max_links=max_links, root_urls=ROOT_URLS)
+    shared_queue = asyncio.Queue()
+
+    worker = await Worker.create(
+        queue=shared_queue, max_links=max_links, root_urls=ROOT_URLS)
 
     print(f"Starting crawler with max_links: {max_links}\n")
     await worker.run()
