@@ -18,14 +18,12 @@ class Worker:
     queue: LinkQueue
     max_links: int
     done: bool
-    no_new_links: bool
     links_processed: int
 
     def __init__(self, *, max_links: int, root_urls: list[Link]):
         self.queue = Queue()
         self.max_links = max_links
         self.done = False
-        self.no_new_links = False
         self.links_processed = 0
 
         for root in root_urls:
@@ -41,8 +39,8 @@ class Worker:
         try:
             print("Worker started")
             # for debugging
-            await self.run_sequential()
-            # await self.run_parallel()
+            # await self.run_sequential()
+            await self.run_parallel()
         except Exception as e:
             print(f"Worker encountered exception: {e}")
             self.done = True
@@ -73,8 +71,6 @@ class Worker:
                     f"Finished working on {len(tasks)} links.")
                 print(
                     f"Added {sum(filter(None, results))} new links to queue\n")
-                if not any(results):
-                    self.done = True
                 await asyncio.sleep(1)
 
     async def run_sequential(self):
@@ -84,14 +80,11 @@ class Worker:
 
             while not self.done:
                 self.print_status()
-                try:
-                    link = self.queue.get(block=False)
-                    print(
-                        f"Working on: {link.url} from parent: {link.parent_url}")
-                    await self.process_link(link, session)
-                    print(f"\n")
-                except QueueEmpty:
-                    self.done = True
+                link = self.queue.get()
+                print(
+                    f"Working on: {link.url} from parent: {link.parent_url}")
+                await self.process_link(link, session)
+                print()
 
             print("Worker exiting...")
 
@@ -113,14 +106,9 @@ class Worker:
                 return None
 
         self.links_processed += 1
-        if not self.no_new_links:
-            if self.links_processed + self.queue.qsize() >= self.max_links:
-                print(
-                    "Reached max links. No longer adding new links to queue.")
-                self.no_new_links = True
-
-        if self.no_new_links:
-            print(f"SUCCESS: Not adding new links from {link.url}")
+        if self.links_processed >= self.max_links:
+            print(f"TARGET LINKS REACHED: {self.max_links}")
+            self.done = True
             return None
 
         # Add outgoing links to queue
