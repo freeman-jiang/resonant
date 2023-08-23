@@ -8,11 +8,12 @@ from crawler.parse import CrawlResult
 
 T = TypeVar('T', bound=BaseModel)
 
+
 class Database:
     db: lmdb.Environment
     value_type: T
 
-    def __init__(self, value_type: Type[T], name = "my_database"):
+    def __init__(self, value_type: Type[T], name="my_database"):
         self.value_type = value_type
         self.db = lmdb.open(name, map_size=int(1e9))
 
@@ -50,8 +51,8 @@ class Database:
             value_bytes = txn.get(key_bytes)
             return value_bytes is not None
 
-
     # Dump contents of the db in human readable format to "dump.txt"
+
     def dump_to_file(self):
         with self.db.begin() as txn:
             cursor = txn.cursor()
@@ -71,6 +72,8 @@ class Database:
                 js[decoded_key] = decoded_value
 
             json.dump(js, open("dump.json", "w"), indent=4)
+
+
 def test_dump_db():
     db = Database(CrawlResult)
     db.dump_json()

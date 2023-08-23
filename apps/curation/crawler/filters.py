@@ -4,6 +4,7 @@ from nltk import sent_tokenize, word_tokenize
 from crawler.link import Link
 from crawler.parse import CrawlResult, parse_html
 
+
 def should_keep(crawl: CrawlResult) -> bool:
     sentences = sent_tokenize(crawl.content)
     words = word_tokenize(crawl.content)
@@ -14,6 +15,7 @@ def should_keep(crawl: CrawlResult) -> bool:
     # to ads, bad formatting.
     # Articles have a meaningful sentence length distribution
     return len(sentences) >= 8 and len(words) >= 150 and avg_word_len > 3 and avg_sent_len >= 8 and avg_sent_len <= 50
+
 
 def test_1():
     link = Link.from_url("http://www.paulgraham.com/pypar.html")
@@ -30,4 +32,3 @@ def test_1():
     avg_word_len = sum(len(word) for word in words) / len(words)
 
     # [print(len(x)) for x in sentences]
-

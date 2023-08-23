@@ -75,7 +75,6 @@ class Link(BaseModel):
 
         self.url = clean_url(self.url)
 
-
         return self
 
     def domain(self) -> str:

@@ -39,7 +39,6 @@ async def main():
     # Start the workers
     tasks = [asyncio.create_task(worker.run()) for worker in workers]
 
-
     # When the shared done_queue size reaches max_links, the first worker to reach it
     # will send a sentinel value to this queue
     queue_done = sentinel_queue.get()
@@ -50,7 +49,6 @@ async def main():
     # # Cancel the workers
     # for task in tasks:
     #     task.cancel()
-
 
     print(
         f"Finished in {time.time() - start_time} seconds. Processed {done_queue.qsize()} links.")

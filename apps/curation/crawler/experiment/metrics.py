@@ -17,9 +17,11 @@ class MetricsResult(BaseModel):
     ttr: float
     hlr: float
 
+
 def get_readability_metrics(link: Link) -> Optional[MetricsResult]:
     response = requests.get(link.url)
-    crawl_result = parse_html(response.content.decode('utf-8', errors='ignore'), link)
+    crawl_result = parse_html(
+        response.content.decode('utf-8', errors='ignore'), link)
 
     if not crawl_result:
         return None
@@ -31,10 +33,12 @@ def get_readability_metrics(link: Link) -> Optional[MetricsResult]:
 
     # Remove stopwords
     stop_words = set(stopwords.words('english'))
-    words = [word.lower() for word in words if word.isalnum() and word.lower() not in stop_words]
+    words = [word.lower() for word in words if word.isalnum()
+             and word.lower() not in stop_words]
 
     # Calculate average sentence length and average word length
-    avg_sentence_length = sum(len(word_tokenize(sentence)) for sentence in sentences) / len(sentences)
+    avg_sentence_length = sum(len(word_tokenize(sentence))
+                              for sentence in sentences) / len(sentences)
     avg_word_length = sum(len(word) for word in words) / len(words)
 
     # Calculate TTR (Type-Token Ratio)

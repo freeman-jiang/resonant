@@ -129,7 +129,8 @@ class Worker:
                     print(f"SUCCESS: {link.url}")
                     db.store(link.url, response)
                 else:
-                    print("WARN: Filtered out link: " + link.url, response.content)
+                    print("WARN: Filtered out link: " +
+                          link.url, response.content)
             except ClientError as e:
                 print(
                     f"FAILED: Can't connect to `{link.url}`, error: `{e}`")

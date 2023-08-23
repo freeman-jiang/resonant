@@ -103,7 +103,7 @@ ROOT_URLS = [
     #     'url':'https://ourworldindata.org/better-learning',
     #     'title': 'Better learning',
     # },
-    {'url':'https://gwern.net/complement','title': 'Complement' },
+    {'url': 'https://gwern.net/complement', 'title': 'Complement'},
     # {'url': 'https://luttig.substack.com/p/dont-forget-microsoft', 'title': 'Don’t forget Microsoft'},
     # {'url': 'https://www.stilldrinking.org/programming-sucks', 'title': 'Programming Sucks'},
     # {'url': 'https://aphyr.com/posts/284-jepsen-mongodb', 'title': 'Jepsen: MongoDB'},
@@ -111,4 +111,3 @@ ROOT_URLS = [
     # {'url': 'https://astralcodexten.substack.com/p/every-bay-area-house-party', 'title': 'Every Bay Area House Party'},
     # {'url': 'http://yosefk.com/blog/people-can-read-their-managers-mind.html', 'title': 'People can read their managers’ minds'},
 ]
-
