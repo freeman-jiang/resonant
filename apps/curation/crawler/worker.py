@@ -20,13 +20,15 @@ class Worker:
     max_links: int
     done: bool
     links_processed: int
+    sentinel_queue: Queue
 
-    def __init__(self, *, max_links: int, work_queue: LinkQueue, done_queue: Queue):
+    def __init__(self, *, max_links: int, work_queue: LinkQueue, done_queue: Queue, sentinel_queue: Queue):
         self.done_queue = done_queue
         self.work_queue = work_queue
         self.max_links = max_links
         self.done = False
         self.links_processed = 0
+        self.sentinel_queue = sentinel_queue
 
     async def run(self):
         """
@@ -108,6 +110,7 @@ class Worker:
         if self.done_queue.qsize() >= self.max_links:
             print(f"TARGET LINKS REACHED: {self.max_links}")
             self.done = True
+            await self.sentinel_queue.put(True)
             return None
 
         # Add outgoing links to queue

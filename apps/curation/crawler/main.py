@@ -7,7 +7,7 @@ from .worker import Worker
 from .link import Link
 
 DEFAULT_MAX_LINKS_TO_CRAWL = 200
-NUM_WORKERS = 4
+NUM_WORKERS = 12
 
 
 async def initialize_queue(queue: asyncio.Queue):
@@ -26,12 +26,29 @@ async def main():
     shared_queue = asyncio.Queue()
     await initialize_queue(shared_queue)
     done_queue = asyncio.Queue()
+    sentinel_queue = asyncio.Queue()
 
     # Create a bunch of workers
-    workers = [Worker(work_queue=shared_queue, max_links=max_links, done_queue=done_queue)
+    workers = [Worker(work_queue=shared_queue,
+                      max_links=max_links,
+                      done_queue=done_queue,
+                      sentinel_queue=sentinel_queue)
                for _ in range(NUM_WORKERS)]
 
-    await asyncio.gather(*[worker.run() for worker in workers])
+    # Start the workers
+    tasks = [asyncio.create_task(worker.run()) for worker in workers]
+
+    # When the shared done_queue size reaches max_links, the first worker to reach it
+    # will send a sentinel value to this queue
+    await sentinel_queue.get()
+
+    # Cancel the workers
+    for task in tasks:
+        task.cancel()
+
+    # Wait for the workers to finish
+    await asyncio.gather(*tasks, return_exceptions=True)
+
     print(
         f"Finished in {time.time() - start_time} seconds. Processed {done_queue.qsize()} links.")
 
