@@ -21,7 +21,7 @@ async def main():
     print(f"Starting crawler with max_links: {max_links}\n")
     await worker.run()
     print(
-        f"Finished in {time.time() - start_time} seconds")
+        f"Finished in {time.time() - start_time} seconds. Processed {worker.links_processed} links.")
 
 
 if __name__ == "__main__":
