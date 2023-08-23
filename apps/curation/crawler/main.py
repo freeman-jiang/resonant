@@ -7,6 +7,13 @@ from .worker import Worker
 from .link import Link
 
 DEFAULT_MAX_LINKS_TO_CRAWL = 200
+NUM_WORKERS = 4
+
+
+async def initialize_queue(queue: asyncio.Queue):
+    for root in ROOT_URLS:
+        await queue.put(
+            Link(text=root["title"], url=root["url"], parent_url="root"))
 
 
 async def main():
@@ -17,15 +24,12 @@ async def main():
     max_links = parser.parse_args().max_links
 
     shared_queue = asyncio.Queue()
+    await initialize_queue(shared_queue)
 
-    worker = await Worker.create(
-        queue=shared_queue, max_links=max_links, root_urls=ROOT_URLS)
-
-    print(f"Starting crawler with max_links: {max_links}\n")
-    await worker.run()
-    print(
-        f"Finished in {time.time() - start_time} seconds. Processed {worker.links_processed} links.")
-
+    # Create a bunch of workers
+    workers = [Worker(queue=shared_queue, max_links=20)
+               for _ in range(NUM_WORKERS)]
+    results = await asyncio.gather(*[worker.run() for worker in workers])
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -20,19 +20,11 @@ class Worker:
     done: bool
     links_processed: int
 
-    @classmethod
-    async def create(self, *, max_links: int, root_urls: list[Link], queue: LinkQueue):
-        self = Worker()
+    def __init__(self, *, max_links: int, queue: LinkQueue):
         self.queue = queue
         self.max_links = max_links
         self.done = False
         self.links_processed = 0
-
-        for root in root_urls:
-            await self.queue.put(
-                Link(text=root["title"], url=root["url"], parent_url="root"))
-
-        return self
 
     async def run(self):
         """
