@@ -27,7 +27,7 @@ async def main():
     await initialize_queue(shared_queue)
 
     # Create a bunch of workers
-    workers = [Worker(queue=shared_queue, max_links=20)
+    workers = [Worker(queue=shared_queue, max_links=max_links)
                for _ in range(NUM_WORKERS)]
     results = await asyncio.gather(*[worker.run() for worker in workers])
 
