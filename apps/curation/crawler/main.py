@@ -25,11 +25,15 @@ async def main():
 
     shared_queue = asyncio.Queue()
     await initialize_queue(shared_queue)
+    done_queue = asyncio.Queue()
 
     # Create a bunch of workers
-    workers = [Worker(queue=shared_queue, max_links=max_links)
+    workers = [Worker(work_queue=shared_queue, max_links=max_links, done_queue=done_queue)
                for _ in range(NUM_WORKERS)]
-    results = await asyncio.gather(*[worker.run() for worker in workers])
+
+    await asyncio.gather(*[worker.run() for worker in workers])
+    print(
+        f"Finished in {time.time() - start_time} seconds. Processed {done_queue.qsize()} links.")
 
 if __name__ == "__main__":
     asyncio.run(main())

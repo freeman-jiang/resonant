@@ -15,13 +15,15 @@ LinkQueue: TypeAlias = "Queue[Link]"
 
 
 class Worker:
-    queue: LinkQueue
+    work_queue: LinkQueue
+    done_queue: Queue
     max_links: int
     done: bool
     links_processed: int
 
-    def __init__(self, *, max_links: int, queue: LinkQueue):
-        self.queue = queue
+    def __init__(self, *, max_links: int, work_queue: LinkQueue, done_queue: Queue):
+        self.done_queue = done_queue
+        self.work_queue = work_queue
         self.max_links = max_links
         self.done = False
         self.links_processed = 0
@@ -43,8 +45,8 @@ class Worker:
             raise e
 
     def print_status(self):
-        print(f"Links processed: {self.links_processed}")
-        print(f"Queue size: {self.queue.qsize()}")
+        print(f"Links processed: {self.done_queue.qsize()}")
+        print(f"Queue size: {self.work_queue.qsize()}")
 
     async def run_parallel(self):
         """Send get requests to all links in the queue at the same time"""
@@ -56,8 +58,8 @@ class Worker:
                 tasks = []
 
                 # Get all the links that are currently in the queue and crawl them in parallel
-                while not self.queue.empty():
-                    link = await self.queue.get()
+                while not self.work_queue.empty():
+                    link = await self.work_queue.get()
                     tasks.append(asyncio.create_task(
                         self.process_link(link, session)))
 
@@ -76,13 +78,14 @@ class Worker:
 
             while not self.done:
                 self.print_status()
-                link = await self.queue.get()
+                link = await self.work_queue.get()
                 print(
                     f"Working on: {link.url} from parent: {link.parent_url}")
                 await self.process_link(link, session)
                 print()
 
             print("Worker exiting...")
+            return
 
     async def process_link(self, link: Link, session: ClientSession) -> Optional[int]:
         """Given `link`, this function crawls and attempts to parse it, then adds any outgoing links to `queue`. Returns the number of links added to `queue` if successful, or `None` if not."""
@@ -91,7 +94,7 @@ class Worker:
             try:
                 response = await self.crawl(link, session)
                 if not response:
-                    self.links_processed += 1
+                    await self.done_queue.put(True)
                     print(f"FAILED: Could not crawl {link.url}")
                     return None
                 db.store(link.url, response)
@@ -101,8 +104,8 @@ class Worker:
                     f"FAILED: Can't connect to `{link.url}`, error: `{e}`")
                 return None
 
-        self.links_processed += 1
-        if self.links_processed >= self.max_links:
+        await self.done_queue.put(True)
+        if self.done_queue.qsize() >= self.max_links:
             print(f"TARGET LINKS REACHED: {self.max_links}")
             self.done = True
             return None
@@ -112,7 +115,7 @@ class Worker:
             l for l in response.outgoing_links if l.depth < MAX_DEPTH
         ]
         for l in links_to_add:
-            await self.queue.put(l)
+            await self.work_queue.put(l)
         print(
             f"SUCCESS: adding {len(links_to_add)} new links from: {link.url}")
         return len(links_to_add)
