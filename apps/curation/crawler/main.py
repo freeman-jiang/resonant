@@ -49,11 +49,12 @@ async def main():
     queue_done = sentinel_queue.get()
     workers_done = asyncio.gather(*tasks, return_exceptions=True)
 
-    await asyncio.gather(queue_done, workers_done, return_exceptions=True)
+    # Wait for either the queue to be done or the workers to be done
+    await asyncio.wait([queue_done, workers_done], return_when=asyncio.FIRST_COMPLETED)
 
-    # # Cancel the workers
-    # for task in tasks:
-    #     task.cancel()
+    # Cancel the workers
+    for task in tasks:
+        task.cancel()
 
     print(
         f"Finished in {time.time() - start_time} seconds. Processed {done_queue.qsize()} links.")
