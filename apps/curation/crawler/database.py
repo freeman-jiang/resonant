@@ -45,13 +45,13 @@ class Database:
                 raise KeyError("Key not found: " + key)
             return self.value_type.model_validate_json(value_bytes)
 
+
     def contains(self, key: str):
         with self.db.begin() as txn:
             key_bytes = key.encode('utf-8')
             value_bytes = txn.get(key_bytes)
             return value_bytes is not None
 
-    # Dump contents of the db in human readable format to "dump.txt"
 
     def dump_to_file(self):
         with self.db.begin() as txn:
@@ -72,8 +72,16 @@ class Database:
                 js[decoded_key] = decoded_value
 
             json.dump(js, open("dump.json", "w"), indent=4)
+    def dump_urls(self):
+        with self.db.begin() as txn:
+            cursor = txn.cursor()
+            js = []
+            for key, value in cursor:
+                decoded_key = key.decode("utf-8")
+                js.append(decoded_key)
 
+            json.dump(js, open("dump.json", "w"), indent=4)
 
 def test_dump_db():
     db = Database(CrawlResult)
-    db.dump_json()
+    db.dump_urls()
