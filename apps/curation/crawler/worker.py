@@ -47,14 +47,16 @@ class Worker:
     done: bool
     links_processed: int
     sentinel_queue: Queue
+    should_debug: bool
 
-    def __init__(self, *, max_links: int, work_queue: LinkQueue, done_queue: Queue, sentinel_queue: Queue):
+    def __init__(self, *, max_links: int, work_queue: LinkQueue, done_queue: Queue, sentinel_queue: Queue, should_debug: bool = False):
         self.done_queue = done_queue
         self.work_queue = work_queue
         self.max_links = max_links
         self.done = False
         self.links_processed = 0
         self.sentinel_queue = sentinel_queue
+        self.should_debug = should_debug
 
     async def run(self):
         """
@@ -76,29 +78,6 @@ class Worker:
         print(f"Links processed: {self.done_queue.qsize()}")
         print(f"Queue size: {self.work_queue.qsize()}")
 
-    async def run_parallel(self):
-        """Send get requests to all links in the queue at the same time"""
-        async with ClientSession() as session:
-            spoof_chrome_user_agent(session)
-
-            while not self.done:
-                self.print_status()
-                tasks = []
-
-                # Get all the links that are currently in the queue and crawl them in parallel
-                while not self.work_queue.empty():
-                    link = await self.work_queue.get()
-                    tasks.append(asyncio.create_task(
-                        self.process_link(link, session)))
-
-                print(f"Working on {len(tasks)} links in parallel...")
-                results = await asyncio.gather(*tasks)
-                print(
-                    f"Finished working on {len(tasks)} links.")
-                print(
-                    f"Added {sum(filter(None, results))} new links to queue\n")
-                # await asyncio.sleep(1)
-
     async def run_sequential(self):
         """Get, crawl, and parse links from the queue one at a time"""
         async with ClientSession() as session:
@@ -111,6 +90,8 @@ class Worker:
                     f"Working on: {link.url} from parent: {link.parent_url} at depth: {link.depth}")
                 await self.process_link(link, session)
                 print()
+                if self.should_debug:
+                    await asyncio.sleep(1.5)
 
             print("Worker exiting...")
             return

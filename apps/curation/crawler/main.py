@@ -8,6 +8,7 @@ from .link import Link
 
 DEFAULT_MAX_LINKS_TO_CRAWL = 20000
 NUM_WORKERS = 12
+NUM_DEBUG_WORKERS = 1
 
 
 async def initialize_queue(queue: LinkQueue):
@@ -22,7 +23,10 @@ async def main():
     parser = argparse.ArgumentParser(prog="python3 -m crawler.main")
     parser.add_argument("--max_links", type=int,
                         help="The maximum number of links to crawl", default=DEFAULT_MAX_LINKS_TO_CRAWL)
+    parser.add_argument("--debug", action="store_true",
+                        help="Runs the crawler with a single worker, slowly", default=False)
     max_links = parser.parse_args().max_links
+    should_debug = parser.parse_args().debug
 
     shared_queue = LinkQueue()
     await initialize_queue(shared_queue)
@@ -33,8 +37,9 @@ async def main():
     workers = [Worker(work_queue=shared_queue,
                       max_links=max_links,
                       done_queue=done_queue,
-                      sentinel_queue=sentinel_queue)
-               for _ in range(NUM_WORKERS)]
+                      sentinel_queue=sentinel_queue,
+                      should_debug=should_debug)
+               for _ in range(NUM_DEBUG_WORKERS if should_debug else NUM_WORKERS)]
 
     # Start the workers
     tasks = [asyncio.create_task(worker.run()) for worker in workers]
