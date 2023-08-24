@@ -8,6 +8,7 @@ import trafilatura
 from pydantic import BaseModel, model_validator
 
 from crawler.link import Link
+from bs4 import BeautifulSoup
 
 
 class CrawlResult(BaseModel):
@@ -68,7 +69,8 @@ def parse_html_trafilatura(html: str, link: Link) -> Optional[CrawlResult]:
         return None
     content = json.loads(content)
 
-    links = extract_links_from_markdown(content['text'], link)
+    # links = extract_links_from_markdown(content['text'], link)
+    links = extract_links_from_html(html, link)
 
     return CrawlResult(
         link=link,
@@ -80,7 +82,25 @@ def parse_html_trafilatura(html: str, link: Link) -> Optional[CrawlResult]:
     )
 
 
+def extract_links_from_html(html: str, link: Link) -> list[Link]:
+    links = []
+    soup = BeautifulSoup(html, 'lxml')
+
+    # Extract all <a> tags
+    link_elements = soup.find_all('a')
+    for a in soup.find_all("a"):
+        href = a.get("href")
+        links.append(href)
+
+    # Extract href attribute and link text from each <a> tag
+    links = [link.create_child_link(element.text, element.get('href'))
+             for element in link_elements]
+    links = filter(lambda k: k is not None, links)
+    return list(links)
+
+
 def parse_html(html: str, link: Link) -> Optional[CrawlResult]:
+
     a = parse_html_trafilatura(html, link)
     if a is None:
         a = parse_html_newspaper(html, link)

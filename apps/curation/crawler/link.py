@@ -124,11 +124,11 @@ class Link(BaseModel):
         if link is None:
             return None
 
-        if link.domain() in root_url_domains:
-            # Deduplicate URL
-            # Reset depth back to 0, because we encountered root domain again
-            print("Boosting depth--arrived at root domain")
-            self.depth -= -0.5
+        # if link.domain() in root_url_domains:
+        #     # Deduplicate URL
+        #     # Reset depth back to 0, because we encountered root domain again
+        #     print("Boosting depth--arrived at root domain")
+        #     self.depth -= -0.5
 
         # Check if the url is one of the suppressed domains
         for suppressed in SUPPRESSED_DOMAINS:

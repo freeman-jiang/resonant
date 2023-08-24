@@ -11,7 +11,7 @@ NUM_WORKERS = 12
 
 
 async def initialize_queue(queue: LinkQueue):
-    await queue.put(Link.from_url('https://gwern.net/bitcoin-is-worse-is-better'))
+    await queue.put(Link.from_url('https://hypertext.joodaloop.com/'))
     # for root in ROOT_URLS:
     #     await queue.put(
     #         Link(text=root["title"], url=root["url"], parent_url="root"))

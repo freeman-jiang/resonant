@@ -99,7 +99,7 @@ class Worker:
                     f"Finished working on {len(tasks)} links.")
                 print(
                     f"Added {sum(filter(None, results))} new links to queue\n")
-                await asyncio.sleep(1)
+                # await asyncio.sleep(1)
 
     async def run_sequential(self):
         """Get, crawl, and parse links from the queue one at a time"""
@@ -110,9 +110,10 @@ class Worker:
                 self.print_status()
                 link = await self.work_queue.get()
                 print(
-                    f"Working on: {link.url} from parent: {link.parent_url}")
+                    f"Working on: {link.url} from parent: {link.parent_url} at depth: {link.depth}")
                 await self.process_link(link, session)
                 print()
+                await asyncio.sleep(5)
 
             print("Worker exiting...")
             return

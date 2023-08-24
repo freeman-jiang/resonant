@@ -2,6 +2,7 @@ __pycache__/
 
 # LMDB
 my_database/
+seen_links/
 dump.txt
 dump.json
 
