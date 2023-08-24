@@ -2,7 +2,7 @@ from typing import Optional, Self
 from urllib.parse import urlparse, urlunparse
 
 import validators
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, validator
 
 from crawler.root_urls import ROOT_URLS
 
@@ -57,7 +57,6 @@ class Link(BaseModel):
     text: str
     url: str
     parent_url: str
-
     depth: float = 0
 
     def __lt__(self, other):
@@ -67,15 +66,15 @@ class Link(BaseModel):
     def from_url(cls, url: str):
         return Link(text="", url=url, parent_url="", depth=0)
 
-    @model_validator(mode='after')
-    def validate_url(self):
+    @validator('url')
+    def validate_url(cls, v):
         global root_url_domains
-        if not is_valid_url(self.url):
-            raise ValueError("Invalid URL: " + self.url)
+        if not is_valid_url(v):
+            raise ValueError("Invalid URL: " + v)
 
-        self.url = clean_url(self.url)
+        v = clean_url(v)
 
-        return self
+        return v
 
     def domain(self) -> str:
         # Parse the URL

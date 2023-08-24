@@ -5,7 +5,7 @@ from typing import Optional
 
 import newspaper
 import trafilatura
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, validator
 
 from crawler.link import Link
 from bs4 import BeautifulSoup
@@ -19,12 +19,10 @@ class CrawlResult(BaseModel):
     content: str  # Markdown
     outgoing_links: list[Link]
 
-    @model_validator(mode='after')
-    def validate(self):
-        assert len(
-            self.content) < 2 ** 25, "Content too large to store in database"
-
-        return self
+    @validator('content')
+    def validate(cls, v):
+        assert len(v) < 2 ** 25, "Content too large to store in database"
+        return v
 
 
 def parse_html_newspaper(html: str, link: Link) -> Optional[CrawlResult]:

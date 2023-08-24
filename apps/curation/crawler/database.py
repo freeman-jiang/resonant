@@ -19,7 +19,7 @@ class Database:
 
     def store(self, key: str, value: T):
         with self.db.begin(write=True) as txn:
-            value_bytes = value.model_dump_json().encode('utf-8')
+            value_bytes = value.json().encode('utf-8')
             key_bytes = key.encode('utf-8')
 
             if len(value_bytes) > 2 ** 25:
