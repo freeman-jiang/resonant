@@ -1,6 +1,8 @@
 import argparse
 import asyncio
 import time
+from prisma import Prisma
+from .prisma import PrismaClient
 
 from .link import Link
 from .root_urls import ROOT_URLS
@@ -28,6 +30,12 @@ async def main():
     max_links = parser.parse_args().max_links
     should_debug = parser.parse_args().debug
 
+    # Initialize Prisma
+    db = Prisma()
+    await db.connect()
+    prisma_client = PrismaClient(db)
+
+    # Initialize the shared work queue
     shared_queue = LinkQueue()
     await initialize_queue(shared_queue)
     done_queue = asyncio.Queue()
@@ -38,7 +46,8 @@ async def main():
                       max_links=max_links,
                       done_queue=done_queue,
                       sentinel_queue=sentinel_queue,
-                      should_debug=should_debug)
+                      should_debug=should_debug,
+                      prisma=prisma_client)
                for _ in range(NUM_DEBUG_WORKERS if should_debug else NUM_WORKERS)]
 
     # Start the workers
@@ -46,15 +55,20 @@ async def main():
 
     # When the shared done_queue size reaches max_links, the first worker to reach it
     # will send a sentinel value to this queue
-    queue_done = sentinel_queue.get()
-    workers_done = asyncio.gather(*tasks, return_exceptions=True)
+    queue_done = asyncio.create_task(sentinel_queue.get())
+
+    # allow the first exception to bubble up
+    workers_done = asyncio.gather(*tasks)
 
     # Wait for either the queue to be done or the workers to be done
     await asyncio.wait([queue_done, workers_done], return_when=asyncio.FIRST_COMPLETED)
 
-    # Cancel the workers
+    # Cancel the other task because we just want to shut down
     for task in tasks:
         task.cancel()
+    queue_done.cancel()
+
+    await db.disconnect()
 
     print(
         f"Finished in {time.time() - start_time} seconds. Processed {done_queue.qsize()} links.")

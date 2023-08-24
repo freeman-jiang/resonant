@@ -20,6 +20,7 @@ numpy = "^1.25.2"
 validators = "^0.21.2"
 beautifulsoup4 = "^4.12.2"
 load-dotenv = "^0.1.0"
+prisma = "^0.9.1"
 
 
 [build-system]

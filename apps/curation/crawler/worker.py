@@ -9,6 +9,7 @@ from . import filters
 from .database import Database
 from .link import Link
 from .parse import CrawlResult, parse_html
+from .prisma import PrismaClient
 
 MAX_DEPTH = 8
 db = Database(CrawlResult, "my_database")
@@ -48,8 +49,9 @@ class Worker:
     links_processed: int
     sentinel_queue: Queue
     should_debug: bool
+    prisma: PrismaClient
 
-    def __init__(self, *, max_links: int, work_queue: LinkQueue, done_queue: Queue, sentinel_queue: Queue, should_debug: bool = False):
+    def __init__(self, *, max_links: int, work_queue: LinkQueue, done_queue: Queue, sentinel_queue: Queue, should_debug: bool = False, prisma: PrismaClient):
         self.done_queue = done_queue
         self.work_queue = work_queue
         self.max_links = max_links
@@ -57,6 +59,7 @@ class Worker:
         self.links_processed = 0
         self.sentinel_queue = sentinel_queue
         self.should_debug = should_debug
+        self.prisma = prisma
 
     async def run(self):
         """
@@ -110,6 +113,7 @@ class Worker:
                 if filters.should_keep(response):
                     print(f"SUCCESS: {link.url}")
                     db.store(link.url, response)
+                    await self.prisma.store_article(response)
                 else:
                     print(f"WARN: Filtered out link: {link.url}")
             except ClientError as e:
@@ -131,7 +135,7 @@ class Worker:
         for l in links_to_add:
             await self.work_queue.put(l)
         print(
-            f"SUCCESS: adding {len(links_to_add)} new links from: {link.url}")
+            f"Adding {len(links_to_add)} new links from: {link.url}")
         return len(links_to_add)
 
     async def crawl(self, link: Link, session: ClientSession) -> Optional[CrawlResult]:
