@@ -28,8 +28,6 @@ class LinkQueue:
         if not seen_links.contains(link.url):
             seen_links.store(link.url, link)
             await self.queue.put((link.depth, link))
-        else:
-            print(f"Skipping link: {link.url}")
 
     # Implement empty, get, put, qsize
     def empty(self):
@@ -113,7 +111,6 @@ class Worker:
                     f"Working on: {link.url} from parent: {link.parent_url} at depth: {link.depth}")
                 await self.process_link(link, session)
                 print()
-                await asyncio.sleep(5)
 
             print("Worker exiting...")
             return
