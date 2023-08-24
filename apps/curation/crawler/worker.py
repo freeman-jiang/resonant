@@ -17,6 +17,7 @@ seen_links = Database(Link, "seen_links")
 
 class LinkQueue:
     # Allows us to crawl by priority in the future based on various metrics
+    # Retrieve entries by lowest depth first
     queue: PriorityQueue[Tuple[int, Link]]
 
     def __init__(self):
@@ -27,6 +28,8 @@ class LinkQueue:
         if not seen_links.contains(link.url):
             seen_links.store(link.url, link)
             await self.queue.put((link.depth, link))
+        else:
+            print(f"Skipping link: {link.url}")
 
     # Implement empty, get, put, qsize
     def empty(self):
@@ -129,8 +132,7 @@ class Worker:
                     print(f"SUCCESS: {link.url}")
                     db.store(link.url, response)
                 else:
-                    print("WARN: Filtered out link: " +
-                          link.url, response.content)
+                    print(f"WARN: Filtered out link: {link.url}")
             except ClientError as e:
                 print(
                     f"FAILED: Can't connect to `{link.url}`, error: `{e}`")
