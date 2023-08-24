@@ -2,9 +2,9 @@ import argparse
 import asyncio
 import time
 
-from .root_urls import ROOT_URLS
-from .worker import Worker, LinkQueue
 from .link import Link
+from .root_urls import ROOT_URLS
+from .worker import LinkQueue, Worker
 
 DEFAULT_MAX_LINKS_TO_CRAWL = 20000
 NUM_WORKERS = 12

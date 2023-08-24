@@ -19,6 +19,8 @@ nltk = "^3.8.1"
 numpy = "^1.25.2"
 validators = "^0.21.2"
 beautifulsoup4 = "^4.12.2"
+load-dotenv = "^0.1.0"
+supabase = "^1.0.4"
 
 
 [build-system]
