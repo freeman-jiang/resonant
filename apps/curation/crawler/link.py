@@ -125,10 +125,8 @@ class Link(BaseModel):
             return None
 
         # if link.domain() in root_url_domains:
-        #     # Deduplicate URL
-        #     # Reset depth back to 0, because we encountered root domain again
-        #     print("Boosting depth--arrived at root domain")
-        #     self.depth -= 0.5
+        #     # Prioritize crawling links from the root domains as we know they are good
+        #     link.depth -= 0.5
 
         # Check if the url is one of the suppressed domains
         for suppressed in SUPPRESSED_DOMAINS:
