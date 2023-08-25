@@ -95,6 +95,10 @@ def extract_links_from_html(html: str, link: Link) -> list[Link]:
              for element in link_elements]
     links = list(filter(lambda k: k is not None, links))
     links = cast(list[Link], links)
+
+    # Filter out links that have the same url as the parent
+    links = list(filter(lambda k: k.url != link.url, links))
+
     return links
 
 
