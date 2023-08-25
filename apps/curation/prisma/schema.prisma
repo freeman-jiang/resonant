@@ -9,34 +9,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model article_outbound_links {
-  article_id Int
-  link_id    Int
-  articles   articles @relation(fields: [article_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  links      links    @relation(fields: [link_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model Link {
+  id         Int      @id @default(autoincrement())
+  text       String
+  url        String   @unique
+  parent_url String
+  depth      Float    @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  @@id([article_id, link_id])
+  page         Page?  @relation("SourceLink")
+  outbound_for Page[] @relation("OutboundLink")
 }
 
-model articles {
-  id                     Int                      @id @default(autoincrement())
-  link_id                Int?
-  title                  String?
-  date                   String?
-  author                 String?
-  content                String
-  created_at             DateTime?                @default(now()) @db.Timestamptz(6)
-  article_outbound_links article_outbound_links[]
-  links                  links?                   @relation(fields: [link_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
-model links {
-  id                     Int                      @id @default(autoincrement())
-  text                   String
-  url                    String                   @unique
-  parent_url             String
-  depth                  Float                    @default(0)
-  created_at             DateTime?                @default(now()) @db.Timestamptz(6)
-  article_outbound_links article_outbound_links[]
-  articles               articles[]
+model Page {
+  id             Int      @id @default(autoincrement())
+  title          String?
+  date           String?
+  author         String?
+  content        String
+  link           Link     @relation("SourceLink", fields: [linkId], references: [id])
+  linkId         Int      @unique
+  outbound_links Link[]   @relation("OutboundLink")
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 }
