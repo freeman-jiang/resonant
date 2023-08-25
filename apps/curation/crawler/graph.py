@@ -52,16 +52,14 @@ def load_from_db():
     db = Database(CrawlResult, "my_database")
     graph = {}
 
-    with db.db.begin() as txn:
-        cursor = txn.cursor()
-        for _key, value in cursor:
-            result = CrawlResult.model_validate_json(value)
+    for _key, value in db.items():
+        result = value
 
-            links = [x.url for x in result.outgoing_links]
+        links = [x.url for x in result.outgoing_links]
 
-            # links = filter(lambda k: get_domain(k) != get_domain(result.link.url), links)
-            node = Node(out=links, url=result.link.url)
-            graph[result.link.url] = node
+        # links = filter(lambda k: get_domain(k) != get_domain(result.link.url), links)
+        node = Node(out=links, url=result.link.url)
+        graph[result.link.url] = node
     for node in graph.values():
         node.out = list(filter(lambda k: k in graph, node.out))
 
