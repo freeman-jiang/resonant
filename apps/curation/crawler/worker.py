@@ -72,16 +72,6 @@ class Worker:
 
                 response = await self.process_task(task, session)
 
-                # End the transaction first, and then we insert
-                # Might lead to consistency issues if we terminate before inserting
-                if response:
-                    # Add outgoing links to queue
-                    links_to_add = [
-                        l for l in response.outgoing_links if l.depth < MAX_DEPTH
-                    ]
-                    count = await self.prisma.add_tasks(links_to_add)
-                    print(f"PRISMA: Added {count} tasks to db")
-
             print("Worker exiting...")
             return
 
