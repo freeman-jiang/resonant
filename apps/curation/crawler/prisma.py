@@ -24,6 +24,15 @@ class PrismaClient:
             }
         )
 
+    async def fail_page(self, tx: Prisma, task: CrawlTask):
+        await tx.crawltask.update(
+            where={
+                'id': task.id
+            },
+            data={
+                'status': TaskStatus.FAILED
+            })
+
     async def store_page(self, tx: Prisma, task: CrawlTask, crawl_result: CrawlResult):
         try:
             page = await tx.page.create(data={
@@ -64,7 +73,7 @@ class PrismaClient:
             TaskStatus.PENDING
         )
 
-    async def add_tasks(self, links: list[Link]):
+    async def add_tasks(self, tx: Prisma, links: list[Link]):
         def create_task(link: Link) -> CrawlTaskCreateWithoutRelationsInput:
             return {
                 'status': TaskStatus.PENDING,
@@ -74,7 +83,7 @@ class PrismaClient:
                 'text': link.text,
             }
 
-        count = await self.db.crawltask.create_many(
+        count = await tx.crawltask.create_many(
             data=[create_task(link) for link in links],
             skip_duplicates=True)
         return count

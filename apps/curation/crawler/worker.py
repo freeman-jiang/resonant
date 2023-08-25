@@ -102,6 +102,9 @@ class Worker:
         except ClientError as e:
             print(
                 f"FAILED: Can't connect to `{link.url}`, error: `{e}`")
+            page = await self.prisma.fail_page(tx, task)
+            await self.done_queue.put(True)
+
             return None
 
         await self.done_queue.put(True)
@@ -115,7 +118,7 @@ class Worker:
         links_to_add = [
             l for l in response.outgoing_links if l.depth < MAX_DEPTH
         ]
-        count = await self.prisma.add_tasks(links_to_add)
+        count = await self.prisma.add_tasks(tx, links_to_add)
         print(f"PRISMA: Added {count} tasks to db")
 
     async def crawl(self, link: Link, session: ClientSession) -> Optional[CrawlResult]:
