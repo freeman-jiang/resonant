@@ -5,18 +5,22 @@ from prisma import Prisma
 from .prisma import PrismaClient
 
 from .link import Link
-from .worker import LinkQueue, Worker
+from .worker import Worker
 
 DEFAULT_MAX_LINKS_TO_CRAWL = 20000
 NUM_WORKERS = 12
 NUM_DEBUG_WORKERS = 1
 
 
-async def initialize_queue(queue: LinkQueue):
-    await queue.put(Link.from_url('https://hypertext.joodaloop.com/'))
-    # for root in ROOT_URLS:
-    #     await queue.put(
-    #         Link(text=root["title"], url=root["url"], parent_url="root"))
+async def initialize_queue(prisma: PrismaClient):
+    task = await prisma.db.task.find_first()
+    if task:
+        # Tasks in queue. Good to go
+        return
+
+    # No tasks in queue. Add the root URL
+    root = Link.from_url('https://hypertext.joodaloop.com/')
+    await prisma.add_tasks([root])
 
 
 async def main():
@@ -35,19 +39,18 @@ async def main():
     prisma_client = PrismaClient(db)
 
     # Initialize the shared work queue
-    shared_queue = LinkQueue()
-    await initialize_queue(shared_queue)
+    await initialize_queue(prisma_client)
     done_queue: asyncio.Queue[Link] = asyncio.Queue()
     sentinel_queue: asyncio.Queue[Link] = asyncio.Queue()
 
     # Create a bunch of workers
-    workers = [Worker(work_queue=shared_queue,
-                      max_links=max_links,
-                      done_queue=done_queue,
-                      sentinel_queue=sentinel_queue,
-                      should_debug=should_debug,
-                      prisma=prisma_client)
-               for _ in range(NUM_DEBUG_WORKERS if should_debug else NUM_WORKERS)]
+    workers = [Worker(
+        max_links=max_links,
+        done_queue=done_queue,
+        sentinel_queue=sentinel_queue,
+        should_debug=should_debug,
+        prisma=prisma_client)
+        for _ in range(NUM_DEBUG_WORKERS if should_debug else NUM_WORKERS)]
 
     # Start the workers
     tasks = [asyncio.create_task(worker.run()) for worker in workers]

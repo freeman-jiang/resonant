@@ -2,47 +2,20 @@ import asyncio
 from queue import Empty as QueueEmpty
 from asyncio import Queue, PriorityQueue
 from typing import Optional, TypeAlias, Tuple
+from prisma import Prisma
+from prisma.models import Task
 
 from aiohttp import ClientError, ClientSession
 
 from . import filters
-from .database import Database
 from .link import Link
 from .parse import CrawlResult, parse_html
 from .prisma import PrismaClient
 
 MAX_DEPTH = 8
-db = Database(CrawlResult, "my_database")
-seen_links = Database(Link, "seen_links")
-
-
-class LinkQueue:
-    # Allows us to crawl by priority in the future based on various metrics
-    # Retrieve entries by lowest depth first
-    queue: PriorityQueue[Tuple[int, Link]]
-
-    def __init__(self):
-        self.queue = PriorityQueue()
-
-    async def put(self, link: Link):
-        """Only put in links if they haven't been explored before"""
-        if not seen_links.contains(link.url):
-            seen_links.store(link.url, link)
-            await self.queue.put((link.depth, link))
-
-    # Implement empty, get, put, qsize
-    def empty(self):
-        return self.queue.empty()
-
-    def qsize(self):
-        return self.queue.qsize()
-
-    async def get(self) -> Link:
-        return (await self.queue.get())[1]
 
 
 class Worker:
-    work_queue: LinkQueue
     done_queue: Queue
     max_links: int
     done: bool
@@ -51,9 +24,8 @@ class Worker:
     should_debug: bool
     prisma: PrismaClient
 
-    def __init__(self, *, max_links: int, work_queue: LinkQueue, done_queue: Queue, sentinel_queue: Queue, should_debug: bool = False, prisma: PrismaClient):
+    def __init__(self, *, max_links: int, done_queue: Queue, sentinel_queue: Queue, should_debug: bool = False, prisma: PrismaClient):
         self.done_queue = done_queue
-        self.work_queue = work_queue
         self.max_links = max_links
         self.done = False
         self.links_processed = 0
@@ -79,7 +51,6 @@ class Worker:
 
     def print_status(self):
         print(f"Pages processed: {self.done_queue.qsize()}")
-        print(f"Queue size: {self.work_queue.qsize()}")
 
     async def run_sequential(self):
         """Get, crawl, and parse links from the queue one at a time"""
@@ -88,38 +59,48 @@ class Worker:
 
             while not self.done:
                 self.print_status()
-                link = await self.work_queue.get()
-                print(
-                    f"Working on: {link.url} from parent: {link.parent_url} at depth: {link.depth}")
-                await self.process_link(link, session)
-                print()
+
+                async with self.prisma.db.tx() as tx:
+                    task = await self.prisma.get_task(tx)
+
+                    if task is None or task.payload is None:
+                        print("No more tasks in database")
+                        self.done = True
+                        break
+
+                    print(f"Working on task: {task.id}")
+
+                    await self.process_task(tx, task, session)
+                    print()
+
                 if self.should_debug:
-                    await asyncio.sleep(1.5)
+                    await asyncio.sleep(5)
 
             print("Worker exiting...")
             return
 
-    async def process_link(self, link: Link, session: ClientSession) -> Optional[int]:
+    async def process_task(self, tx: Prisma, task: Task, session: ClientSession) -> Optional[int]:
         """Given `link`, this function crawls and attempts to parse it, then adds any outgoing links to `queue`. Returns the number of links added to `queue` if successful, or `None` if not."""
-        response = db.get(link.url, allow_null=True)
-        if not response:
-            try:
-                response = await self.crawl(link, session)
-                if not response:
-                    await self.done_queue.put(True)
-                    print(f"FAILED: Could not crawl {link.url}")
-                    return None
 
-                if filters.should_keep(response):
-                    print(f"SUCCESS: {link.url}")
-                    db.store(link.url, response)
-                    await self.prisma.store_page(response)
-                else:
-                    print(f"WARN: Filtered out link: {link.url}")
-            except ClientError as e:
-                print(
-                    f"FAILED: Can't connect to `{link.url}`, error: `{e}`")
+        link = Link.parse_obj(task.payload)
+        print(
+            f"Working on: {link.url} from parent: {link.parent_url} at depth: {link.depth}")
+        try:
+            response = await self.crawl(link, session)
+            if not response:
+                await self.done_queue.put(True)
+                print(f"FAILED: Could not crawl {link.url}")
                 return None
+
+            if filters.should_keep(response):
+                page = await self.prisma.store_page(tx, task, response)
+                print(f"SUCCESS: Finished task. Added page to db: {page.url}")
+            else:
+                print(f"WARN: Filtered out link: {link.url}")
+        except ClientError as e:
+            print(
+                f"FAILED: Can't connect to `{link.url}`, error: `{e}`")
+            return None
 
         await self.done_queue.put(True)
         if self.done_queue.qsize() >= self.max_links:
@@ -132,11 +113,8 @@ class Worker:
         links_to_add = [
             l for l in response.outgoing_links if l.depth < MAX_DEPTH
         ]
-        for l in links_to_add:
-            await self.work_queue.put(l)
-        print(
-            f"Adding {len(links_to_add)} new links from: {link.url}")
-        return len(links_to_add)
+        count = await self.prisma.add_tasks(links_to_add)
+        print(f"PRISMA: Added {count} tasks to db")
 
     async def crawl(self, link: Link, session: ClientSession) -> Optional[CrawlResult]:
         """Crawl and parse the given `link`, returning a `CrawlResult` if successful, or `None` if not"""

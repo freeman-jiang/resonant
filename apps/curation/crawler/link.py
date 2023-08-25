@@ -57,7 +57,7 @@ class Link(BaseModel):
     text: str
     url: str
     parent_url: str | None
-    depth: float = 0
+    depth: int = 0
 
     def __lt__(self, other):
         return self.url.__lt__(other.url)

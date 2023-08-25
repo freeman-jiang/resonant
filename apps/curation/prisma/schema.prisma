@@ -21,3 +21,20 @@ model Page {
   updated_at    DateTime @updatedAt
   outbound_urls String[]
 }
+
+enum TaskStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Task {
+  id         Int        @id @default(autoincrement())
+  priority   Float      @default(0)
+  message    String
+  status     TaskStatus
+  payload    Json
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+}
