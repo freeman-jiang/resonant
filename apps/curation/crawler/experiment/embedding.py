@@ -1,21 +1,24 @@
 import asyncio
+from psycopg.rows import class_row
 import datetime
 import os
-from typing import Iterator
+from typing import Iterator, Any
 
 import numpy as np
+import psycopg
 import vecs
 from sentence_transformers import SentenceTransformer
 
 from crawler.link import Link
 from crawler.parse import CrawlResult
 from dotenv import load_dotenv
-from prisma import Prisma
+from prisma import Prisma, models
 from prisma.models import Page
 
 load_dotenv()
 
 client = Prisma()
+db = psycopg.connect(os.environ['DATABASE_URL'])
 
 
 def overlapping_windows(s: str) -> Iterator[str]:
@@ -100,19 +103,25 @@ def generate_embedding_for_document(document: Page):
     return embedding
 
 
-def query_similar(doc_url: str):
-    document, embedding, metadata = embeddings.fetch([doc_url])[0]
-    similar = embeddings.query(
-        data=embedding,  # required
-        limit=5,  # number of records to return
-        filters={},  # metadata filters
-        measure="cosine_distance",  # distance measure to use
-        include_value=True,  # should distance measure values be returned?
-        include_metadata=False,  # should record metadata be returned?
-    )
+class EmbeddingsWithVec(models.Embeddings):
+    vec: str
+    distance: float
 
-    for simurl, distance in similar:
-        print("Most similar to ", doc_url, "is:", simurl, distance, metadata)
+
+
+async def query_similar(doc_url: str):
+    cursor = db.cursor(row_factory=class_row(EmbeddingsWithVec))
+    similar: list[EmbeddingsWithVec] = cursor.execute("""
+ WITH want AS (SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %s GROUP BY url)
+
+ SELECT distinct ON (e1.url) e1.url, e1.*, e2.avg_dist as distance FROM vecs."Embeddings" e1 RIGHT JOIN (SELECT AVG(e.vec <=> w.vec) as avg_dist, e.url from vecs."Embeddings" as e, want as w WHERE e.url != w.url GROUP BY e.url ORDER BY  avg_dist LIMIT 10) e2
+ ON e1.url = e2.url
+    """, (doc_url, )).fetchall()
+
+
+
+    for sim in similar:
+        print("Most similar to ", doc_url, "is:", sim.url, sim.distance)
 
 
 async def query_similar_test():
@@ -131,28 +140,30 @@ async def query_similar_test():
 async def main():
     model = Embedder()
     await client.connect()
-
+    # await query_similar("https://www.evanmiller.org/dont-kill-math.html")
+    # return
     # await query_similar_test()
     # return
 
-    pages = await client.page.find_many(take=1, where={
-        'embeddings': {
-            'none': {}
-        }
-    })
+    while True:
+        pages = await client.page.find_many(take=50, where={
+            'embeddings': {
+                'none': {}
+            }
+        })
 
-    if len(pages) == 0:
-        print("ERR: No pages to process")
-        return
-    to_append = []
-    for p in pages:
-        data = model.generate_vecs(p)
-        to_append.extend(data)
+        if len(pages) == 0:
+            print("ERR: No pages to process")
+            return
+        to_append = []
+        for p in pages:
+            data = model.generate_vecs(p)
+            to_append.extend(data)
 
-    query = """INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES {}""".format(",".join(
-            ["('{}', '{}', '{}')".format(x[0], x[1], x[2]) for x in to_append]))
-    print(query)
-    await client.execute_raw(query)
+        query = """INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES {}""".format(",".join(
+                ["('{}', '{}', '{}')".format(x[0], x[1], x[2]) for x in to_append]))
+        print(query)
+        await client.execute_raw(query)
 
 
 import nltk.tokenize
