@@ -78,7 +78,7 @@ class Worker:
             raise
 
     def print_status(self):
-        print(f"Links processed: {self.done_queue.qsize()}")
+        print(f"Pages processed: {self.done_queue.qsize()}")
         print(f"Queue size: {self.work_queue.qsize()}")
 
     async def run_sequential(self):
@@ -113,7 +113,7 @@ class Worker:
                 if filters.should_keep(response):
                     print(f"SUCCESS: {link.url}")
                     db.store(link.url, response)
-                    await self.prisma.store_article(response)
+                    await self.prisma.store_page(response)
                 else:
                     print(f"WARN: Filtered out link: {link.url}")
             except ClientError as e:

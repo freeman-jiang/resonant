@@ -10,27 +10,14 @@ class PrismaClient:
         """Prisma Client assumes you have already awaited db.connect() before passing db in"""
         self.db = db
 
-    async def store_link(self, link: Link):
-        link_created = await self.db.links.create({
-            'url': link.url,
-            'depth': link.depth,
-            'text': link.text,
-            'parent_url': link.parent_url
-        })
-        print(f"PRISMA: Added link to db: {link_created.url}")
-
-    async def store_article(self, crawl_result: CrawlResult):
-        link = crawl_result.link
-        article_created = await self.db.articles.create(data={
-            'links': {'create': {
-                'url': link.url,
-                'depth': link.depth,
-                'text': link.text,
-                'parent_url': link.parent_url
-            }},
+    async def store_page(self, crawl_result: CrawlResult):
+        page = await self.db.page.create(data={
+            'url': crawl_result.link.url,
+            'parent_url': crawl_result.link.parent_url,
             'title': crawl_result.title,
             'date': crawl_result.date,
             'author': crawl_result.author,
             'content': crawl_result.content,
-        }, include={'links': True})
-        print(f"PRISMA: Added article to db: {article_created.links.url}")
+            'outbound_urls': [link.url for link in crawl_result.outgoing_links]
+        })
+        print(f"PRISMA: Added page to db: {page.url}")

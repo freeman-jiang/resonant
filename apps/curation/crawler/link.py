@@ -17,7 +17,7 @@ SUPPRESSED_DOMAINS = {
     'sciencemuseum.org.uk',
     'bloomberg.com', 'forbes.com', 'bbc.com', 'economist.com', 'ft.com', 'vimeo.com', 'youtube.com',
     'pittsburghlive.com', 'linkedin.com', 'soundcloud.com', 'albawa.com',
-    'prnewswire.com','web.archive.org','stackexchange.com','doi.org','mail-archive.com','ncbi.nlm.nih.gov','vice.com'
+    'prnewswire.com', 'web.archive.org', 'stackexchange.com', 'doi.org', 'mail-archive.com', 'ncbi.nlm.nih.gov', 'vice.com'
 }
 
 
@@ -56,7 +56,7 @@ root_url_domains = {get_domain(x["url"]) for x in ROOT_URLS}
 class Link(BaseModel):
     text: str
     url: str
-    parent_url: str
+    parent_url: str | None
     depth: float = 0
 
     def __lt__(self, other):
@@ -64,7 +64,7 @@ class Link(BaseModel):
 
     @classmethod
     def from_url(cls, url: str):
-        return Link(text="", url=url, parent_url="", depth=0)
+        return Link(text="", url=url, parent_url=None, depth=0)
 
     @validator('url')
     def validate_url(cls, v):
