@@ -60,7 +60,7 @@ class Worker:
             while not self.done:
                 self.print_status()
 
-                async with self.prisma.db.tx() as tx:
+                async with self.prisma.db.tx(timeout=40000) as tx:
                     task = await self.prisma.get_task(tx)
 
                     if task is None or task.payload is None:
@@ -94,7 +94,9 @@ class Worker:
 
             if filters.should_keep(response):
                 page = await self.prisma.store_page(tx, task, response)
-                print(f"SUCCESS: Finished task. Added page to db: {page.url}")
+                assert (page.link is not None)
+                print(
+                    f"SUCCESS: Finished task. Added page to db: {page.link.url}")
             else:
                 print(f"WARN: Filtered out link: {link.url}")
         except ClientError as e:
@@ -113,7 +115,7 @@ class Worker:
         links_to_add = [
             l for l in response.outgoing_links if l.depth < MAX_DEPTH
         ]
-        count = await self.prisma.add_tasks(links_to_add)
+        count = await self.prisma.add_tasks(tx, links_to_add)
         print(f"PRISMA: Added {count} tasks to db")
 
     async def crawl(self, link: Link, session: ClientSession) -> Optional[CrawlResult]:
