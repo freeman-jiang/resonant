@@ -67,12 +67,12 @@ def parse_html_trafilatura(html: str, link: Link) -> Optional[CrawlResult]:
         return None
     content = json.loads(content)
 
-    # links = extract_links_from_markdown(content['text'], link)
     links = extract_links_from_html(html, link)
+    title = extract_meta_title(html) or content["title"]
 
     return CrawlResult(
         link=link,
-        title=content['title'],
+        title=title,
         date=content['date'],
         author=content['author'],
         content=content['text'],
@@ -124,3 +124,13 @@ def extract_links_from_markdown(markdown_text: str, parent: Link) -> list[Link]:
             links.append(link)
 
     return links
+
+
+def extract_meta_title(html: str) -> Optional[str]:
+    soup = BeautifulSoup(html, 'lxml')
+    title = soup.find("meta", property="og:title")
+    if title:
+        return title["content"]  # type: ignore
+    title = soup.find('title')
+    if title:
+        return title.get_text()
