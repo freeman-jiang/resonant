@@ -76,6 +76,7 @@ class PrismaClient:
         )
 
     async def add_tasks(self, tx: Prisma, links: list[Link]):
+        await tx.execute_raw("LOCK TABLE \"CrawlTask\";")
         def create_task(link: Link) -> CrawlTaskCreateWithoutRelationsInput:
             return {
                 'status': TaskStatus.PENDING,
@@ -85,12 +86,9 @@ class PrismaClient:
                 'text': link.text,
             }
 
-        id = random.randint(0, 1000)
-        print(id, "Creating...", links)
         count = await tx.crawltask.create_many(
             data=[create_task(link) for link in links],
             skip_duplicates=True)
-        print(id, "Done creating links!")
         return count
 
     async def finish_task(self, tx: Prisma, task: CrawlTask):

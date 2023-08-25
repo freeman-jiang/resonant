@@ -1,5 +1,7 @@
 import asyncio
+import datetime
 import os
+from typing import Iterator
 
 import numpy as np
 import vecs
@@ -15,13 +17,61 @@ load_dotenv()
 
 client = Prisma()
 
+
+def overlapping_windows(s: str) -> Iterator[str]:
+    arr: list[str] = nltk.word_tokenize(s)
+    # Generate overlapping windows of size 512 of arr
+    for i in range(0, len(arr), 330):
+        yield ' '.join(arr[i:i + 380])
+
+
+def cosine_similarity(vector1, vector2):
+    dot_product = np.dot(vector1, vector2)
+    norm_vector1 = np.linalg.norm(vector1)
+    norm_vector2 = np.linalg.norm(vector2)
+    similarity = dot_product / (norm_vector1 * norm_vector2)
+    return similarity
+
+def compute_cosine_similarity_matrix(vectors):
+    num_vectors = vectors.shape[0]
+    similarity_matrix = np.zeros((num_vectors, num_vectors))
+
+    for i in range(num_vectors):
+        for j in range(num_vectors):
+            similarity_matrix[i, j] = cosine_similarity(vectors[i], vectors[j])
+
+    return similarity_matrix
 class Embedder:
     model: SentenceTransformer
+
     def __init__(self):
         self.model = SentenceTransformer('all-mpnet-base-v2')
 
     def embed(self, text: str) -> np.ndarray:
-        return self.model.encode(text)
+        windows = list(overlapping_windows(text))
+        return self.model.encode(windows)
+
+    def generate_vecs(self, document: Page) -> list[tuple[str, np.ndarray, dict]]:
+        """
+        Get embedding for both the document text + title
+
+        :param document:
+        :return:
+        """
+
+        model_input = document.title + " " + document.content
+        embeddings = self.embed(model_input)
+        to_append = []
+        for idx, e in enumerate(embeddings):
+            to_append.append(
+                (
+                    f"{document.url}-{idx}",
+                    e,
+                    {"url": document.url}
+                )
+            )
+        return to_append
+
 
 model = SentenceTransformer('all-mpnet-base-v2')
 vx = vecs.create_client(os.environ['DATABASE_URL'])
@@ -41,10 +91,10 @@ def generate_embedding_for_document(document: Page):
     :return:
     """
 
+    sentences = nltk.sent_tokenize(document.content)
     model_input = document.title + " " + document.content
     embedding = model.encode(model_input)
     return embedding
-
 
 
 def query_similar(doc_url: str):
@@ -63,25 +113,47 @@ def query_similar(doc_url: str):
 
 
 async def query_similar_test():
-    pages = await client.page.find_many(take = 100, where = {
+    pages = await client.page.find_many(take=100, where={
         'embeddings': {
             'isNot': None
         }
     })
-    print(pages)
 
     for p in pages:
         query_similar(p.url)
 
     return
 
+
 async def main():
-    cr = CrawlResult(
-        link=Link.from_url("https://taoofmac.com/space/blog/2023/08/20/1600"),
-        title="SUMMER MINIMALISM",
-        date="2021-01-04T10:00:00-05:00",
-        author="HENRY TESTING",
-        content="""
+    model = Embedder()
+    await client.connect()
+
+    # await query_similar_test()
+    # return
+
+    pages = await client.page.find_many(take=500, where={
+        'embeddings': {
+            'is': None
+        }
+    })
+
+    if len(pages) == 0:
+        print("ERR: No pages to process")
+        return
+    to_append = []
+    for p in pages:
+        data = model.generate_vecs(p)
+        to_append.extend(data)
+    embeddings.upsert(
+        records=to_append
+    )
+
+
+import nltk.tokenize
+
+if __name__ == "__main__":
+    text = """
 SUMMER MINIMALISM
 
 As the haziness of mid-summer starts to fade away, I am starting to worry a bit more about my interminable personal backlog and getting back to some unfinished projects. 
@@ -104,40 +176,7 @@ Good support for parallelism and concurrency, especially concerning networking.
 But since I am doing this for fun, I am again going off the beaten path. I grabbed a bunch of LISP and Scheme related stuff1, ran some of it through Sigil and sent the resulting EPUB files to my Kindle to read while on the beach (or, more euphemistically given the current climate, “the ultimate silicon grill”).
 
 I am tempted to use Janet and uLisp, but that might be a tad extreme so I’m focusing on Guile Scheme to begin with since it has been around forever. ↩︎
-        """,
-        outgoing_links=[]
-    )
-
-    await client.connect()
-
-    # await query_similar_test()
-    # return
-
-    pages = await client.page.find_many(take = 500, where = {
-        'embeddings': {
-            'is': None
-        }
-    })
-
-    if len(pages) == 0:
-        print("ERR: No pages to process")
-        return
-    to_append = []
-    for p in pages:
-        print(p.url)
-        embedding = generate_embedding_for_document(p)
-        to_append.append(
-                (
-                    p.url,
-                    embedding,
-                    {}
-                )
-        )
-    embeddings.upsert(
-        records=to_append
-    )
-
-
-if __name__ == "__main__":
-    print(model.encode(['this is a sentence', 'and this is another sentence']))
+        """
+    #
+    # print(model.encode(['this is a sentence', 'and this is another sentence']))
     asyncio.run(main())

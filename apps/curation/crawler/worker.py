@@ -5,7 +5,7 @@ from typing import Optional, TypeAlias, Tuple
 from prisma import Prisma
 from prisma.models import CrawlTask
 
-from aiohttp import ClientError, ClientSession
+from aiohttp import ClientError, ClientSession, ClientTimeout
 
 from . import filters
 from .link import Link
@@ -55,7 +55,7 @@ class Worker:
 
     async def run_sequential(self):
         """Get, crawl, and parse links from the queue one at a time"""
-        async with ClientSession() as session:
+        async with ClientSession(timeout=ClientTimeout(connect = 4)) as session:
             spoof_chrome_user_agent(session)
 
             while not self.done:
@@ -80,7 +80,8 @@ class Worker:
                     links_to_add = [
                         l for l in response.outgoing_links if l.depth < MAX_DEPTH
                     ]
-                    count = await self.prisma.add_tasks(self.prisma.db, links_to_add)
+                    async with self.prisma.db.tx() as tx:
+                        count = await self.prisma.add_tasks(tx, links_to_add)
                     print(f"PRISMA: Added {count} tasks to db")
 
             print("Worker exiting...")

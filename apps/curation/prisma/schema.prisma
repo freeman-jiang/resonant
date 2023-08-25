@@ -53,7 +53,7 @@ model CrawlTask {
 model embeddings {
   id       String                     @id @unique
   page     Page                       @relation(fields: [id], references: [url])
-  vec      Unsupported("vector(384)")
+  vec      Unsupported("vector(768)")
   metadata Json
 
   @@schema("vecs")
