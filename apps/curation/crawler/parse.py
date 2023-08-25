@@ -1,7 +1,7 @@
 import json
 
 import re
-from typing import Optional
+from typing import Optional, cast
 
 import newspaper
 import trafilatura
@@ -44,6 +44,7 @@ def parse_html_newspaper(html: str, link: Link) -> Optional[CrawlResult]:
     links = [link.create_child_link(element.text, element.get('href'))
              for element in link_elements]
     links = filter(lambda k: k is not None, links)
+    links = cast(list[Link], links)
 
     publish_date = article.publish_date.isoformat(
     ) if article.publish_date is not None else None
@@ -92,8 +93,9 @@ def extract_links_from_html(html: str, link: Link) -> list[Link]:
     # Extract href attribute and link text from each <a> tag
     links = [link.create_child_link(element.text, element.get('href'))
              for element in link_elements]
-    links = filter(lambda k: k is not None, links)
-    return list(links)
+    links = list(filter(lambda k: k is not None, links))
+    links = cast(list[Link], links)
+    return links
 
 
 def parse_html(html: str, link: Link) -> Optional[CrawlResult]:

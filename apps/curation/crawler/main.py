@@ -5,7 +5,6 @@ from prisma import Prisma
 from .prisma import PrismaClient
 
 from .link import Link
-from .root_urls import ROOT_URLS
 from .worker import LinkQueue, Worker
 
 DEFAULT_MAX_LINKS_TO_CRAWL = 20000
@@ -38,8 +37,8 @@ async def main():
     # Initialize the shared work queue
     shared_queue = LinkQueue()
     await initialize_queue(shared_queue)
-    done_queue = asyncio.Queue()
-    sentinel_queue = asyncio.Queue()
+    done_queue: asyncio.Queue[Link] = asyncio.Queue()
+    sentinel_queue: asyncio.Queue[Link] = asyncio.Queue()
 
     # Create a bunch of workers
     workers = [Worker(work_queue=shared_queue,
