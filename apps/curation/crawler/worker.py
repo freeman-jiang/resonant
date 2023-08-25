@@ -55,39 +55,27 @@ class Worker:
 
     async def run_sequential(self):
         """Get, crawl, and parse links from the queue one at a time"""
-        async with ClientSession(timeout=ClientTimeout(connect = 4)) as session:
+        async with ClientSession(timeout=ClientTimeout(connect=4)) as session:
             spoof_chrome_user_agent(session)
 
             while not self.done:
                 self.print_status()
 
-                async with self.prisma.db.tx(timeout=15000) as tx:
-                    task = await self.prisma.get_task(tx)
+                task = await self.prisma.get_task()
 
-                    if task is None:
-                        print("No more tasks in database")
-                        self.done = True
-                        break
+                if task is None:
+                    print("No more tasks in database")
+                    self.done = True
+                    break
 
-                    print(f"Working on task: {task.id}")
+                print(f"Working on task: {task.id}")
 
-                    response = await self.process_task(tx, task, session)
-
-                # End the transaction first, and then we insert
-                # Might lead to consistency issues if we terminate before inserting
-                if response:
-                    # Add outgoing links to queue
-                    links_to_add = [
-                        l for l in response.outgoing_links if l.depth < MAX_DEPTH
-                    ]
-                    async with self.prisma.db.tx() as tx:
-                        count = await self.prisma.add_tasks(tx, links_to_add)
-                    print(f"PRISMA: Added {count} tasks to db")
+                response = await self.process_task(task, session)
 
             print("Worker exiting...")
             return
 
-    async def process_task(self, tx: Prisma, task: CrawlTask, session: ClientSession) -> Optional[CrawlResult]:
+    async def process_task(self, task: CrawlTask, session: ClientSession) -> Optional[CrawlResult]:
         """Given `link`, this function crawls and attempts to parse it, then adds any outgoing links to `queue`. Returns the number of links added to `queue` if successful, or `None` if not."""
 
         link = Link(url=task.url, parent_url=task.parent_url,
@@ -98,20 +86,20 @@ class Worker:
             response = await self.crawl(link, session)
             if not response:
                 await self.done_queue.put(True)
-                page = await self.prisma.fail_page(tx, task)
+                page = await self.prisma.fail_page(task)
                 print(f"FAILED: Could not crawl {link.url}")
                 return None
 
             if filters.should_keep(response):
-                page = await self.prisma.store_page(tx, task, response)
+                page = await self.prisma.store_page(task, response)
                 print(f"SUCCESS: Crawled page: {page.url}")
             else:
                 print(f"WARN: Filtered out link: {link.url}")
-                page = await self.prisma.filter_page(tx, task)
+                page = await self.prisma.filter_page(task)
         except ClientError as e:
             print(
                 f"FAILED: Can't connect to `{link.url}`, error: `{e}`")
-            page = await self.prisma.fail_page(tx, task)
+            page = await self.prisma.fail_page(task)
             await self.done_queue.put(True)
 
             return None
