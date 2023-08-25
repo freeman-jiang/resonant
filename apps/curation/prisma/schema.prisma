@@ -22,7 +22,7 @@ model Page {
   created_at    DateTime    @default(now())
   updated_at    DateTime    @updatedAt
   outbound_urls String[]
-  embeddings    embeddings?
+  embeddings    Embeddings[]
 
   @@schema("public")
 }
@@ -50,11 +50,12 @@ model CrawlTask {
   @@schema("public")
 }
 
-model embeddings {
-  id       String                     @id @unique
-  page     Page                       @relation(fields: [id], references: [url])
+model Embeddings {
+  id__       Int                        @id @default(autoincrement())
+  url       String
+  index Int
+  page     Page                       @relation(fields: [url], references: [url])
   vec      Unsupported("vector(768)")
-  metadata Json
 
   @@schema("vecs")
 }

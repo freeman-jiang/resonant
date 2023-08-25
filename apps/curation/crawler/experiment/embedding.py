@@ -32,6 +32,7 @@ def cosine_similarity(vector1, vector2):
     similarity = dot_product / (norm_vector1 * norm_vector2)
     return similarity
 
+
 def compute_cosine_similarity_matrix(vectors):
     num_vectors = vectors.shape[0]
     similarity_matrix = np.zeros((num_vectors, num_vectors))
@@ -41,6 +42,8 @@ def compute_cosine_similarity_matrix(vectors):
             similarity_matrix[i, j] = cosine_similarity(vectors[i], vectors[j])
 
     return similarity_matrix
+
+
 class Embedder:
     model: SentenceTransformer
 
@@ -51,7 +54,7 @@ class Embedder:
         windows = list(overlapping_windows(text))
         return self.model.encode(windows)
 
-    def generate_vecs(self, document: Page) -> list[tuple[str, np.ndarray, dict]]:
+    def generate_vecs(self, document: Page) -> list[tuple[str, int, list]]:
         """
         Get embedding for both the document text + title
 
@@ -65,9 +68,9 @@ class Embedder:
         for idx, e in enumerate(embeddings):
             to_append.append(
                 (
-                    f"{document.url}-{idx}",
-                    e,
-                    {"url": document.url}
+                    document.url,
+                    idx,
+                    e.tolist(),
                 )
             )
         return to_append
@@ -76,7 +79,7 @@ class Embedder:
 model = SentenceTransformer('all-mpnet-base-v2')
 vx = vecs.create_client(os.environ['DATABASE_URL'])
 
-embeddings = vx.get_or_create_collection(name="embeddings", dimension=384)
+embeddings = vx.get_or_create_collection(name="Embeddings", dimension=768)
 
 
 def create_index():
@@ -132,9 +135,9 @@ async def main():
     # await query_similar_test()
     # return
 
-    pages = await client.page.find_many(take=500, where={
+    pages = await client.page.find_many(take=1, where={
         'embeddings': {
-            'is': None
+            'none': {}
         }
     })
 
@@ -145,9 +148,11 @@ async def main():
     for p in pages:
         data = model.generate_vecs(p)
         to_append.extend(data)
-    embeddings.upsert(
-        records=to_append
-    )
+
+    query = """INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES {}""".format(",".join(
+            ["('{}', '{}', '{}')".format(x[0], x[1], x[2]) for x in to_append]))
+    print(query)
+    await client.execute_raw(query)
 
 
 import nltk.tokenize
