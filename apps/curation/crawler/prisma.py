@@ -14,6 +14,16 @@ class PrismaClient:
         """Prisma Client assumes you have already awaited db.connect() before passing db in"""
         self.db = db
 
+    async def filter_page(self, tx: Prisma, task: CrawlTask):
+        await tx.crawltask.update(
+            where={
+                'id': task.id
+            },
+            data={
+                'status': TaskStatus.FILTERED
+            }
+        )
+
     async def store_page(self, tx: Prisma, task: CrawlTask, crawl_result: CrawlResult):
         try:
             page = await tx.page.create(data={

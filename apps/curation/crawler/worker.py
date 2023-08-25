@@ -98,6 +98,7 @@ class Worker:
                 print(f"SUCCESS: Crawled page: {page.url}")
             else:
                 print(f"WARN: Filtered out link: {link.url}")
+                page = await self.prisma.filter_page(tx, task)
         except ClientError as e:
             print(
                 f"FAILED: Can't connect to `{link.url}`, error: `{e}`")

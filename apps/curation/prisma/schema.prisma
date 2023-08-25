@@ -27,6 +27,7 @@ enum TaskStatus {
   PROCESSING
   COMPLETED
   FAILED
+  FILTERED
 }
 
 model CrawlTask {
