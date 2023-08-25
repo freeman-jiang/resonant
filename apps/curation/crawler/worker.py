@@ -1,4 +1,5 @@
 import asyncio
+import random
 from queue import Empty as QueueEmpty
 from asyncio import Queue, PriorityQueue
 from typing import Optional, TypeAlias, Tuple
@@ -55,6 +56,8 @@ class Worker:
 
     async def run_sequential(self):
         """Get, crawl, and parse links from the queue one at a time"""
+        # Prevents exhausting the queue and exiting all at once
+        await asyncio.sleep(random.uniform(0, 1) * 5)
         async with ClientSession(timeout=ClientTimeout(connect=4)) as session:
             spoof_chrome_user_agent(session)
 

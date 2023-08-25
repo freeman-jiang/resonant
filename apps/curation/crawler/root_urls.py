@@ -115,4 +115,8 @@ ROOT_URLS = [
         'title': 'Every Bay Area House Party'},
     {'url': 'http://yosefk.com/blog/people-can-read-their-managers-mind.html',
         'title': 'People can read their managers’ minds'},
+    {'url': 'https://worksinprogress.co/issue/the-story-of-vaccinateca',
+        'title': 'The Story of VaccinateCA'},
+    {'url': 'https://worksinprogress.co/issue/why-tech-cannot-escape-expensive-housing',
+        'title': 'Why Tech Cannot Escape Expensive Housing'},
 ]
