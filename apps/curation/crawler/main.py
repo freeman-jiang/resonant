@@ -13,7 +13,7 @@ NUM_DEBUG_WORKERS = 1
 
 
 async def initialize_queue(prisma: PrismaClient):
-    task = await prisma.db.task.find_first()
+    task = await prisma.db.crawltask.find_first()
     if task:
         # Tasks in queue. Good to go
         return

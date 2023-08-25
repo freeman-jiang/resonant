@@ -29,12 +29,13 @@ enum TaskStatus {
   FAILED
 }
 
-model Task {
+model CrawlTask {
   id         Int        @id @default(autoincrement())
-  priority   Float      @default(0)
-  message    String
   status     TaskStatus
-  payload    Json
+  url        String     @unique
+  depth      Int        @default(0)
+  text       String
+  parent_url String?
   created_at DateTime   @default(now())
   updated_at DateTime   @updatedAt
 }

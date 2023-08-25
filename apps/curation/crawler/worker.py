@@ -3,7 +3,7 @@ from queue import Empty as QueueEmpty
 from asyncio import Queue, PriorityQueue
 from typing import Optional, TypeAlias, Tuple
 from prisma import Prisma
-from prisma.models import Task
+from prisma.models import CrawlTask
 
 from aiohttp import ClientError, ClientSession
 
@@ -63,7 +63,7 @@ class Worker:
                 async with self.prisma.db.tx() as tx:
                     task = await self.prisma.get_task(tx)
 
-                    if task is None or task.payload is None:
+                    if task is None:
                         print("No more tasks in database")
                         self.done = True
                         break
@@ -79,10 +79,11 @@ class Worker:
             print("Worker exiting...")
             return
 
-    async def process_task(self, tx: Prisma, task: Task, session: ClientSession) -> Optional[int]:
+    async def process_task(self, tx: Prisma, task: CrawlTask, session: ClientSession) -> Optional[int]:
         """Given `link`, this function crawls and attempts to parse it, then adds any outgoing links to `queue`. Returns the number of links added to `queue` if successful, or `None` if not."""
 
-        link = Link.parse_obj(task.payload)
+        link = Link(url=task.url, parent_url=task.parent_url,
+                    depth=task.depth, text=task.text)
         print(
             f"Working on: {link.url} from parent: {link.parent_url} at depth: {link.depth}")
         try:
@@ -94,7 +95,7 @@ class Worker:
 
             if filters.should_keep(response):
                 page = await self.prisma.store_page(tx, task, response)
-                print(f"SUCCESS: Finished task. Added page to db: {page.url}")
+                print(f"SUCCESS: Crawled page: {page.url}")
             else:
                 print(f"WARN: Filtered out link: {link.url}")
         except ClientError as e:

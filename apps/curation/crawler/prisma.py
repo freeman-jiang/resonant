@@ -2,8 +2,8 @@ from prisma import Json, Prisma
 from .link import Link
 from .parse import CrawlResult
 from prisma.enums import TaskStatus
-from prisma.models import Task
-from prisma.types import TaskCreateWithoutRelationsInput
+from prisma.models import CrawlTask
+from prisma.types import CrawlTaskCreateWithoutRelationsInput
 from prisma.errors import UniqueViolationError
 
 
@@ -14,7 +14,7 @@ class PrismaClient:
         """Prisma Client assumes you have already awaited db.connect() before passing db in"""
         self.db = db
 
-    async def store_page(self, tx: Prisma, task: Task, crawl_result: CrawlResult):
+    async def store_page(self, tx: Prisma, task: CrawlTask, crawl_result: CrawlResult):
         try:
             page = await tx.page.create(data={
                 'url': crawl_result.link.url,
@@ -31,7 +31,7 @@ class PrismaClient:
             print(f"EXCEPTION! Page already exists: {crawl_result.link.url}")
             raise
 
-    async def get_task(self, tx: Prisma) -> Task | None:
+    async def get_task(self, tx: Prisma) -> CrawlTask | None:
         """Get the next link to crawl from the queue in the database"""
         # Order by lowest priority first
         # task = await tx.query_raw(
@@ -43,11 +43,11 @@ class PrismaClient:
         #     LIMIT 1;"""
         # )
         # See: https://github.com/prisma/prisma/issues/16361
-        return await tx.task.query_first(
+        return await tx.crawltask.query_first(
             """
-            SELECT * FROM "Task"
+            SELECT * FROM "CrawlTask"
             WHERE status::text = $1
-            ORDER BY id ASC
+            ORDER BY depth ASC, id ASC
             FOR UPDATE SKIP LOCKED
             LIMIT 1;
             """,
@@ -55,19 +55,22 @@ class PrismaClient:
         )
 
     async def add_tasks(self, links: list[Link]):
-        def create_task(link: Link) -> TaskCreateWithoutRelationsInput:
+        def create_task(link: Link) -> CrawlTaskCreateWithoutRelationsInput:
             return {
                 'status': TaskStatus.PENDING,
-                'message': 'crawl',
-                'priority': link.depth,
-                'payload': Json(link.json()),
+                'url': link.url,
+                'depth': link.depth,
+                'parent_url': link.parent_url,
+                'text': link.text,
             }
 
-        count = await self.db.task.create_many(data=[create_task(link) for link in links])
+        count = await self.db.crawltask.create_many(
+            data=[create_task(link) for link in links],
+            skip_duplicates=True)
         return count
 
-    async def finish_task(self, tx: Prisma, task: Task):
-        await tx.task.update(
+    async def finish_task(self, tx: Prisma, task: CrawlTask):
+        await tx.crawltask.update(
             data={
                 'status': TaskStatus.COMPLETED,
             },
