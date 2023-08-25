@@ -21,6 +21,8 @@ validators = "^0.21.2"
 beautifulsoup4 = "^4.12.2"
 load-dotenv = "^0.1.0"
 prisma = "^0.9.1"
+sentence-transformers = "^2.2.2"
+vecs = "^0.3.0"
 
 
 [build-system]

@@ -2,24 +2,29 @@ generator client {
   provider             = "prisma-client-py"
   interface            = "asyncio"
   recursive_type_depth = "5"
+  previewFeatures      = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["public", "vecs"]
 }
 
 model Page {
-  id            Int      @id @default(autoincrement())
-  url           String   @unique
+  id            Int         @id @default(autoincrement())
+  url           String      @unique
   parent_url    String?
   title         String?
   date          String?
   author        String?
   content       String
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
   outbound_urls String[]
+  embeddings    embeddings?
+
+  @@schema("public")
 }
 
 enum TaskStatus {
@@ -28,6 +33,8 @@ enum TaskStatus {
   COMPLETED
   FAILED
   FILTERED
+
+  @@schema("public")
 }
 
 model CrawlTask {
@@ -39,4 +46,15 @@ model CrawlTask {
   parent_url String?
   created_at DateTime   @default(now())
   updated_at DateTime   @updatedAt
+
+  @@schema("public")
+}
+
+model embeddings {
+  id       String                     @id @unique
+  page     Page                       @relation(fields: [id], references: [url])
+  vec      Unsupported("vector(384)")
+  metadata Json
+
+  @@schema("vecs")
 }

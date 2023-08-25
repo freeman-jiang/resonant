@@ -24,7 +24,8 @@ class Worker:
     should_debug: bool
     prisma: PrismaClient
 
-    def __init__(self, *, max_links: int, done_queue: Queue, sentinel_queue: Queue, should_debug: bool = False, prisma: PrismaClient):
+    def __init__(self, *, max_links: int, done_queue: Queue, sentinel_queue: Queue, should_debug: bool = False,
+                 prisma: PrismaClient):
         self.done_queue = done_queue
         self.max_links = max_links
         self.done = False
@@ -60,7 +61,7 @@ class Worker:
             while not self.done:
                 self.print_status()
 
-                async with self.prisma.db.tx(timeout = 10000) as tx:
+                async with self.prisma.db.tx(timeout=15000) as tx:
                     task = await self.prisma.get_task(tx)
 
                     if task is None:
@@ -96,6 +97,7 @@ class Worker:
             response = await self.crawl(link, session)
             if not response:
                 await self.done_queue.put(True)
+                page = await self.prisma.fail_page(tx, task)
                 print(f"FAILED: Could not crawl {link.url}")
                 return None
 
@@ -120,7 +122,6 @@ class Worker:
             return None
 
         return response
-
 
     async def crawl(self, link: Link, session: ClientSession) -> Optional[CrawlResult]:
         """Crawl and parse the given `link`, returning a `CrawlResult` if successful, or `None` if not"""
