@@ -1,3 +1,5 @@
+import random
+
 from prisma import Json, Prisma
 from .link import Link
 from .parse import CrawlResult
@@ -83,9 +85,12 @@ class PrismaClient:
                 'text': link.text,
             }
 
+        id = random.randint(0, 1000)
+        print(id, "Creating...", links)
         count = await tx.crawltask.create_many(
             data=[create_task(link) for link in links],
             skip_duplicates=True)
+        print(id, "Done creating links!")
         return count
 
     async def finish_task(self, tx: Prisma, task: CrawlTask):

@@ -60,7 +60,7 @@ class Worker:
             while not self.done:
                 self.print_status()
 
-                async with self.prisma.db.tx() as tx:
+                async with self.prisma.db.tx(timeout = 10000) as tx:
                     task = await self.prisma.get_task(tx)
 
                     if task is None:
@@ -70,16 +70,22 @@ class Worker:
 
                     print(f"Working on task: {task.id}")
 
-                    await self.process_task(tx, task, session)
-                    print()
+                    response = await self.process_task(tx, task, session)
 
-                if self.should_debug:
-                    await asyncio.sleep(5)
+                # End the transaction first, and then we insert
+                # Might lead to consistency issues if we terminate before inserting
+                if response:
+                    # Add outgoing links to queue
+                    links_to_add = [
+                        l for l in response.outgoing_links if l.depth < MAX_DEPTH
+                    ]
+                    count = await self.prisma.add_tasks(self.prisma.db, links_to_add)
+                    print(f"PRISMA: Added {count} tasks to db")
 
             print("Worker exiting...")
             return
 
-    async def process_task(self, tx: Prisma, task: CrawlTask, session: ClientSession) -> Optional[int]:
+    async def process_task(self, tx: Prisma, task: CrawlTask, session: ClientSession) -> Optional[CrawlResult]:
         """Given `link`, this function crawls and attempts to parse it, then adds any outgoing links to `queue`. Returns the number of links added to `queue` if successful, or `None` if not."""
 
         link = Link(url=task.url, parent_url=task.parent_url,
@@ -106,7 +112,6 @@ class Worker:
             await self.done_queue.put(True)
 
             return None
-
         await self.done_queue.put(True)
         if self.done_queue.qsize() >= self.max_links:
             print(f"TARGET LINKS REACHED: {self.max_links}")
@@ -114,12 +119,8 @@ class Worker:
             await self.sentinel_queue.put(True)
             return None
 
-        # Add outgoing links to queue
-        links_to_add = [
-            l for l in response.outgoing_links if l.depth < MAX_DEPTH
-        ]
-        count = await self.prisma.add_tasks(tx, links_to_add)
-        print(f"PRISMA: Added {count} tasks to db")
+        return response
+
 
     async def crawl(self, link: Link, session: ClientSession) -> Optional[CrawlResult]:
         """Crawl and parse the given `link`, returning a `CrawlResult` if successful, or `None` if not"""
