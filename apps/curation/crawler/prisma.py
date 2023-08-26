@@ -35,6 +35,13 @@ class PrismaClient:
                 'status': TaskStatus.FAILED
             })
 
+    async def add_outgoing_links(self, result: CrawlResult):
+        # Add outgoing links to queue
+        # TODO: Replace with constant
+        links_to_add = [l for l in result.outgoing_links if l.depth < 8]
+        count = await self.add_tasks(links_to_add)
+        print(f"PRISMA: Added {count} tasks to db")
+
     async def store_page(self, task: CrawlTask, crawl_result: CrawlResult):
         try:
             async with self.db.tx() as tx:
@@ -48,14 +55,9 @@ class PrismaClient:
                     'outbound_urls': [link.url for link in crawl_result.outgoing_links]
                 })
                 await self.finish_task(tx, task)
-                # Add outgoing links to queue
-                # TODO: Replace with constant
-                links_to_add = [
-                    l for l in crawl_result.outgoing_links if l.depth < 8
-                ]
-                count = await self.add_tasks(tx, links_to_add)
-                print(f"PRISMA: Added {count} tasks to db")
-                return page
+
+            await self.add_outgoing_links(crawl_result)
+            return page
         except UniqueViolationError:
             print(f"EXCEPTION! Page already exists: {crawl_result.link.url}")
             raise
@@ -71,6 +73,7 @@ class PrismaClient:
                 SELECT * FROM "CrawlTask"
                 WHERE status::text = $1
                 ORDER BY depth ASC, id ASC
+                LIMIT 1
                 FOR UPDATE SKIP LOCKED
                 """,
                 TaskStatus.PENDING
@@ -90,7 +93,7 @@ class PrismaClient:
 
             return in_progress_task
 
-    async def add_tasks(self, tx: Prisma, links: list[Link]):
+    async def add_tasks(self, links: list[Link]):
         # await self.db.execute_raw("LOCK TABLE \"CrawlTask\";")
 
         def create_task(link: Link) -> CrawlTaskCreateWithoutRelationsInput:
@@ -102,7 +105,7 @@ class PrismaClient:
                 'text': link.text,
             }
 
-        count = await tx.crawltask.create_many(
+        count = await self.db.crawltask.create_many(
             data=[create_task(link) for link in links],
             skip_duplicates=True)
         return count
