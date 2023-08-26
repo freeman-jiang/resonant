@@ -2,14 +2,12 @@ import argparse
 import asyncio
 import time
 from prisma import Prisma
+
+from .config import Config
 from .prisma import PrismaClient
 
 from .link import Link
 from .worker import Worker
-
-DEFAULT_MAX_LINKS_TO_CRAWL = 20000
-NUM_WORKERS = 12
-NUM_DEBUG_WORKERS = 1
 
 
 async def initialize_queue(prisma: PrismaClient):
@@ -26,13 +24,7 @@ async def initialize_queue(prisma: PrismaClient):
 
 async def main():
     start_time = time.time()
-    parser = argparse.ArgumentParser(prog="python3 -m crawler.main")
-    parser.add_argument("--max_links", type=int,
-                        help="The maximum number of links to crawl", default=DEFAULT_MAX_LINKS_TO_CRAWL)
-    parser.add_argument("--debug", action="store_true",
-                        help="Runs the crawler with a single worker, slowly", default=False)
-    max_links = parser.parse_args().max_links
-    should_debug = parser.parse_args().debug
+    config = Config()
 
     # Initialize Prisma
     db = Prisma()
@@ -46,12 +38,11 @@ async def main():
 
     # Create a bunch of workers
     workers = [Worker(
-        max_links=max_links,
+        config=config,
         done_queue=done_queue,
         sentinel_queue=sentinel_queue,
-        should_debug=should_debug,
         prisma=prisma_client)
-        for _ in range(NUM_DEBUG_WORKERS if should_debug else NUM_WORKERS)]
+        for _ in range(config.num_workers)]
 
     # Start the workers
     tasks = [asyncio.create_task(worker.run()) for worker in workers]

@@ -9,7 +9,6 @@ DEFAULT_MAX_QUEUE_SIZE = 500  # maximum number of tasks to keep in the queue at 
 class Config():
     max_links: int
     num_workers: int
-    num_debug_workers: int
     max_queue_size: int
     should_debug = True
 
@@ -24,5 +23,5 @@ class Config():
 
         self.max_links = max_links
         self.num_workers = DEFAULT_DEBUG_WORKERS if should_debug else DEFAULT_WORKERS
-        self.should_debug = should_debug
         self.max_queue_size = DEFAULT_MAX_QUEUE_SIZE
+        self.should_debug = should_debug
