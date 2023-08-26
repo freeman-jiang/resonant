@@ -22,6 +22,9 @@ SUPPRESSED_DOMAINS = {
     'qualiacomputing.com'
 }
 
+UNSUPPORTED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.ppt', '.pptx',
+                          '.xls', '.xlsx', '.zip', '.rar', '.7z', '.gz', '.png', '.jpg', '.jpeg', }
+
 
 def is_valid_url(url: str) -> bool:
     try:
@@ -89,7 +92,7 @@ class Link(BaseModel):
 
     def _create_child_link_inner(self, text: str, url: str):
         # TODO: Add support for .pdf files
-        if url.endswith(".pdf"):
+        if any(url.endswith(ext) for ext in UNSUPPORTED_EXTENSIONS):
             return None
 
         if is_valid_url(url):
