@@ -1,7 +1,7 @@
 import argparse
 
 DEFAULT_MAX_LINKS_TO_CRAWL = 20000
-DEFAULT_WORKERS = 2
+DEFAULT_WORKERS = 10
 DEFAULT_DEBUG_WORKERS = 1
 DEFAULT_MAX_QUEUE_SIZE = 500  # maximum number of tasks to keep in the queue at once
 

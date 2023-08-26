@@ -6,7 +6,7 @@ from .parse import CrawlResult
 from prisma.enums import TaskStatus
 from prisma.models import CrawlTask
 from prisma.types import CrawlTaskCreateWithoutRelationsInput
-from prisma.errors import UniqueViolationError
+from prisma.errors import UniqueViolationError, TransactionExpiredError
 
 
 class PrismaClient:
@@ -68,20 +68,22 @@ class PrismaClient:
         # Use a transaction to block other workers from getting the same task
         async with self.db.tx() as tx:
             # See: https://github.com/prisma/prisma/issues/16361
-            task = await tx.crawltask.query_first(
+            tasks = await tx.query_raw(
                 """
-                SELECT * FROM "CrawlTask"
-                WHERE status::text = $1
-                ORDER BY depth ASC, id ASC
-                LIMIT 1
-                FOR UPDATE SKIP LOCKED
-                """,
-                TaskStatus.PENDING
+                    SELECT * FROM "CrawlTask"
+                    WHERE status::text = $1
+                    ORDER BY depth ASC, id ASC
+                    LIMIT 1
+                    FOR UPDATE SKIP LOCKED
+                    """,
+                TaskStatus.PENDING,
+                model=CrawlTask
             )
 
-            if task is None:
+            if tasks is None:
                 return None
 
+            task = tasks[0]
             in_progress_task = await tx.crawltask.update(
                 data={
                     'status': TaskStatus.PROCESSING

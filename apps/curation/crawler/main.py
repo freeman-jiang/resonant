@@ -18,8 +18,7 @@ async def initialize_queue(prisma: PrismaClient):
 
     # No tasks in queue. Add the root URL
     root = Link.from_url('https://hypertext.joodaloop.com/')
-    async with prisma.db.tx() as tx:
-        await prisma.add_tasks(tx, [root])
+    await prisma.add_tasks([root])
 
 
 async def main():
