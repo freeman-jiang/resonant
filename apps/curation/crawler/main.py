@@ -51,7 +51,7 @@ async def main():
     queue_done = asyncio.create_task(sentinel_queue.get())
 
     # allow the first exception to bubble up
-    workers_done = asyncio.gather(*tasks, return_exceptions=True)
+    workers_done = asyncio.gather(*tasks)
 
     # Wait for either the queue to be done or the workers to be done
     await asyncio.wait([queue_done, workers_done], return_when=asyncio.FIRST_COMPLETED)

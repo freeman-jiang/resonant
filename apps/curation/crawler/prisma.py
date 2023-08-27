@@ -96,8 +96,8 @@ class PrismaClient:
 
                 return in_progress_task
         except TransactionExpiredError as e:
+            # We don't re-raise because this exception can be caused by spotty internet
             print(f"EXCEPTION! Transaction expired getting task: {e}")
-            raise
 
     async def add_tasks(self, links: list[Link]):
         # await self.db.execute_raw("LOCK TABLE \"CrawlTask\";")
