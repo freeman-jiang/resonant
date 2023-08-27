@@ -83,7 +83,7 @@ class PrismaClient:
                     model=CrawlTask
                 )
 
-                if tasks is None:
+                if not tasks:
                     return None
 
                 task = tasks[0]
