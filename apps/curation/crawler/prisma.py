@@ -47,17 +47,18 @@ class PrismaClient:
 
     async def store_page(self, task: CrawlTask, crawl_result: CrawlResult):
         try:
-            async with self.db.tx() as tx:
-                page = await tx.page.create(data={
-                    'url': crawl_result.link.url,
-                    'parent_url': crawl_result.link.parent_url,
-                    'title': crawl_result.title,
-                    'date': crawl_result.date,
-                    'author': crawl_result.author,
-                    'content': crawl_result.content,
-                    'outbound_urls': [link.url for link in crawl_result.outgoing_links]
-                })
-                await self.finish_task(tx, task)
+            await self.db.query_raw("BEGIN;")
+            page = await self.db.page.create(data={
+                'url': crawl_result.link.url,
+                'parent_url': crawl_result.link.parent_url,
+                'title': crawl_result.title,
+                'date': crawl_result.date,
+                'author': crawl_result.author,
+                'content': crawl_result.content,
+                'outbound_urls': [link.url for link in crawl_result.outgoing_links]
+            })
+            await self.finish_task(task)
+            await self.db.query_raw("COMMIT;")
 
             await self.add_outgoing_links(crawl_result)
             return page
@@ -109,8 +110,8 @@ class PrismaClient:
             skip_duplicates=True)
         return count
 
-    async def finish_task(self, tx: Prisma, task: CrawlTask):
-        await tx.crawltask.update(
+    async def finish_task(self, task: CrawlTask):
+        await self.db.crawltask.update(
             data={
                 'status': TaskStatus.COMPLETED,
             },
