@@ -24,6 +24,7 @@ async def initialize_queue(prisma: PrismaClient):
 async def main():
     start_time = time.time()
     config = Config()
+    print(f"Starting with {config.num_workers} workers")
 
     # Initialize Prisma
     db = Prisma()
