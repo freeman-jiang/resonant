@@ -8,3 +8,6 @@ dump.json
 
 # Experimentation
 sandbox.py
+
+# Scripts
+ROOT_URLS.txt
