@@ -116,10 +116,15 @@ class Link(BaseModel):
             return Link(text=text, url=url, parent_url=self.url, depth=self.depth + 1)
 
     def create_child_link(self, text: str, url: str) -> Optional[Self]:
+
         if url is None:
             return None
         if text is None:
             text = ""
+        # Disallow links that are too long. This breaks the PostgreSQL index on the url column
+        if len(url) > 2000:
+            print(f"Link too long: {url}")
+            return None
         try:
             link = self._create_child_link_inner(text, url)
         except ValueError:
