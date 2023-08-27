@@ -40,7 +40,8 @@ class PrismaClient:
     async def add_outgoing_links(self, result: CrawlResult):
         # Add outgoing links to queue
         # TODO: Replace with constant
-        links_to_add = [l for l in result.outgoing_links if l.depth < 8]
+        links_to_add = [
+            l for l in result.outgoing_links if l.depth <= self.cfg.max_crawl_depth]
         count = await self.add_tasks(links_to_add)
         print(f"PRISMA: Added {count} tasks to db")
 

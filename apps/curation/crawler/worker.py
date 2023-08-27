@@ -15,8 +15,6 @@ from .link import Link
 from .parse import CrawlResult, parse_html
 from .prisma import PrismaClient
 
-MAX_DEPTH = 8
-
 
 class Worker:
     config: Config
