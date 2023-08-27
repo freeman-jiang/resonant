@@ -33,7 +33,7 @@ def is_valid_url(url: str) -> bool:
         return False
 
 
-def clean_url(url):
+def clean_url(url: str):
     """Removes hashtags and query parameters from a URL"""
     parsed_url = urlparse(url)
 
@@ -69,6 +69,7 @@ class Link(BaseModel):
 
     @classmethod
     def from_url(cls, url: str):
+        url = clean_url(url)
         return Link(text="", url=url, parent_url=None, depth=0)
 
     @validator('url')
