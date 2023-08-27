@@ -66,34 +66,38 @@ class PrismaClient:
         """Get the next link to crawl from the queue in the database"""
 
         # Use a transaction to block other workers from getting the same task
-        async with self.db.tx() as tx:
-            # See: https://github.com/prisma/prisma/issues/16361
-            tasks = await tx.query_raw(
-                """
-                    SELECT * FROM "CrawlTask"
-                    WHERE status::text = $1
-                    ORDER BY depth ASC, id ASC
-                    LIMIT 1
-                    FOR UPDATE SKIP LOCKED
-                    """,
-                TaskStatus.PENDING,
-                model=CrawlTask
-            )
+        try:
+            async with self.db.tx() as tx:
+                # See: https://github.com/prisma/prisma/issues/16361
+                tasks = await tx.query_raw(
+                    """
+                        SELECT * FROM "CrawlTask"
+                        WHERE status::text = $1
+                        ORDER BY depth ASC, id ASC
+                        LIMIT 1
+                        FOR UPDATE SKIP LOCKED
+                        """,
+                    TaskStatus.PENDING,
+                    model=CrawlTask
+                )
 
-            if tasks is None:
-                return None
+                if tasks is None:
+                    return None
 
-            task = tasks[0]
-            in_progress_task = await tx.crawltask.update(
-                data={
-                    'status': TaskStatus.PROCESSING
-                },
-                where={
-                    'id': task.id
-                }
-            )
+                task = tasks[0]
+                in_progress_task = await tx.crawltask.update(
+                    data={
+                        'status': TaskStatus.PROCESSING
+                    },
+                    where={
+                        'id': task.id
+                    }
+                )
 
-            return in_progress_task
+                return in_progress_task
+        except TransactionExpiredError as e:
+            print(f"EXCEPTION! Transaction expired getting task: {e}")
+            raise
 
     async def add_tasks(self, links: list[Link]):
         # await self.db.execute_raw("LOCK TABLE \"CrawlTask\";")
