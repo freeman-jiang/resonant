@@ -1,6 +1,6 @@
-import random
-
 from prisma import Json, Prisma
+
+from crawler.config import Config
 from .link import Link
 from .parse import CrawlResult
 from prisma.enums import TaskStatus
@@ -11,10 +11,12 @@ from prisma.errors import UniqueViolationError, TransactionExpiredError
 
 class PrismaClient:
     db: Prisma
+    cfg: Config
 
-    def __init__(self, db: Prisma):
+    def __init__(self, cfg: Config, db: Prisma):
         """Prisma Client assumes you have already awaited db.connect() before passing db in"""
         self.db = db
+        self.cfg = cfg
 
     async def filter_page(self, task: CrawlTask):
         await self.db.crawltask.update(
