@@ -27,8 +27,8 @@ db = psycopg.connect(os.environ['DATABASE_URL'])
 def overlapping_windows(s: str) -> Iterator[str]:
     arr: list[str] = nltk.word_tokenize(s)
     # Generate overlapping windows of size 512 of arr
-    for i in range(0, len(arr), 330):
-        yield ' '.join(arr[i:i + 380])
+    for i in range(0, len(arr), 350):
+        yield ' '.join(arr[i:i + 370])
 
 
 def cosine_similarity(vector1, vector2):
@@ -58,6 +58,10 @@ class Embedder:
 
     def embed(self, text: str) -> np.ndarray:
         windows = list(overlapping_windows(text))
+
+        if len(windows) > 14:
+            # Get first 7 and last 7 of windows
+            windows = windows[0:7] + windows[-7:]
         return self.model.encode(windows)
 
     def generate_vecs(self, document: Page) -> list[tuple[str, int, list]]:
@@ -100,7 +104,6 @@ def generate_embedding_for_document(document: Page):
     :return:
     """
 
-    sentences = nltk.sent_tokenize(document.content)
     model_input = document.title + " " + document.content
     embedding = model.encode(model_input)
     return embedding
@@ -158,14 +161,14 @@ async def lda_test():
 async def main():
     model = Embedder()
     await client.connect()
-    await lda_test()
+    # await lda_test()
     # await query_similar("https://www.evanmiller.org/dont-kill-math.html")
     # return
     # await query_similar_test()
     # return
 
     while True:
-        pages = await client.page.find_many(take=50, where={
+        pages = await client.page.find_many(take=40, where={
             'embeddings': {
                 'none': {}
             }
@@ -175,14 +178,16 @@ async def main():
             print("ERR: No pages to process")
             return
         to_append = []
+        print("Calculating embeddings for {} pages".format(len(pages)))
         for p in pages:
             data = model.generate_vecs(p)
             to_append.extend(data)
 
+
         query = """INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES {}""".format(",".join(
                 ["('{}', '{}', '{}')".format(x[0], x[1], x[2]) for x in to_append]))
-        print(query)
         await client.execute_raw(query)
+
 
 
 import nltk.tokenize
