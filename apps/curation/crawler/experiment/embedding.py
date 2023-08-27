@@ -1,4 +1,6 @@
 import asyncio
+from functools import cached_property
+
 from psycopg.rows import class_row
 import datetime
 import os
@@ -9,6 +11,7 @@ import psycopg
 import vecs
 from sentence_transformers import SentenceTransformer
 
+from crawler.experiment.lda import cluster_documents_with_lda, cluster_documents_with_bertopic
 from crawler.link import Link
 from crawler.parse import CrawlResult
 from dotenv import load_dotenv
@@ -137,9 +140,25 @@ async def query_similar_test():
     return
 
 
+class PageWithVec(models.Page):
+    vec: str
+
+    # def npvec(self):
+    #     Convert vec into
+
+async def lda_test():
+    # cursor = db.cursor(row_factory=class_row(PageWithVec))
+    # pages = cursor.execute("""SELECT * FROM "Page" INNER JOIN "vecs"."Embeddings" ON "Page".url = "vecs"."Embeddings".url LIMIT 100""").fetchall()
+
+    pages = await client.page.find_many(take=950)
+
+    print(cluster_documents_with_bertopic(pages))
+
+    return
 async def main():
     model = Embedder()
     await client.connect()
+    await lda_test()
     # await query_similar("https://www.evanmiller.org/dont-kill-math.html")
     # return
     # await query_similar_test()
