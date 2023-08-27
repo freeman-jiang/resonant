@@ -8,31 +8,26 @@ from prisma.models import CrawlTask
 
 from aiohttp import ClientError, ClientSession, ClientTimeout
 
+from crawler.config import Config
+
 from . import filters
 from .link import Link
 from .parse import CrawlResult, parse_html
 from .prisma import PrismaClient
 
-MAX_DEPTH = 8
-
 
 class Worker:
+    config: Config
     done_queue: Queue
-    max_links: int
     done: bool
-    links_processed: int
     sentinel_queue: Queue
-    should_debug: bool
     prisma: PrismaClient
 
-    def __init__(self, *, max_links: int, done_queue: Queue, sentinel_queue: Queue, should_debug: bool = False,
-                 prisma: PrismaClient):
+    def __init__(self, *, config: Config, done_queue: Queue, sentinel_queue: Queue, prisma: PrismaClient):
+        self.config = config
         self.done_queue = done_queue
-        self.max_links = max_links
         self.done = False
-        self.links_processed = 0
         self.sentinel_queue = sentinel_queue
-        self.should_debug = should_debug
         self.prisma = prisma
 
     async def run(self):
@@ -107,8 +102,8 @@ class Worker:
 
             return None
         await self.done_queue.put(True)
-        if self.done_queue.qsize() >= self.max_links:
-            print(f"TARGET LINKS REACHED: {self.max_links}")
+        if self.done_queue.qsize() >= self.config.max_links:
+            print(f"TARGET LINKS REACHED: {self.config.max_links}")
             self.done = True
             await self.sentinel_queue.put(True)
             return None

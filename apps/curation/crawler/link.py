@@ -22,6 +22,9 @@ SUPPRESSED_DOMAINS = {
     'qualiacomputing.com'
 }
 
+UNSUPPORTED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.ppt', '.pptx',
+                          '.xls', '.xlsx', '.zip', '.rar', '.7z', '.gz', '.png', '.jpg', '.jpeg', }
+
 
 def is_valid_url(url: str) -> bool:
     try:
@@ -89,7 +92,7 @@ class Link(BaseModel):
 
     def _create_child_link_inner(self, text: str, url: str):
         # TODO: Add support for .pdf files
-        if url.endswith(".pdf"):
+        if any(url.endswith(ext) for ext in UNSUPPORTED_EXTENSIONS):
             return None
 
         if is_valid_url(url):
@@ -113,10 +116,15 @@ class Link(BaseModel):
             return Link(text=text, url=url, parent_url=self.url, depth=self.depth + 1)
 
     def create_child_link(self, text: str, url: str) -> Optional[Self]:
+
         if url is None:
             return None
         if text is None:
             text = ""
+        # Disallow links that are too long. This breaks the PostgreSQL index on the url column
+        if len(url) > 2000:
+            print(f"Link too long: {url}")
+            return None
         try:
             link = self._create_child_link_inner(text, url)
         except ValueError:
