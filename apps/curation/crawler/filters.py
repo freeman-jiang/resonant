@@ -1,34 +1,71 @@
-import requests
-from nltk import sent_tokenize, word_tokenize
+import re
+from typing import Tuple, List
+
+import pytest
+from nltk import sent_tokenize, word_tokenize, LineTokenizer
+from prisma import Prisma
 
 from crawler.link import Link
-from crawler.parse import CrawlResult, parse_html
+from crawler.parse import CrawlResult
+
+
+def is_comment_page(crawl: CrawlResult) -> bool:
+    regex = r'.*\/comments?(\/|\Z)'
+    return bool(re.match(regex, crawl.link.url))
+
+
+def tokenize_by_line(text: str) -> Tuple[List[str], List[int]]:
+    line_tokenizer = LineTokenizer(blanklines='discard')
+    tokenized_lines = line_tokenizer.tokenize(text)
+    tokenized_lines = [word_tokenize(line) for line in tokenized_lines]
+    line_lengths = [len(line) for line in
+                    tokenized_lines]  # Calculate line lengths for calculations *without* filtering out short lines
+
+    tokenized_lines = [line for line in tokenized_lines if len(line) >= 8]  # Remove too short lines
+    flattened_tokens = [token for tokens in tokenized_lines for token in tokens]  # Flatten tokens
+
+    return flattened_tokens, line_lengths
+
+
+def filter_by_line_length(lengths: List[int]) -> bool:
+    # We must have a `PERCENT_GREATER` percent of lines with word count >= `THRESHOLD`
+    THRESHOLD = 8
+    PERCENT_GREATER = 0.75
+
+    # Or we can have lots of long, high quality lines that contribute to >= 65% of the word count
+
+    # Define a high quality line as one with >= 80 words
+    long_lines = sum(length for length in lengths if length >= 80)
+
+    if long_lines / len(lengths) >= 0.65:
+        return False
+
+    return not (sum(int(length >= THRESHOLD) for length in lengths) / len(lengths) >= PERCENT_GREATER)
 
 
 def should_keep(crawl: CrawlResult) -> bool:
+    if is_comment_page(crawl):
+        return False
+
+    words, line_lengths = tokenize_by_line(crawl.content)
+
+    if filter_by_line_length(line_lengths):
+        return False
+
     sentences = sent_tokenize(crawl.content)
-    words = word_tokenize(crawl.content)
     avg_sent_len = len(words) / len(sentences)
     avg_word_len = sum(len(word) for word in words) / len(words)
 
-    # TODO: include the variance of sentence lengths too as bad websites have tons of short / tons of long sentences due
-    # to ads, bad formatting.
-    # Articles have a meaningful sentence length distribution
-    return len(sentences) >= 8 and len(words) >= 150 and avg_word_len > 3 and avg_sent_len >= 8 and avg_sent_len <= 50
+    return len(sentences) >= 15 and len(words) >= 300 and avg_word_len > 3 and avg_sent_len >= 8 and avg_sent_len <= 50
 
 
-def test_1():
-    link = Link.from_url("http://www.paulgraham.com/pypar.html")
-
-    response = requests.get(link.url)
-    text = parse_html(response.content.decode('utf-8', errors='ignore'), link)
-    should_keep(text)
-    text = text.content
-    print(text)
-
-    sentences = sent_tokenize(text)
-    words = word_tokenize(text)
-
-    avg_word_len = sum(len(word) for word in words) / len(words)
-
-    # [print(len(x)) for x in sentences]
+@pytest.mark.asyncio
+async def test_1():
+    client = Prisma()
+    await client.connect()
+    pages = await client.page.find_many(take=2500)
+    for page in pages:
+        crawl = CrawlResult(link=Link.from_url(page.url), content=page.content, outgoing_links=[])
+        if not should_keep(crawl):
+            print("Will filter out", page.url)
+            pass

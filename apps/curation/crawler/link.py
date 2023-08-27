@@ -18,6 +18,8 @@ SUPPRESSED_DOMAINS = {
     'bloomberg.com', 'forbes.com', 'bbc.com', 'economist.com', 'ft.com', 'vimeo.com', 'youtube.com',
     'pittsburghlive.com', 'linkedin.com', 'soundcloud.com', 'albawa.com',
     'prnewswire.com', 'web.archive.org', 'stackexchange.com', 'doi.org', 'mail-archive.com', 'ncbi.nlm.nih.gov', 'vice.com',
+    'goodreads.com',
+    '.gov',
 
     'qualiacomputing.com'
 }
