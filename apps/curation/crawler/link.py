@@ -17,11 +17,28 @@ SUPPRESSED_DOMAINS = {
     'sciencemuseum.org.uk',
     'bloomberg.com', 'forbes.com', 'bbc.com', 'economist.com', 'ft.com', 'vimeo.com', 'youtube.com',
     'pittsburghlive.com', 'linkedin.com', 'soundcloud.com', 'albawa.com',
-    'prnewswire.com', 'web.archive.org', 'stackexchange.com', 'doi.org', 'mail-archive.com', 'ncbi.nlm.nih.gov', 'vice.com',
+    'prnewswire.com', 'archive.org', 'stackexchange.com', 'doi.org', 'mail-archive.com', 'ncbi.nlm.nih.gov',
+    'vice.com',
+    'biorxiv.org',
+    'psychologytoday.com',
+
+    'unsongbook.com'
     'goodreads.com',
     '.gov',
+    'cdc.gov',
+    'technologyreview.com',
+'businessinsider.com',
+'investopedia.com',
+    'qualiacomputing.com',
+'smithsonianmag.com',
+'sciencedaily.com',
+'plus.google.com',
+'genomebiology.biomedcentral.com',
+'openid.net',
+'developer.apple.com',
+'cnbc.com',
+'brookings.edu',
 
-    'qualiacomputing.com'
 }
 
 UNSUPPORTED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.ppt', '.pptx',
@@ -146,3 +163,9 @@ class Link(BaseModel):
                 return None
 
         return link
+
+    def __hash__(self):
+        return (self.text,
+                self.url,
+                self.parent_url,
+                self.depth).__hash__()

@@ -83,7 +83,10 @@ class Worker:
         print(
             f"Working on: {link.url} from parent: {link.parent_url} at depth: {link.depth}")
         try:
-            response = await self.crawl(link, session)
+            response, rss_links = await self.crawl(link, session)
+
+            await self.prisma.add_outgoing_links(rss_links)
+
             if not response:
                 await self.done_queue.put(True)
                 page = await self.prisma.fail_page(task)
@@ -112,13 +115,16 @@ class Worker:
 
         return response
 
-    async def crawl(self, link: Link, session: ClientSession) -> Optional[CrawlResult]:
+    async def crawl(self, link: Link, session: ClientSession) -> Tuple[Optional[CrawlResult], list[Link]]:
         """Crawl and parse the given `link`, returning a `CrawlResult` if successful, or `None` if not"""
+        should_rss = not await self.prisma.is_already_explored(link.domain())
+
         async with session.get(link.url) as response:
             if not response.ok:
-                return None
+                return None, []
             response = await response.read()
-            return parse_html(response.decode('utf-8', errors='ignore'), link)
+
+            return parse_html(response.decode('utf-8', errors='ignore'), link, should_rss)
 
 
 def spoof_chrome_user_agent(session: ClientSession):

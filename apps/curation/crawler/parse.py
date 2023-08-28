@@ -1,7 +1,9 @@
+import functools
 import json
+import trafilatura.feeds
 
 import re
-from typing import Optional, cast
+from typing import Optional, cast, Tuple
 
 import newspaper
 import trafilatura
@@ -102,12 +104,29 @@ def extract_links_from_html(html: str, link: Link) -> list[Link]:
     return links
 
 
-def parse_html(html: str, link: Link) -> Optional[CrawlResult]:
+@functools.lru_cache
+def find_feed_urls_cached(base_domain: Link) -> list[str]:
+    rss_feed_urls = trafilatura.feeds.find_feed_urls(base_domain.url)
 
+    print(f"Found {len(rss_feed_urls)} RSS links from {base_domain.url}")
+
+    rss_links = [base_domain.create_child_link("Link From RSS", rssurl) for rssurl in rss_feed_urls]
+    rss_links = list(filter(lambda k: k is not None, rss_links))
+    return rss_links
+
+
+def parse_html(html: str, link: Link, should_rss: bool) -> Tuple[Optional[CrawlResult], list[Link]]:
     a = parse_html_trafilatura(html, link)
     if a is None:
         a = parse_html_newspaper(html, link)
-    return a
+
+    base_domain = Link.from_url(link.domain())
+
+    if should_rss:
+        rss_links = find_feed_urls_cached(base_domain)
+    else:
+        rss_links = []
+    return a, rss_links
 
 
 def extract_links_from_markdown(markdown_text: str, parent: Link) -> list[Link]:
@@ -134,3 +153,16 @@ def extract_meta_title(html: str) -> Optional[str]:
     title = soup.find('title')
     if title:
         return title.get_text()
+
+
+def test_rss_trafil():
+    import trafilatura.feeds, trafilatura.sitemaps
+    print(trafilatura.feeds.find_feed_urls("http://paulgraham.com"))
+    # print(trafilatura.sitemaps.sitemap_search("http://paulgraham.com"))
+
+
+def test_parse_html():
+    import requests
+    url = "https://danluu.com/wat"
+    r = requests.get(url)
+    print(parse_html(r.text, Link.from_url(url)))
