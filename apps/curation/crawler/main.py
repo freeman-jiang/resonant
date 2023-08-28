@@ -38,11 +38,12 @@ async def main():
 
     # Create a bunch of workers
     workers = [Worker(
+        id=i,
         config=config,
         done_queue=done_queue,
         sentinel_queue=sentinel_queue,
         prisma=prisma_client)
-        for _ in range(config.num_workers)]
+        for i in range(config.num_workers)]
 
     # Start the workers
     tasks = [asyncio.create_task(worker.run()) for worker in workers]

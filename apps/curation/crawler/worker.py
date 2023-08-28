@@ -22,13 +22,15 @@ class Worker:
     done: bool
     sentinel_queue: Queue
     prisma: PrismaClient
+    id: int
 
-    def __init__(self, *, config: Config, done_queue: Queue, sentinel_queue: Queue, prisma: PrismaClient):
+    def __init__(self, *, id: int, config: Config, done_queue: Queue, sentinel_queue: Queue, prisma: PrismaClient):
         self.config = config
         self.done_queue = done_queue
         self.done = False
         self.sentinel_queue = sentinel_queue
         self.prisma = prisma
+        self.id = id
 
     async def run(self):
         """
