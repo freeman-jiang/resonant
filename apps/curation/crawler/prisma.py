@@ -47,7 +47,6 @@ class PrismaClient:
 
     async def store_page(self, task: CrawlTask, crawl_result: CrawlResult):
         try:
-            await self.db.query_raw("BEGIN;")
             page = await self.db.page.create(data={
                 'url': crawl_result.link.url,
                 'parent_url': crawl_result.link.parent_url,
@@ -58,8 +57,6 @@ class PrismaClient:
                 'outbound_urls': [link.url for link in crawl_result.outgoing_links]
             })
             await self.finish_task(task)
-            await self.db.query_raw("COMMIT;")
-
             await self.add_outgoing_links(crawl_result)
             return page
         except UniqueViolationError:
@@ -69,7 +66,10 @@ class PrismaClient:
     async def get_task(self) -> CrawlTask | None:
         """Get the next link to crawl from the queue in the database"""
 
-        await self.db.query_raw("BEGIN;")
+        # The reason we don't have to wrap this in a transaction is because PostgreSQL
+        # actually treats every SQL statement as being executed within a transaction implicitly.
+        # That's why we can use `FOR UPDATE SKIP LOCKED`
+        # Source: https://www.postgresql.org/docs/current/tutorial-transactions.html#:~:text=PostgreSQL%20actually%20treats,transaction%20block.
         tasks = await self.db.query_raw(
             """
             UPDATE "CrawlTask" 
@@ -87,7 +87,6 @@ class PrismaClient:
             TaskStatus.PENDING,
             model=CrawlTask
         )
-        await self.db.query_raw("COMMIT;")
         if not tasks:
             return None
 
