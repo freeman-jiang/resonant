@@ -136,10 +136,6 @@ class Link(BaseModel):
         if link is None:
             return None
 
-        # if link.domain() in root_url_domains:
-        #     # Prioritize crawling links from the root domains as we know they are good
-        #     link.depth -= 0.5
-
         # Check if the url is one of the suppressed domains
         for suppressed in SUPPRESSED_DOMAINS:
             if suppressed in link.url:

@@ -17,7 +17,7 @@ class CrawlResult(BaseModel):
     date: Optional[str]
     author: Optional[str]
     content: str  # Markdown
-    outgoing_links: list[Link]
+    outbound_links: list[Link]
 
     @validator('content')
     def validate(cls, v):
@@ -55,7 +55,7 @@ def parse_html_newspaper(html: str, link: Link) -> Optional[CrawlResult]:
         date=publish_date,
         author=str(article.authors),
         content=article.text,
-        outgoing_links=list(links)
+        outbound_links=list(links)
     )
 
 
@@ -76,7 +76,7 @@ def parse_html_trafilatura(html: str, link: Link) -> Optional[CrawlResult]:
         date=content['date'],
         author=content['author'],
         content=content['text'],
-        outgoing_links=links
+        outbound_links=links
     )
 
 

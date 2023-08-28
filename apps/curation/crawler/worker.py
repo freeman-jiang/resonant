@@ -34,9 +34,9 @@ class Worker:
 
     async def run(self):
         """
-        This is the entry point for the worker process which will take items from the work queue, crawl and attempt to parse the link, then add any outgoing links to the work queue.
+        This is the entry point for the worker process which will take items from the work queue, crawl and attempt to parse the link, then add any outbound links to the work queue.
 
-        The worker will stop adding new outgoing links to the work queue once the number of links processed + the number of links in the work queue is >= `max_links`
+        The worker will stop adding new outbound links to the work queue once the number of links processed + the number of links in the work queue is >= `max_links`
         """
         try:
             print("Worker started")
@@ -76,7 +76,7 @@ class Worker:
             return
 
     async def process_task(self, task: CrawlTask, session: ClientSession) -> Optional[CrawlResult]:
-        """Given `link`, this function crawls and attempts to parse it, then adds any outgoing links to `queue`. Returns the number of links added to `queue` if successful, or `None` if not."""
+        """Given `link`, this function crawls and attempts to parse it, then adds any outbound links to `queue`. Returns the number of links added to `queue` if successful, or `None` if not."""
 
         link = Link(url=task.url, parent_url=task.parent_url,
                     depth=task.depth, text=task.text)

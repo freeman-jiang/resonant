@@ -51,6 +51,7 @@ def filter_by_line_length(lengths: List[int]) -> bool:
 
 
 def should_keep(crawl: CrawlResult) -> bool:
+    """Decide whether or not to keep a page after crawling it based on its content"""
     if is_comment_page(crawl):
         return False
 
@@ -73,7 +74,7 @@ async def test_1():
     pages = await client.page.find_many(take=500)
     for page in pages:
         crawl = CrawlResult(link=Link.from_url(page.url),
-                            content=page.content, outgoing_links=[])
+                            content=page.content, outbound_links=[])
         if not should_keep(crawl):
             print("Will filter out", page.url)
             pass
