@@ -7,11 +7,10 @@ from crawler.link import get_domain
 from crawler.parse import CrawlResult
 
 
-
-
 class Node(BaseModel):
     out: list[str]
     url: str
+
 
 def pagerank(graph: dict[str, Node], damping_factor=0.99, max_iterations=9, tolerance=1e-6):
     num_nodes = len(graph)
@@ -36,10 +35,10 @@ def pagerank(graph: dict[str, Node], damping_factor=0.99, max_iterations=9, tole
             random_jump_value = (1 - used_damping) * initial_value
             new_pagerank_values[node_url] += random_jump_value
 
-            total_diff += abs(new_pagerank_values[node_url] - pagerank_values[node_url])
+            total_diff += abs(new_pagerank_values[node_url] -
+                              pagerank_values[node_url])
 
         pagerank_values = new_pagerank_values.copy()
-
 
         [print(k, v) for k, v in pagerank_values.items() if v > 0.025]
         new_pagerank_values = {url: initial_value for url in graph}
@@ -48,6 +47,8 @@ def pagerank(graph: dict[str, Node], damping_factor=0.99, max_iterations=9, tole
             break
 
     return pagerank_values
+
+
 def load_from_db():
     db = Database(CrawlResult, "my_database")
     graph = {}
@@ -55,7 +56,7 @@ def load_from_db():
     for _key, value in db.items():
         result = value
 
-        links = [x.url for x in result.outgoing_links]
+        links = [x.url for x in result.outbound_links]
 
         # links = filter(lambda k: get_domain(k) != get_domain(result.link.url), links)
         node = Node(out=links, url=result.link.url)
@@ -71,7 +72,8 @@ def load_from_db():
             most_connected[url] += 1
 
     most_connected = most_connected.items()
-    most_connected = sorted(pagerank(graph).items(), key=lambda k: k[1], reverse=True)
+    most_connected = sorted(pagerank(graph).items(),
+                            key=lambda k: k[1], reverse=True)
     print(most_connected)
     # print(pagerank(graph))
 

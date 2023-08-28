@@ -46,10 +46,15 @@ UNSUPPORTED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.ppt', '.pptx',
 
 
 def is_valid_url(url: str) -> bool:
-    try:
-        return url.startswith("http://") or url.startswith("https://") and validators.url(url)
-    except ValueError:
+    if not (url.startswith("http://") or url.startswith("https://")):
         return False
+
+    res = validators.url(url)
+
+    if type(res) == validators.ValidationError:
+        return False
+
+    return True
 
 
 def clean_url(url: str):
@@ -152,10 +157,6 @@ class Link(BaseModel):
 
         if link is None:
             return None
-
-        # if link.domain() in root_url_domains:
-        #     # Prioritize crawling links from the root domains as we know they are good
-        #     link.depth -= 0.5
 
         # Check if the url is one of the suppressed domains
         for suppressed in SUPPRESSED_DOMAINS:

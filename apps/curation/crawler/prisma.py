@@ -38,8 +38,6 @@ class PrismaClient:
             })
 
     async def add_outgoing_links(self, links: list[Link]):
-        # Add outgoing links to queue
-        # TODO: Replace with constant
         links_to_add = [
             l for l in links if l.depth <= self.cfg.max_crawl_depth]
         count = await self.add_tasks(links_to_add)
@@ -57,10 +55,10 @@ class PrismaClient:
                 'date': crawl_result.date,
                 'author': crawl_result.author,
                 'content': crawl_result.content,
-                'outbound_urls': [link.url for link in crawl_result.outgoing_links]
+                'outbound_urls': [link.url for link in crawl_result.outbound_links]
             })
             await self.finish_task(task)
-            await self.add_outgoing_links(crawl_result.outgoing_links)
+            await self.add_outgoing_links(crawl_result.outbound_links)
             return page
         except UniqueViolationError:
             print(f"EXCEPTION! Page already exists: {crawl_result.link.url}")
