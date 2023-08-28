@@ -4,7 +4,6 @@ from urllib.parse import urlparse, urlunparse
 import validators
 from pydantic import BaseModel, validator
 
-from crawler.root_urls import ROOT_URLS
 
 SUPPRESSED_DOMAINS = {
     "wikipedia.org", "amazon.com", "youtube.com", "twitter.com", "facebook.com", "reddit.com", "instagram.com",
@@ -79,9 +78,6 @@ def get_domain(url):
     return new_url
 
 
-root_url_domains = {get_domain(x["url"]) for x in ROOT_URLS}
-
-
 class Link(BaseModel):
     text: str
     url: str
@@ -98,7 +94,6 @@ class Link(BaseModel):
 
     @validator('url')
     def validate_url(cls, v):
-        global root_url_domains
         if not is_valid_url(v):
             raise ValueError("Invalid URL: " + v)
 
