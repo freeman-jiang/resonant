@@ -21,13 +21,20 @@ def tokenize_by_line(text: str) -> Tuple[List[str], List[int]]:
     line_lengths = [len(line) for line in
                     tokenized_lines]  # Calculate line lengths for calculations *without* filtering out short lines
 
-    tokenized_lines = [line for line in tokenized_lines if len(line) >= 8]  # Remove too short lines
-    flattened_tokens = [token for tokens in tokenized_lines for token in tokens]  # Flatten tokens
+    tokenized_lines = [line for line in tokenized_lines if len(
+        line) >= 8]  # Remove too short lines
+    flattened_tokens = [
+        token for tokens in tokenized_lines for token in tokens]  # Flatten tokens
 
     return flattened_tokens, line_lengths
 
 
 def filter_by_line_length(lengths: List[int]) -> bool:
+    # If there are no lines, filter this page out because it has no content
+    # This check is also needed for the next check to avoid a division by zero error
+    if len(lengths) == 0:
+        return True
+
     # We must have a `PERCENT_GREATER` percent of lines with word count >= `THRESHOLD`
     THRESHOLD = 8
     PERCENT_GREATER = 0.75
@@ -65,7 +72,8 @@ async def test_1():
     await client.connect()
     pages = await client.page.find_many(take=2500)
     for page in pages:
-        crawl = CrawlResult(link=Link.from_url(page.url), content=page.content, outgoing_links=[])
+        crawl = CrawlResult(link=Link.from_url(page.url),
+                            content=page.content, outgoing_links=[])
         if not should_keep(crawl):
             print("Will filter out", page.url)
             pass
