@@ -70,7 +70,7 @@ def should_keep(crawl: CrawlResult) -> bool:
 async def test_1():
     client = Prisma()
     await client.connect()
-    pages = await client.page.find_many(take=2500)
+    pages = await client.page.find_many(take=500)
     for page in pages:
         crawl = CrawlResult(link=Link.from_url(page.url),
                             content=page.content, outgoing_links=[])

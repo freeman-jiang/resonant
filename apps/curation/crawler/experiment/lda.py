@@ -1,15 +1,14 @@
+import json
+
 import gensim
 import nltk
-from bertopic import BERTopic
-from bertopic.representation import KeyBERTInspired
+import numpy as np
+# from bertopic import BERTopic
+# from bertopic.representation import KeyBERTInspired
 from gensim import corpora
 from gensim.models import LdaModel
-from gensim.parsing.preprocessing import preprocess_string
 from typing import Optional, List, Iterator
-import string
-from datetime import datetime
 
-from gensim.utils import simple_preprocess
 from nltk.corpus import stopwords
 from prisma import models
 
@@ -72,24 +71,35 @@ def overlapping_windows(s: str) -> Iterator[str]:
             break
         yield ' '.join(arr[i:i + 250])
 
-def cluster_documents_with_bertopic(pages: List[models.Page], num_topics: int = 20):
+class PageWithVec(models.Page):
+    vec: str
+
+    def npvec(self):
+        # Convert vec string into list
+        li = json.loads(self.vec)
+        return np.array(li)
+def cluster_documents_with_bertopic(pages: List[PageWithVec]):
     # Create a list of document content
-    documents = [filter_text(page.content) for page in pages]
-    documents = [overlapping_windows(x) for x in documents]
-    documents = [x for y in documents for x in y]
+    # documents = [filter_text(page.content) for page in pages]
+    # documents = [overlapping_windows(x) for x in documents]
+    # documents = [x for y in documents for x in y]
+    documents = [page.content for page in pages]
+    embeddings = np.vstack([x.npvec() for x in pages])
 
     # Create BERTopic model
     # Create your representation model
     representation_model = KeyBERTInspired()
 
     # Use the representation model in BERTopic on top of the default pipeline
-    model = BERTopic(representation_model=representation_model, min_topic_size=5)
+    model = BERTopic(representation_model=representation_model, min_topic_size=12, embedding_model="all-mpnet-base-v2")
 
     # Fit the model on the documents
-    topics, probabilities = model.fit_transform(documents)
+    model.fit(documents, embeddings)
 
-    # Get topic descriptions
-    topic_descriptions = model.get_topic_info()
+    # topic_distr, topic_token_distr = model.approximate_distribution(documents, calculate_tokens=True)
+
+    # Run the visualization with the original embeddings
+    model.visualize_documents(documents, embeddings=embeddings).write_html("a.html")
 
 
-    return topic_descriptions
+    return 5
