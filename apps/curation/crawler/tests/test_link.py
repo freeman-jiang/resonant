@@ -1,6 +1,5 @@
 from pydantic import ValidationError
 import pytest
-from sympy import fu
 from crawler.link import *
 
 

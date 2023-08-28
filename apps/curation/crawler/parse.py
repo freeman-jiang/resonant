@@ -110,7 +110,8 @@ def find_feed_urls_cached(base_domain: Link) -> list[str]:
 
     print(f"Found {len(rss_feed_urls)} RSS links from {base_domain.url}")
 
-    rss_links = [base_domain.create_child_link("Link From RSS", rssurl) for rssurl in rss_feed_urls]
+    rss_links = [base_domain.create_child_link(
+        "Link From RSS", rssurl) for rssurl in rss_feed_urls]
     rss_links = list(filter(lambda k: k is not None, rss_links))
     return rss_links
 
@@ -156,7 +157,8 @@ def extract_meta_title(html: str) -> Optional[str]:
 
 
 def test_rss_trafil():
-    import trafilatura.feeds, trafilatura.sitemaps
+    import trafilatura.feeds
+    import trafilatura.sitemaps
     print(trafilatura.feeds.find_feed_urls("http://paulgraham.com"))
     # print(trafilatura.sitemaps.sitemap_search("http://paulgraham.com"))
 

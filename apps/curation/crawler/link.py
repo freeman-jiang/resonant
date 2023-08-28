@@ -26,17 +26,17 @@ SUPPRESSED_DOMAINS = {
     '.gov',
     'cdc.gov',
     'technologyreview.com',
-'businessinsider.com',
-'investopedia.com',
+    'businessinsider.com',
+    'investopedia.com',
     'qualiacomputing.com',
-'smithsonianmag.com',
-'sciencedaily.com',
-'plus.google.com',
-'genomebiology.biomedcentral.com',
-'openid.net',
-'developer.apple.com',
-'cnbc.com',
-'brookings.edu',
+    'smithsonianmag.com',
+    'sciencedaily.com',
+    'plus.google.com',
+    'genomebiology.biomedcentral.com',
+    'openid.net',
+    'developer.apple.com',
+    'cnbc.com',
+    'brookings.edu',
 
 }
 
@@ -69,7 +69,7 @@ def clean_url(url: str):
     return cleaned_url
 
 
-def get_domain(url):
+def get_domain(url: str):
     parsed_url = urlparse(url)
 
     # Create a new URL without the path
@@ -84,7 +84,7 @@ class Link(BaseModel):
     parent_url: str | None
     depth: int = 0
 
-    def __lt__(self, other):
+    def __lt__(self, other: Self):
         return self.url.__lt__(other.url)
 
     @classmethod
@@ -93,7 +93,7 @@ class Link(BaseModel):
         return Link(text="", url=url, parent_url=None, depth=0)
 
     @validator('url')
-    def validate_url(cls, v):
+    def validate_url(cls, v: str):
         if not is_valid_url(v):
             raise ValueError("Invalid URL: " + v)
 
@@ -135,8 +135,7 @@ class Link(BaseModel):
             url = self.url + '/' + url
             return Link(text=text, url=url, parent_url=self.url, depth=self.depth + 1)
 
-    def create_child_link(self, text: str, url: str) -> Optional[Self]:
-
+    def create_child_link(self, text: Optional[str], url: Optional[str]) -> Optional[Self]:
         if url is None:
             return None
         if text is None:

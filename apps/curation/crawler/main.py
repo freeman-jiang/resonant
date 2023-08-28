@@ -1,4 +1,3 @@
-import argparse
 import asyncio
 import time
 from prisma import Prisma
@@ -33,8 +32,8 @@ async def main():
 
     # Initialize the shared work queue
     await initialize_queue(prisma_client)
-    done_queue: asyncio.Queue[Link] = asyncio.Queue()
-    sentinel_queue: asyncio.Queue[Link] = asyncio.Queue()
+    done_queue: asyncio.Queue[bool] = asyncio.Queue()
+    sentinel_queue: asyncio.Queue[bool] = asyncio.Queue()
 
     # Create a bunch of workers
     workers = [Worker(

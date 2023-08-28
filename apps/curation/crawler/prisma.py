@@ -1,4 +1,4 @@
-from prisma import Json, Prisma
+from prisma import Prisma
 
 from crawler.config import Config
 from .link import Link
@@ -6,7 +6,7 @@ from .parse import CrawlResult
 from prisma.enums import TaskStatus
 from prisma.models import CrawlTask
 from prisma.types import CrawlTaskCreateWithoutRelationsInput
-from prisma.errors import UniqueViolationError, TransactionExpiredError
+from prisma.errors import UniqueViolationError
 
 
 class PrismaClient:

@@ -1,9 +1,7 @@
 import asyncio
 import random
-from queue import Empty as QueueEmpty
-from asyncio import Queue, PriorityQueue
-from typing import Optional, TypeAlias, Tuple
-from prisma import Prisma
+from asyncio import Queue
+from typing import Optional, Tuple
 from prisma.models import CrawlTask
 
 from aiohttp import ClientError, ClientSession, ClientTimeout
@@ -18,13 +16,13 @@ from .prisma import PrismaClient
 
 class Worker:
     config: Config
-    done_queue: Queue
+    done_queue: Queue[bool]
     done: bool
-    sentinel_queue: Queue
+    sentinel_queue: Queue[bool]
     prisma: PrismaClient
     id: int
 
-    def __init__(self, *, id: int, config: Config, done_queue: Queue, sentinel_queue: Queue, prisma: PrismaClient):
+    def __init__(self, *, id: int, config: Config, done_queue: Queue[bool], sentinel_queue: Queue[bool], prisma: PrismaClient):
         self.config = config
         self.done_queue = done_queue
         self.done = False
@@ -70,7 +68,7 @@ class Worker:
 
                 print(f"Working on task: {task.id}")
 
-                response = await self.process_task(task, session)
+                await self.process_task(task, session)
 
             print("Worker exiting...")
             return
