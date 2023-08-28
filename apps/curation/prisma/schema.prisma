@@ -19,6 +19,7 @@ model Page {
   date          String?
   author        String?
   content       String
+  content_hash  String       @unique // A 128-bit MurmurHash3 hash of the content
   created_at    DateTime     @default(now())
   updated_at    DateTime     @updatedAt
   outbound_urls String[]

@@ -110,6 +110,16 @@ class Link(BaseModel):
             (parsed_url.scheme, parsed_url.netloc, '', '', '', ''))
         return new_url
 
+    def raw_domain(self) -> str:
+        """Returns the domain without the scheme and www prefix"""
+        parsed_url = urlparse(self.url)
+
+        # Remove www from the domain if it exists
+        if parsed_url.netloc.startswith("www."):
+            return parsed_url.netloc[4:]
+
+        return parsed_url.netloc
+
     def _create_child_link_inner(self, text: str, url: str):
         # TODO: Add support for .pdf files
         if any(url.endswith(ext) for ext in UNSUPPORTED_EXTENSIONS):

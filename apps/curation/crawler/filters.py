@@ -8,6 +8,8 @@ from prisma import Prisma
 from crawler.link import Link
 from crawler.parse import CrawlResult
 
+WHITELIST_DOMAINS = {'hypertext.joodaloop.com'}
+
 
 def is_comment_page(crawl: CrawlResult) -> bool:
     regex = r'.*\/comments?(\/|\Z)'
@@ -51,6 +53,10 @@ def filter_by_line_length(lengths: List[int]) -> bool:
 
 
 def should_keep(crawl: CrawlResult) -> bool:
+    print(f"Comparing {crawl.link.raw_domain()})")
+    if crawl.link.raw_domain() in WHITELIST_DOMAINS:
+        return True
+
     """Decide whether or not to keep a page after crawling it based on its content"""
     if is_comment_page(crawl):
         return False

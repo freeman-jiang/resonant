@@ -7,6 +7,7 @@ from prisma.enums import TaskStatus
 from prisma.models import CrawlTask
 from prisma.types import CrawlTaskCreateWithoutRelationsInput
 from prisma.errors import UniqueViolationError
+import mmh3
 
 
 class PrismaClient:
@@ -48,15 +49,29 @@ class PrismaClient:
             # TODO: Currently these actions are not done in a transaction. Ideally they are
             # But prisma is very buggy with transactions right now, returning 422 errors
             # They also don't support transactions in raw queries
-            page = await self.db.page.create(data={
-                'url': crawl_result.link.url,
-                'parent_url': crawl_result.link.parent_url,
-                'title': crawl_result.title,
-                'date': crawl_result.date,
-                'author': crawl_result.author,
-                'content': crawl_result.content,
-                'outbound_urls': [link.url for link in crawl_result.outbound_links]
-            })
+
+            content_hash = str(mmh3.hash128(
+                crawl_result.content, signed=False))
+
+            page = await self.db.page.upsert(
+                data={
+                    'create': {
+                        'content_hash': content_hash,
+                        'url': crawl_result.link.url,
+                        'parent_url': crawl_result.link.parent_url,
+                        'title': crawl_result.title,
+                        'date': crawl_result.date,
+                        'author': crawl_result.author,
+                        'content': crawl_result.content,
+                        'outbound_urls': [link.url for link in crawl_result.outbound_links]
+                    },
+                    'update': {}
+                },
+                where={
+                    'content_hash': content_hash
+                }
+
+            )
             await self.finish_task(task)
             await self.add_outgoing_links(crawl_result.outbound_links)
             return page
