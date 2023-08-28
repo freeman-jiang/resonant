@@ -47,6 +47,9 @@ class PrismaClient:
 
     async def store_page(self, task: CrawlTask, crawl_result: CrawlResult):
         try:
+            # TODO: Currently these actions are not done in a transaction. Ideally they are
+            # But prisma is very buggy with transactions right now, returning 422 errors
+            # They also don't support transactions in raw queries
             page = await self.db.page.create(data={
                 'url': crawl_result.link.url,
                 'parent_url': crawl_result.link.parent_url,
