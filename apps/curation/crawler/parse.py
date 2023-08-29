@@ -10,9 +10,9 @@ from typing import Optional, cast, Tuple
 import newspaper
 import trafilatura
 from pydantic import BaseModel, validator
+from crawler.constants.whitelist import WHITELIST_DOMAINS
 
 from crawler.link import Link
-from .root_urls import WHITELIST_DOMAINS
 from bs4 import BeautifulSoup
 
 
@@ -43,7 +43,8 @@ def parse_html_newspaper(html: str, link: Link) -> Optional[CrawlResult]:
     if tree is None:
         return None
     # Extract all <a> tags that are not sponsored or ugc (user generated content)
-    link_elements = tree.xpath("//a[not(@rel = 'ugc' or @rel = 'sponsored' or @rel = 'nofollow')]")
+    link_elements = tree.xpath(
+        "//a[not(@rel = 'ugc' or @rel = 'sponsored' or @rel = 'nofollow')]")
 
     # Extract href attribute and link text from each <a> tag
     links = [link.create_child_link(element.text, element.get('href'))
@@ -69,13 +70,15 @@ def filter_out_ugc_sponsored(html: str) -> str:
     tree = etree.HTML(html)
 
     # Find and remove <a> tags with rel="ugc", "sponsored", or "nofollow"
-    links_to_remove = tree.xpath("//a[@rel='ugc' or @rel='sponsored' or @rel='nofollow']")
+    links_to_remove = tree.xpath(
+        "//a[@rel='ugc' or @rel='sponsored' or @rel='nofollow']")
     for link in links_to_remove:
         # Simply pop the href to prevent crawler from exploring that page
         link.attrib.pop('href', None)
 
     # Return the modified HTML content as a string
     return etree.tostring(tree, encoding='unicode')
+
 
 def parse_html_trafilatura(html: str, link: Link) -> Optional[CrawlResult]:
     content = trafilatura.extract(html, url=link.url, include_links=True, include_tables=False, include_comments=False, include_images=False, output_format='json',
@@ -122,6 +125,7 @@ def extract_links_from_html(html: str, link: Link) -> list[Link]:
     links = list(filter(lambda k: k.url != link.url, links))
 
     return links
+
 
 @functools.lru_cache
 def find_feed_urls_cached(base_domain: Link) -> list[str]:
@@ -181,15 +185,3 @@ def test_rss_trafil():
     import trafilatura.sitemaps
     print(trafilatura.feeds.find_feed_urls("http://paulgraham.com"))
     # print(trafilatura.sitemaps.sitemap_search("http://paulgraham.com"))
-
-
-def test_parse_html():
-    global text
-    import requests
-    url = "https://slatestarcodex.com/2014/12/"
-
-    r = requests.get(url, headers={'User-Agent':  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'})
-
-
-    print(parse_html(r.content, Link.from_url(url), True))
-

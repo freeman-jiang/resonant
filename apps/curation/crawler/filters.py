@@ -4,10 +4,10 @@ from typing import Tuple, List
 import pytest
 from nltk import sent_tokenize, word_tokenize, LineTokenizer
 from prisma import Prisma
+from crawler.constants.whitelist import WHITELIST_DOMAINS
 
 from crawler.link import Link
 from crawler.parse import CrawlResult
-from crawler.root_urls import WHITELIST_DOMAINS
 
 
 def is_comment_page(crawl: CrawlResult) -> bool:
@@ -52,11 +52,10 @@ def filter_by_line_length(lengths: List[int]) -> bool:
 
 
 def should_keep(crawl: CrawlResult) -> bool:
-    print(f"Comparing {crawl.link.raw_domain()})")
+    """Decide whether or not to keep a page after crawling it based on its content"""
     if crawl.link.raw_domain() in WHITELIST_DOMAINS:
         return True
 
-    """Decide whether or not to keep a page after crawling it based on its content"""
     if is_comment_page(crawl):
         return False
 
@@ -77,7 +76,7 @@ async def test_1():
     client = Prisma()
     await client.connect()
     pages = await client.page.find_many(take=500, where={
-        'url': 'https://slatestarcodex.com/2014/12/'
+        'url': 'https://shkspr.mobi/blog/2014/07/'
     })
     for page in pages:
         crawl = CrawlResult(link=Link.from_url(page.url),
