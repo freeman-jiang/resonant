@@ -65,7 +65,7 @@ def parse_html_newspaper(html: str, link: Link) -> Optional[CrawlResult]:
     )
 
 
-def filter_out_ugc_sponsored(html: str) -> str:
+def filter_out_ugc_sponsored(html: bytes) -> str:
     # Parse the HTML content
     tree = etree.HTML(html)
 
@@ -139,7 +139,7 @@ def find_feed_urls_cached(base_domain: Link) -> list[str]:
     return rss_links
 
 
-def parse_html(html: str, link: Link, should_rss: bool) -> Tuple[Optional[CrawlResult], list[Link]]:
+def parse_html(html: bytes, link: Link, should_rss: bool) -> Tuple[Optional[CrawlResult], list[Link]]:
     html = filter_out_ugc_sponsored(html)
     a = parse_html_trafilatura(html, link)
     if a is None:

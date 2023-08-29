@@ -122,7 +122,7 @@ class Worker:
                 return None, []
             response = await response.read()
 
-            return parse_html(response.decode('utf-8', errors='ignore'), link, should_rss)
+            return parse_html(response, link, should_rss)
 
 
 def spoof_chrome_user_agent(session: ClientSession):
