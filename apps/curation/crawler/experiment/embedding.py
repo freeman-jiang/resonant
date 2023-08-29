@@ -127,15 +127,7 @@ async def test_query_similar():
     await generate_feed_from_liked(lp)
 
 
-async def lda_test():
-    cursor = db.cursor(row_factory=class_row(PageWithVec))
-    pages = cursor.execute("""WITH pages AS (SELECT * FROM "Page" LIMIT 700)
-SELECT * FROM pages INNER JOIN "vecs"."Embeddings" ON pages.url = "vecs"."Embeddings".url WHERE index < 10 ORDER BY pages.url, index
-""").fetchall()
 
-    print(cluster_documents_with_bertopic(pages))
-
-    return
 
 
 async def generate_embeddings():

@@ -1,17 +1,21 @@
 import json
+import os
 
 import gensim
+import load_dotenv
 import nltk
 import numpy as np
-# from bertopic import BERTopic
-# from bertopic.representation import KeyBERTInspired
+import psycopg
+import pytest
+from bertopic import BERTopic
+from bertopic.representation import KeyBERTInspired
 from gensim import corpora
 from gensim.models import LdaModel
 from typing import Optional, List, Iterator
 
 from nltk.corpus import stopwords
 from prisma import models
-
+from psycopg.rows import class_row
 
 stop_words = stopwords.words('english')
 stop_words.extend(['from', 'subject', 're', 'edu', 'use'])
@@ -91,7 +95,7 @@ def cluster_documents_with_bertopic(pages: List[PageWithVec]):
     representation_model = KeyBERTInspired()
 
     # Use the representation model in BERTopic on top of the default pipeline
-    model = BERTopic(representation_model=representation_model, min_topic_size=12, embedding_model="all-mpnet-base-v2")
+    model = BERTopic(representation_model=representation_model, min_topic_size=15, embedding_model="all-mpnet-base-v2")
 
     # Fit the model on the documents
     model.fit(documents, embeddings)
@@ -103,3 +107,18 @@ def cluster_documents_with_bertopic(pages: List[PageWithVec]):
 
 
     return 5
+
+
+@pytest.mark.asyncio
+async def test_lda():
+    load_dotenv.load_dotenv()
+    db = psycopg.connect(os.environ['DATABASE_URL'])
+
+    cursor = db.cursor(row_factory=class_row(PageWithVec))
+    pages = cursor.execute("""WITH pages AS (SELECT * FROM "Page" LIMIT 700)
+SELECT * FROM pages INNER JOIN "vecs"."Embeddings" ON pages.url = "vecs"."Embeddings".url WHERE index < 10 ORDER BY pages.url, index
+""").fetchall()
+
+    print(cluster_documents_with_bertopic(pages))
+
+    return
