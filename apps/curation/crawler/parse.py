@@ -88,7 +88,7 @@ def parse_html_trafilatura(html: str, link: Link) -> Optional[CrawlResult]:
         return None
     content = json.loads(content)
 
-    if link.url in WHITELIST_DOMAINS:
+    if link.raw_domain() in WHITELIST_DOMAINS:
         links = extract_links_from_html(html, link)
     else:
         links = extract_links_from_markdown(content["text"], link)

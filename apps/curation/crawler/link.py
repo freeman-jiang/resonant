@@ -37,6 +37,7 @@ SUPPRESSED_DOMAINS = {
     'developer.apple.com',
     'cnbc.com',
     'brookings.edu',
+    'thekrazycouponlady.com'
 
 }
 
