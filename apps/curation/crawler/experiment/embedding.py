@@ -158,3 +158,10 @@ async def generate_embeddings():
 
 if __name__ == "__main__":
     asyncio.run(generate_embeddings())
+
+
+def test_st_topics():
+    topics = ["philosophy", "health", "technology"]
+    model = SentenceTransformer('all-mpnet-base-v2')
+    embeddings = model.encode(topics)
+    print(embeddings)

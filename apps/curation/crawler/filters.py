@@ -7,8 +7,7 @@ from prisma import Prisma
 
 from crawler.link import Link
 from crawler.parse import CrawlResult
-
-WHITELIST_DOMAINS = {'hypertext.joodaloop.com'}
+from crawler.root_urls import WHITELIST_DOMAINS
 
 
 def is_comment_page(crawl: CrawlResult) -> bool:
@@ -78,7 +77,7 @@ async def test_1():
     client = Prisma()
     await client.connect()
     pages = await client.page.find_many(take=500, where={
-        'url': 'https://shkspr.mobi/blog/2014/07/'
+        'url': 'https://slatestarcodex.com/2014/12/'
     })
     for page in pages:
         crawl = CrawlResult(link=Link.from_url(page.url),

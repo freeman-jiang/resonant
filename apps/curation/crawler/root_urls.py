@@ -120,3 +120,4 @@ ROOT_URLS = [
     {'url': 'https://worksinprogress.co/issue/why-tech-cannot-escape-expensive-housing',
         'title': 'Why Tech Cannot Escape Expensive Housing'},
 ]
+WHITELIST_DOMAINS = {'hypertext.joodaloop.com'}
