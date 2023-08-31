@@ -67,6 +67,7 @@ class Embedder:
 
 model = Embedder()
 
+
 async def _query_similar(doc_url: str) -> list[str]:
     cursor = db.cursor(row_factory=class_row(models.Embeddings))
     similar = cursor.execute("""
@@ -80,8 +81,6 @@ async def _query_similar(doc_url: str) -> list[str]:
     urls_to_add = [x.url for x in similar]
 
     return urls_to_add
-
-
 
 
 async def generate_feed_from_liked(lp: models.LikedPage):
@@ -126,8 +125,6 @@ async def test_query_similar():
     await generate_feed_from_liked(lp)
 
 
-
-
 async def store_embeddings_for_pages(client: Prisma, pages: list[Page]):
     to_append = []
     print("Calculating embeddings for {} pages".format(len(pages)))
@@ -138,6 +135,7 @@ async def store_embeddings_for_pages(client: Prisma, pages: list[Page]):
     query = """INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES {}""".format(",".join(
         ["('{}', '{}', '{}')".format(x[0], x[1], x[2]) for x in to_append]))
     await client.execute_raw(query)
+
 
 async def generate_embeddings():
     await client.connect()
@@ -161,4 +159,3 @@ async def generate_embeddings():
 
 if __name__ == "__main__":
     asyncio.run(generate_embeddings())
-

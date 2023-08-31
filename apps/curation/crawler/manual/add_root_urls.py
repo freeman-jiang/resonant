@@ -10,16 +10,20 @@ from crawler.prisma import PrismaClient
 
 # This script adds additional root URLs to the database work queue. Because they are initialized with
 # depth 0 they will be prioritized
+
+
 def parse_csv_to_dict_list(csv_file_path):
     rows = []  # Initialize an empty list to store rows as dictionaries
 
     with open(csv_file_path, 'r') as csv_file:
-        csv_reader = csv.DictReader(csv_file)  # Use DictReader to automatically parse rows into dictionaries
+        # Use DictReader to automatically parse rows into dictionaries
+        csv_reader = csv.DictReader(csv_file)
 
         for row in csv_reader:
             rows.append(row)  # Append each row dictionary to the list
 
     return rows
+
 
 def extract_url_from_text(html_text):
     # Define a regular expression pattern to match the href attribute
@@ -33,6 +37,7 @@ def extract_url_from_text(html_text):
         return href_attribute
     else:
         print("No href attribute found.", html_text)
+
 
 def add_dm_hn_urls():
     # Parse CSV file at dm_hn_data.csv

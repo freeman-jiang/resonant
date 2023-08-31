@@ -24,7 +24,8 @@ async def seed_database_topics(client: PrismaClient):
         cr = CrawlResult(
             # Use our own domain to store topics
             # When we serve feeds, don't include anything from our domain
-            link=Link.from_url(f"https://{t}.topics.superstack-web.vercel.app"),
+            link=Link.from_url(
+                f"https://{t}.topics.superstack-web.vercel.app"),
             author="Topic: " + t,
             title="",
             date=datetime.now().isoformat(),

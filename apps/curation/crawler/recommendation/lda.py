@@ -19,6 +19,8 @@ from psycopg.rows import class_row
 
 stop_words = stopwords.words('english')
 stop_words.extend(['from', 'subject', 're', 'edu', 'use'])
+
+
 def preprocess(doc):
     data_words = gensim.utils.simple_preprocess(doc, deacc=True)
     # remove stop words
@@ -28,7 +30,9 @@ def preprocess(doc):
 
 def sent_to_words(sentences):
     for sentence in sentences:
-        yield()
+        yield ()
+
+
 def remove_stopwords(texts):
     return [word for word in texts if word not in stop_words]
 
@@ -60,9 +64,11 @@ def cluster_documents_with_lda(pages: List[models.Page], num_topics: int = 20, n
 def filter_text(s):
     import re
     cleaned_text = re.sub(r'\n|http[s]?://\S+', ' ', s)
-    cleaned_text = cleaned_text.translate(str.maketrans("", "", r"""#$%&'*+<=>@[\]^_`{|}~"""))
+    cleaned_text = cleaned_text.translate(
+        str.maketrans("", "", r"""#$%&'*+<=>@[\]^_`{|}~"""))
 
     return cleaned_text
+
 
 def overlapping_windows(s: str) -> Iterator[str]:
     arr: list[str] = nltk.word_tokenize(s)
@@ -75,6 +81,7 @@ def overlapping_windows(s: str) -> Iterator[str]:
             break
         yield ' '.join(arr[i:i + 250])
 
+
 class PageWithVec(models.Page):
     vec: str
 
@@ -82,6 +89,8 @@ class PageWithVec(models.Page):
         # Convert vec string into list
         li = json.loads(self.vec)
         return np.array(li)
+
+
 def cluster_documents_with_bertopic(pages: List[PageWithVec]):
     # Create a list of document content
     # documents = [filter_text(page.content) for page in pages]
@@ -95,7 +104,8 @@ def cluster_documents_with_bertopic(pages: List[PageWithVec]):
     representation_model = KeyBERTInspired()
 
     # Use the representation model in BERTopic on top of the default pipeline
-    model = BERTopic(representation_model=representation_model, min_topic_size=15, embedding_model="all-mpnet-base-v2")
+    model = BERTopic(representation_model=representation_model,
+                     min_topic_size=15, embedding_model="all-mpnet-base-v2")
 
     # Fit the model on the documents
     model.fit(documents, embeddings)
@@ -103,8 +113,8 @@ def cluster_documents_with_bertopic(pages: List[PageWithVec]):
     # topic_distr, topic_token_distr = model.approximate_distribution(documents, calculate_tokens=True)
 
     # Run the visualization with the original embeddings
-    model.visualize_documents(documents, embeddings=embeddings).write_html("a.html")
-
+    model.visualize_documents(
+        documents, embeddings=embeddings).write_html("a.html")
 
     return 5
 
