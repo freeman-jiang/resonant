@@ -2,11 +2,14 @@ import asyncio
 import csv
 import re
 
+from dotenv import load_dotenv
 from prisma import Prisma
 
 from crawler.config import Config
 from crawler.link import Link
 from crawler.prisma import PrismaClient
+
+load_dotenv()
 
 # This script adds additional root URLs to the database work queue. Because they are initialized with
 # depth 0 they will be prioritized
@@ -50,6 +53,11 @@ def add_dm_hn_urls():
     print(urls)
     return urls
 
+def add_aldaily_urls():
+    li = []
+    for page in range(1, 41):
+        li.append(f"https://www.aldaily.com/essays-and-opinions/?page={page}")
+    return li
 
 async def main():
     config = Config()
@@ -62,6 +70,7 @@ async def main():
     #     urls = f.readlines()
 
     urls += add_dm_hn_urls()
+    urls += add_aldaily_urls()
 
     links = []
 
