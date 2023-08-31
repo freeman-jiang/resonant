@@ -74,7 +74,7 @@ def filter_out_ugc_sponsored(html: bytes) -> str:
         "//a[@rel='ugc' or @rel='sponsored' or @rel='nofollow']")
     for link in links_to_remove:
         # Simply pop the href to prevent crawler from exploring that page
-        link.attrib.pop('href', None)
+        link.attrib.pop('href')
 
     # Return the modified HTML content as a string
     return etree.tostring(tree, encoding='unicode')
