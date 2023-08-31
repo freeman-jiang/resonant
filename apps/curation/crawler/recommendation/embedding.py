@@ -1,6 +1,6 @@
 import asyncio
 import pytest
-from psycopg.rows import class_row, dict_row
+from psycopg.rows import class_row
 import os
 from typing import Iterator
 
@@ -8,7 +8,6 @@ import numpy as np
 import psycopg
 from sentence_transformers import SentenceTransformer
 
-from crawler.experiment.lda import cluster_documents_with_bertopic, PageWithVec
 from dotenv import load_dotenv
 from prisma import Prisma, models
 from prisma.models import Page
@@ -69,20 +68,20 @@ class Embedder:
 model = Embedder()
 
 async def _query_similar(doc_url: str) -> list[str]:
-    cursor = db.cursor(row_factory=dict_row)
+    cursor = db.cursor(row_factory=class_row(models.Embeddings))
     similar = cursor.execute("""
     -- Get average of the first 7 vectors for the article we WANT
-    
  WITH want AS (SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %(url)s AND index <= 7 GROUP BY url)
- SELECT distinct ON (e1.url) e1.url as url, e2.avg_dist as distance FROM vecs."Embeddings" e1 RIGHT JOIN
- -- See which other articles matches that "want" average 
- (SELECT AVG(e.vec <=> w.vec) as avg_dist, e.url from vecs."Embeddings" as e, want as w WHERE e.url != w.url GROUP BY e.url ORDER BY  avg_dist LIMIT %(limit)s) e2
- ON e1.url = e2.url
-    """, dict(url=doc_url, limit=5)).fetchall()
+ SELECT embed.* FROM vecs."Embeddings" as embed INNER JOIN
+ (SELECT AVG(e.vec <=> w.vec) as avg_dist, e.url from vecs."Embeddings" as e, want as w WHERE e.url != w.url GROUP BY e.url ORDER BY  avg_dist LIMIT %(limit)s) matching_docs
+ ON embed.url = matching_docs.url
+    """, dict(url=doc_url, limit=50)).fetchall()
 
-    urls_to_add = [x["url"] for x in similar]
+    urls_to_add = [x.url for x in similar]
 
     return urls_to_add
+
+
 
 
 async def generate_feed_from_liked(lp: models.LikedPage):
@@ -102,7 +101,7 @@ async def generate_feed_from_liked(lp: models.LikedPage):
             },
             'suggested_from': {
                 'connect': {
-                    'id': liked.id
+                    'id': lp.id
                 }
             }
         })
@@ -120,7 +119,7 @@ async def test_query_similar():
         },
         'page': {
             'connect': {
-                'id': 2
+                'id': 52
             }
         }
     }, include={'page': True, 'user': True})
@@ -129,39 +128,37 @@ async def test_query_similar():
 
 
 
+async def store_embeddings_for_pages(client: Prisma, pages: list[Page]):
+    to_append = []
+    print("Calculating embeddings for {} pages".format(len(pages)))
+    for p in pages:
+        data = model.generate_vecs(p)
+        to_append.extend(data)
+
+    query = """INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES {}""".format(",".join(
+        ["('{}', '{}', '{}')".format(x[0], x[1], x[2]) for x in to_append]))
+    await client.execute_raw(query)
 
 async def generate_embeddings():
     await client.connect()
-    # await lda_test()
-    # return
 
     while True:
         pages = await client.page.find_many(take=40, where={
             'embeddings': {
                 'none': {}
-            }
+            },
+            # 'url': {
+            #     'endsWith': 'topics.superstack-web.vercel.app'
+            # }
         })
 
         if len(pages) == 0:
             print("ERR: No pages to process")
             return
-        to_append = []
-        print("Calculating embeddings for {} pages".format(len(pages)))
-        for p in pages:
-            data = model.generate_vecs(p)
-            to_append.extend(data)
 
-        query = """INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES {}""".format(",".join(
-            ["('{}', '{}', '{}')".format(x[0], x[1], x[2]) for x in to_append]))
-        await client.execute_raw(query)
+        await store_embeddings_for_pages(client, pages)
 
 
 if __name__ == "__main__":
     asyncio.run(generate_embeddings())
 
-
-def test_st_topics():
-    topics = ["philosophy", "health", "technology"]
-    model = SentenceTransformer('all-mpnet-base-v2')
-    embeddings = model.encode(topics)
-    print(embeddings)

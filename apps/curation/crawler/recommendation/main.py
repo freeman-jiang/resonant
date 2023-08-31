@@ -1,5 +1,5 @@
 import numpy as np
-from crawler.experiment.metrics import get_readability_metrics
+from crawler.recommendation.metrics import get_readability_metrics
 from crawler.root_urls import ROOT_URLS
 
 BAD_URLS = ["https://www.linkedin.com/in/marcyun", "https://www.detroitnews.com/story/sports/mlb/tigers/2023/08/22/tigers-even-series-with-cubs-andy-ibanez-has-career-night-with-two-homers/70649505007/",
