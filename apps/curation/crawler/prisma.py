@@ -44,34 +44,37 @@ class PrismaClient:
         count = await self.add_tasks(links_to_add)
         print(f"PRISMA: Added {count} tasks to db")
 
+    async def store_raw_page(self, crawl_result: CrawlResult):
+        content_hash = str(mmh3.hash128(
+            crawl_result.content, signed=False))
+
+        page = await self.db.page.upsert(
+            data={
+                'create': {
+                    'content_hash': content_hash,
+                    'url': crawl_result.link.url,
+                    'parent_url': crawl_result.link.parent_url,
+                    'title': crawl_result.title,
+                    'date': crawl_result.date,
+                    'author': crawl_result.author,
+                    'content': crawl_result.content,
+                    'outbound_urls': [link.url for link in crawl_result.outbound_links]
+                },
+                'update': {}
+            },
+            where={
+                'content_hash': content_hash
+            }
+        )
+        return page
+
     async def store_page(self, task: CrawlTask, crawl_result: CrawlResult):
         try:
             # TODO: Currently these actions are not done in a transaction. Ideally they are
             # But prisma is very buggy with transactions right now, returning 422 errors
             # They also don't support transactions in raw queries
 
-            content_hash = str(mmh3.hash128(
-                crawl_result.content, signed=False))
-
-            page = await self.db.page.upsert(
-                data={
-                    'create': {
-                        'content_hash': content_hash,
-                        'url': crawl_result.link.url,
-                        'parent_url': crawl_result.link.parent_url,
-                        'title': crawl_result.title,
-                        'date': crawl_result.date,
-                        'author': crawl_result.author,
-                        'content': crawl_result.content,
-                        'outbound_urls': [link.url for link in crawl_result.outbound_links]
-                    },
-                    'update': {}
-                },
-                where={
-                    'content_hash': content_hash
-                }
-
-            )
+            page = await self.store_raw_page(crawl_result)
             await self.finish_task(task)
             await self.add_outgoing_links(crawl_result.outbound_links)
             return page
