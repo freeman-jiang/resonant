@@ -31,6 +31,14 @@ model Page {
   @@schema("public")
 }
 
+model Topic {
+  id         Int        @id @default(autoincrement())
+  name       String     @unique
+  embedding Unsupported("vector(768)")
+
+  @@schema("public")
+}
+
 enum TaskStatus {
   PENDING
   PROCESSING
@@ -58,7 +66,7 @@ model Embeddings {
   id__  Int                        @id @default(autoincrement())
   url   String
   index Int
-  page  Page                       @relation(fields: [url], references: [url])
+  page  Page                       @relation(fields: [url], references: [url], onDelete: Cascade)
   vec   Unsupported("vector(768)")
 
   @@schema("vecs")
@@ -82,7 +90,7 @@ model FeedPage {
   page           Page      @relation(fields: [page_id], references: [id])
   suggested_from LikedPage @relation(fields: [suggested_from_id], references: [id])
 
-  @@unique([user_id, page_id], name: "feed_pages_user_id_page_id")
+  @@unique([user_id, page_id, suggested_from_id], name: "feed_pages_user_id_page_id_suggested_from_id")
   @@index([user_id], name: "feed_pages_user_id")
   @@index([page_id], name: "feed_pages_page_id")
   @@schema("public")
