@@ -134,9 +134,11 @@ async def store_embeddings_for_pages(client: Prisma, pages: list[Page]):
         data = model.generate_vecs(p)
         to_append.extend(data)
 
-    query = """INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES {}""".format(",".join(
-        ["('{}', '{}', '{}')".format(x[0], x[1], x[2]) for x in to_append]))
-    await client.execute_raw(query)
+    # query = """INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES (%s, %s, %s)""".format(",".join(
+    #     ["('{}', '{}', '{}')".format(x[0], x[1], x[2]) for x in to_append]))
+
+    cur = db.cursor()
+    cur.executemany("""INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES (%s, %s, %s)""", [(x[0], x[1], x[2]) for x in to_append])
 
 
 async def generate_embeddings():
