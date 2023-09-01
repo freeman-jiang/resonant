@@ -80,6 +80,8 @@ async def _query_similar(doc_url: str) -> list[str]:
 
     urls_to_add = list(set(x.url for x in similar))
 
+    print("Found similar URLs to ", doc_url, urls_to_add)
+
     return urls_to_add
 
 
