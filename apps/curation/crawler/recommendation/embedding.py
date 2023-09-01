@@ -35,10 +35,10 @@ class Embedder:
 
     def embed(self, text: str) -> np.ndarray:
         windows = list(overlapping_windows(text))
+        # Trim to first 7 windows only to save computation
+        if len(windows) > 7:
+            windows = windows[0:7]
 
-        if len(windows) > 12:
-            # Get first 7 and last 5 of windows
-            windows = windows[0:7] + windows[-5:]
         return self.model.encode(windows)
 
     def generate_vecs(self, document: Page) -> list[tuple[str, int, list]]:
@@ -71,14 +71,14 @@ model = Embedder()
 async def _query_similar(doc_url: str) -> list[str]:
     cursor = db.cursor(row_factory=class_row(models.Embeddings))
     similar = cursor.execute("""
-    -- Get average of the first 7 vectors for the article we WANT
+    -- Get average of the first X vectors for the article we WANT
  WITH want AS (SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %(url)s AND index <= 7 GROUP BY url)
  SELECT embed.* FROM vecs."Embeddings" as embed INNER JOIN
  (SELECT AVG(e.vec <=> w.vec) as avg_dist, e.url from vecs."Embeddings" as e, want as w WHERE e.url != w.url GROUP BY e.url ORDER BY  avg_dist LIMIT %(limit)s) matching_docs
  ON embed.url = matching_docs.url
     """, dict(url=doc_url, limit=50)).fetchall()
 
-    urls_to_add = [x.url for x in similar]
+    urls_to_add = list(set(x.url for x in similar))
 
     return urls_to_add
 
@@ -118,7 +118,7 @@ async def test_query_similar():
         },
         'page': {
             'connect': {
-                'id': 52
+                'id': 56
             }
         }
     }, include={'page': True, 'user': True})
@@ -141,7 +141,7 @@ async def generate_embeddings():
     await client.connect()
 
     while True:
-        pages = await client.page.find_many(take=40, where={
+        pages = await client.page.find_many(take=10, where={
             'embeddings': {
                 'none': {}
             },

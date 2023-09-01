@@ -2,6 +2,7 @@ import asyncio
 import csv
 import re
 
+import requests
 from dotenv import load_dotenv
 from prisma import Prisma
 
@@ -59,6 +60,24 @@ def add_aldaily_urls():
         li.append(f"https://www.aldaily.com/essays-and-opinions/?page={page}")
     return li
 
+def add_blogshn_urls():
+    blog_directory = "https://raw.githubusercontent.com/surprisetalk/blogs.hn/main/blogs.json"
+    response = requests.get(blog_directory)
+    urls = response.json()
+    return [x["url"] for x in urls]
+
+def add_ooh_directory_urls():
+    files = ["futures.xml", "humanities.xml", "personal.xml", "technology.xml", "society.xml", "history.xml", "language.xml", "economics.xml"]
+
+    pattern = r'htmlUrl="([^"]*)"'
+    urls = []
+    for f in files:
+        with open(f"/Users/henry/Downloads/{f}", "r") as file:
+            text = file.read()
+            html_urls = re.findall(pattern, text)
+            urls += html_urls
+    return urls
+
 async def main():
     config = Config()
     db = Prisma()
@@ -71,6 +90,8 @@ async def main():
 
     urls += add_dm_hn_urls()
     urls += add_aldaily_urls()
+    urls += add_ooh_directory_urls()
+
 
     links = []
 
