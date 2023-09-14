@@ -16,6 +16,7 @@ import nltk
 load_dotenv()
 
 client = Prisma()
+print(os.environ['DATABASE_URL'])
 db = psycopg.connect(os.environ['DATABASE_URL'])
 
 
@@ -120,7 +121,7 @@ async def test_query_similar():
         },
         'page': {
             'connect': {
-                'id': 56
+                'id': 42
             }
         }
     }, include={'page': True, 'user': True})
@@ -134,11 +135,9 @@ async def store_embeddings_for_pages(client: Prisma, pages: list[Page]):
         data = model.generate_vecs(p)
         to_append.extend(data)
 
-    # query = """INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES (%s, %s, %s)""".format(",".join(
-    #     ["('{}', '{}', '{}')".format(x[0], x[1], x[2]) for x in to_append]))
-
     cur = db.cursor()
     cur.executemany("""INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES (%s, %s, %s)""", [(x[0], x[1], x[2]) for x in to_append])
+    db.commit()
 
 
 async def generate_embeddings():
