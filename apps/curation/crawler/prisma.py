@@ -48,25 +48,31 @@ class PrismaClient:
         content_hash = str(mmh3.hash128(
             crawl_result.content, signed=False))
 
-        page = await self.db.page.upsert(
-            data={
-                'create': {
-                    'content_hash': content_hash,
-                    'url': crawl_result.link.url,
-                    'parent_url': crawl_result.link.parent_url,
-                    'title': crawl_result.title,
-                    'date': crawl_result.date,
-                    'author': crawl_result.author,
-                    'content': crawl_result.content,
-                    'outbound_urls': [link.url for link in crawl_result.outbound_links]
+        # Check prisma.errors.UniqueViolationError: Unique constraint failed on the fields: (`content_hash`)
+        try:
+            page = await self.db.page.upsert(
+                data={
+                    'create': {
+                        'content_hash': content_hash,
+                        'url': crawl_result.link.url,
+                        'parent_url': crawl_result.link.parent_url,
+                        'title': crawl_result.title,
+                        'date': crawl_result.date,
+                        'author': crawl_result.author,
+                        'content': crawl_result.content,
+                        'outbound_urls': [link.url for link in crawl_result.outbound_links]
+                    },
+                    'update': {}
                 },
-                'update': {}
-            },
-            where={
-                'content_hash': content_hash
-            }
-        )
-        return page
+                where={
+                    'content_hash': content_hash
+                }
+            )
+            return page
+
+        except UniqueViolationError as e:
+            if "content_hash" not in str(e):
+                raise  # only re-raise if it's not a content_hash error
 
     async def store_page(self, task: CrawlTask, crawl_result: CrawlResult):
         try:
