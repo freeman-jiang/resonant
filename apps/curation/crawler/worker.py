@@ -11,7 +11,7 @@ from crawler.config import Config
 from . import filters
 from .link import Link
 from .parse import CrawlResult, parse_html
-from .prisma import PrismaClient
+from .prismac import PrismaClient
 
 
 class Worker:

@@ -20,7 +20,7 @@ SUPPRESSED_DOMAINS = {
     'vice.com',
     'biorxiv.org',
     'psychologytoday.com',
-
+    'dailymail.com',
     'unsongbook.com'
     'goodreads.com',
     '.gov',

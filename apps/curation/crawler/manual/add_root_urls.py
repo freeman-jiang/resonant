@@ -8,7 +8,7 @@ from prisma import Prisma
 
 from crawler.config import Config
 from crawler.link import Link
-from crawler.prisma import PrismaClient
+from crawler.prismac import PrismaClient
 
 load_dotenv()
 

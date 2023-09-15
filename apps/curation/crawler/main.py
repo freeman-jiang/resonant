@@ -3,7 +3,7 @@ import time
 from prisma import Prisma
 
 from .config import Config
-from .prisma import PrismaClient
+from .prismac import PrismaClient
 
 from .link import Link
 from .worker import Worker

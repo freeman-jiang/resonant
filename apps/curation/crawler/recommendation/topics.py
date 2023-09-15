@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 
 import psycopg
-from ..prisma import PrismaClient
+from ..prismac import PrismaClient
 
 from crawler.recommendation.embedding import Embedder, store_embeddings_for_pages
 from crawler.link import Link

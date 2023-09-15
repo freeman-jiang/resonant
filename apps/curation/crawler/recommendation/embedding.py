@@ -1,11 +1,12 @@
 import asyncio
 import pytest
-from psycopg.rows import class_row
+from psycopg.rows import class_row, dict_row
 import os
 from typing import Iterator
 
 import numpy as np
 import psycopg
+from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 
 from dotenv import load_dotenv
@@ -68,28 +69,40 @@ class Embedder:
 
 model = Embedder()
 
+class SimilarArticles(BaseModel):
+    url: str
+    score: float
 
-async def _query_similar(doc_url: str) -> list[str]:
-    cursor = db.cursor(row_factory=class_row(models.Embeddings))
+    def __hash__(self):
+        return hash(self.url)
+
+async def _query_similar(doc_url: str) -> list[SimilarArticles]:
+    cursor = db.cursor(row_factory=dict_row)
     similar = cursor.execute("""
     -- Get average of the first X vectors for the article we WANT
- WITH want AS (SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %(url)s AND index <= 7 GROUP BY url)
- SELECT embed.* FROM vecs."Embeddings" as embed INNER JOIN
- (SELECT AVG(e.vec <=> w.vec) as avg_dist, e.url from vecs."Embeddings" as e, want as w WHERE e.url != w.url GROUP BY e.url ORDER BY  avg_dist LIMIT %(limit)s) matching_docs
- ON embed.url = matching_docs.url
-    """, dict(url=doc_url, limit=50)).fetchall()
+ WITH want AS (SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %(url)s AND index <= 4 GROUP BY url)
+ SELECT page.*, matching_docs.avg_dist as avg_dist FROM "Page" as page INNER JOIN
+ (SELECT AVG(e.vec <=> w.vec) as avg_dist, e.url as url from vecs."Embeddings" as e, want as w WHERE e.url != w.url GROUP BY e.url ORDER BY  avg_dist LIMIT %(limit)s) matching_docs
+ ON page.url = matching_docs.url ORDER BY avg_dist ASC
+    """, dict(url=doc_url, limit=15)).fetchall()
 
-    urls_to_add = list(set(x.url for x in similar))
+
+    urls_to_add = list(set(SimilarArticles(
+        url = x['url'],
+        score = -x['avg_dist'] # Higher distance means lower similarity, so just negate it
+    ) for x in similar))
 
     print("Found similar URLs to ", doc_url, urls_to_add)
 
     return urls_to_add
 
 
-async def generate_feed_from_liked(lp: models.LikedPage):
+async def generate_feed_from_liked(client: Prisma, lp: models.LikedPage):
     liked = lp.page
-    urls = await _query_similar(liked.url)
-    for url in urls:
+    similar = await _query_similar(liked.url)
+
+    for article in similar:
+        url = article.url
         await client.feedpage.create(data={
             'page': {
                 'connect': {
@@ -107,7 +120,7 @@ async def generate_feed_from_liked(lp: models.LikedPage):
                 }
             }
         })
-
+    return similar
 
 @pytest.mark.asyncio
 async def test_query_similar():
