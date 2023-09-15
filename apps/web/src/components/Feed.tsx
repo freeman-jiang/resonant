@@ -1,35 +1,60 @@
-import { ArticleLink } from "@/links";
-import { FeedbackButton } from "./FeedbackButton";
+import { cn } from "@/lib/utils";
+import { Link } from "@/types/api";
+import { Entry } from "./Entry";
+import { Skeleton } from "./ui/skeleton";
 
-export const extractDomain = (url: string) => {
-  const domain = url.split("/")[2];
-  return domain.split(":")[0];
-};
+async function getData() {
+  const response = await fetch("http://127.0.0.1:8000/pages", {
+    cache: "no-store",
+    next: {
+      tags: ["pages"],
+      // revalidate: 30, // Clear cache every 30 seconds
+    },
+  });
+  return response.json() as Promise<Link[]>;
+}
 
-const Entry = ({ title, url, excerpt }: ArticleLink) => {
+export const Feed = async () => {
+  const links = await getData();
+
   return (
-    <div className="my-4">
-      <div className="flex flex-row items-center justify-between border-b border-slate-400 pb-2">
-        <a href={url} className="cursor-pointer" target="_blank">
-          <h2 className="scroll-m-20 text-xl font-semibold tracking-tight">
-            {title}
-          </h2>
-          <p className="text-sm font-light text-slate-700">
-            {extractDomain(url)}
-          </p>
-        </a>
-        <FeedbackButton className="ml-8 lg:ml-20" />
-      </div>
-    </div>
-  );
-};
-
-export const Feed = (props: { links: ArticleLink[] }) => {
-  return (
-    <div>
-      {props.links.map((link) => (
+    <div className="mt-4 space-y-2">
+      {links.map((link) => (
         <Entry key={link.url} {...link} />
       ))}
     </div>
   );
+};
+
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
+  index: number;
+}
+
+const LoadingEntry = ({ index, ...rest }: Props) => {
+  const isLarger = index % 3 === 0;
+
+  return (
+    <div {...rest}>
+      <Skeleton
+        className={cn("bg-slate-200", {
+          "h-12": isLarger,
+          "h-8": !isLarger,
+        })}
+      />
+      <Skeleton className="mt-2 h-6" />
+    </div>
+  );
+};
+
+const renderSkeletons = (count: number) => {
+  const skeletons = [];
+
+  for (let i = 0; i < count; i++) {
+    skeletons.push(<LoadingEntry index={i} />);
+  }
+  return skeletons;
+};
+
+export const LoadingFeed = () => {
+  return <div className="mt-4 w-full space-y-4">{renderSkeletons(20)}</div>;
 };
