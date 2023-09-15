@@ -1,4 +1,4 @@
-import { Feed } from "@/components/Feed";
+import { Feed, LoadingFeed } from "@/components/Feed";
 import { Badge } from "@/components/ui/badge";
 import { Suspense } from "react";
 
@@ -18,7 +18,7 @@ export default function Home() {
           Philosophy
         </Badge>
       </div>
-      <Suspense fallback={<div>loading</div>}>
+      <Suspense fallback={<LoadingFeed />}>
         <Feed />
       </Suspense>
     </div>

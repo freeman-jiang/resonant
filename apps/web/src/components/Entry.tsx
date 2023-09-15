@@ -8,7 +8,7 @@ export const extractDomain = (url: string) => {
 
 export const Entry = (link: Link) => {
   return (
-    <div className="my-4">
+    <div>
       <div className="flex flex-row items-center justify-between border-b border-slate-400 pb-2">
         <a href={link.url} className="cursor-pointer" target="_blank">
           <h2 className="scroll-m-20 text-xl font-semibold tracking-tight">
