@@ -1,16 +1,18 @@
 from collections import defaultdict
-from prisma.models import Page
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from prisma.models import Page
 from pydantic import BaseModel
 
-from link import Link
 from prisma import Prisma
-from recommendation.embedding import generate_feed_from_liked
+
+from .link import Link
+from .recommendation.embedding import generate_feed_from_liked
+
 app = FastAPI()
 client = Prisma()
 
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
@@ -26,9 +28,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
 @app.on_event("startup")
 async def startup():
     await client.connect()
+
 
 async def find_or_create_user(userid):
     # Check if the user exists
@@ -46,6 +51,8 @@ async def find_or_create_user(userid):
     )
 
     return new_user
+
+
 @app.get("/like/{userid}/{pageid}")
 async def like(userid: int, pageid: int):
     page = await client.page.find_first(where={"id": pageid})
@@ -63,6 +70,7 @@ async def like(userid: int, pageid: int):
         }
     }, include={'page': True, 'user': True})
     urls = await generate_feed_from_liked(client, lp)
+    print(urls)
     return urls
 
 
@@ -72,19 +80,19 @@ class PageResponse(BaseModel):
     title: str
     date: str
 
-
     @classmethod
     def from_prisma_page(cls, p: Page) -> 'PageResponse':
         return PageResponse(
-            id = p.id,
-            url = p.url,
-            title = p.title,
-            date = p.date
+            id=p.id,
+            url=p.url,
+            title=p.title,
+            date=p.date
         )
+
 
 @app.get("/pages")
 async def pages() -> list[PageResponse]:
-    crawltasks = await client.crawltask.find_many(take = 120, where = {
+    crawltasks = await client.crawltask.find_many(take=120, where={
         "depth": {
             'lt': 2
         },
@@ -95,7 +103,7 @@ async def pages() -> list[PageResponse]:
 
     pages_to_return = []
     for ct in crawltasks:
-        page = await client.page.find_first(where = {'url': ct.url})
+        page = await client.page.find_first(where={'url': ct.url})
 
         if page:
             domain = Link.from_url(page.url).domain()
