@@ -70,6 +70,7 @@ class Embedder:
 model = Embedder()
 
 class SimilarArticles(BaseModel):
+    title: str
     url: str
     score: float
 
@@ -89,6 +90,7 @@ async def _query_similar(doc_url: str) -> list[SimilarArticles]:
 
     urls_to_add = list(set(SimilarArticles(
         url = x['url'],
+        title = x['title'],
         score = -x['avg_dist'] # Higher distance means lower similarity, so just negate it
     ) for x in similar))
 

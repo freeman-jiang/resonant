@@ -1,4 +1,5 @@
 from collections import defaultdict
+from nltk import sent_tokenize
 from prisma.models import Page
 
 from fastapi import FastAPI
@@ -65,21 +66,27 @@ async def like(userid: int, pageid: int):
     urls = await generate_feed_from_liked(client, lp)
     return urls
 
-
+def sentences(text: str) -> list[str]:
+    return sent_tokenize(input_string)
 class PageResponse(BaseModel):
     id: int
     url: str
     title: str
     date: str
+    excerpt: str
 
 
     @classmethod
     def from_prisma_page(cls, p: Page) -> 'PageResponse':
+        # Get first two sentences from p.content
+        excerpt = sent_tokenize(p.content)[:2]
+
         return PageResponse(
             id = p.id,
             url = p.url,
             title = p.title,
-            date = p.date
+            date = p.date,
+            excerpt='. '.join(excerpt)
         )
 
 @app.get("/pages")
