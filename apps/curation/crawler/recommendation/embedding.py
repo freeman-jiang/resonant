@@ -71,6 +71,7 @@ model = Embedder()
 
 
 class SimilarArticles(BaseModel):
+    title: str
     url: str
     score: float
 
@@ -88,7 +89,10 @@ async def _query_similar(doc_url: str) -> list[SimilarArticles]:
  ON page.url = matching_docs.url ORDER BY avg_dist ASC
     """, dict(url=doc_url, limit=15)).fetchall()
 
+    print("GOT SIMILAR:", similar)
+
     urls_to_add = list(set(SimilarArticles(
+        title=x['title'],
         url=x['url'],
         # Higher distance means lower similarity, so just negate it
         score=-x['avg_dist']
