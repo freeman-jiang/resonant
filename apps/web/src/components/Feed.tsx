@@ -4,7 +4,7 @@ import { Entry } from "./Entry";
 import { Skeleton } from "./ui/skeleton";
 
 async function getData() {
-  const response = await fetch("http://127.0.0.1:8000/pages", {
+  const response = await fetch("http://127.0.0.1:8000/feed", {
     cache: "no-store",
     next: {
       tags: ["pages"],

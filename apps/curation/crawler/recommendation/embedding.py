@@ -1,18 +1,18 @@
 import asyncio
-import pytest
-from psycopg.rows import class_row, dict_row
 import os
 from typing import Iterator
 
+import nltk
 import numpy as np
 import psycopg
+import pytest
+from dotenv import load_dotenv
+from prisma.models import Page
+from psycopg.rows import class_row, dict_row
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 
-from dotenv import load_dotenv
 from prisma import Prisma, models
-from prisma.models import Page
-import nltk
 
 load_dotenv()
 
@@ -69,6 +69,7 @@ class Embedder:
 
 model = Embedder()
 
+
 class SimilarArticles(BaseModel):
     title: str
     url: str
@@ -76,6 +77,7 @@ class SimilarArticles(BaseModel):
 
     def __hash__(self):
         return hash(self.url)
+
 
 async def _query_similar(doc_url: str) -> list[SimilarArticles]:
     cursor = db.cursor(row_factory=dict_row)
@@ -87,11 +89,13 @@ async def _query_similar(doc_url: str) -> list[SimilarArticles]:
  ON page.url = matching_docs.url ORDER BY avg_dist ASC
     """, dict(url=doc_url, limit=15)).fetchall()
 
+    print("GOT SIMILAR:", similar)
 
     urls_to_add = list(set(SimilarArticles(
-        url = x['url'],
-        title = x['title'],
-        score = -x['avg_dist'] # Higher distance means lower similarity, so just negate it
+        title=x['title'],
+        url=x['url'],
+        # Higher distance means lower similarity, so just negate it
+        score=-x['avg_dist']
     ) for x in similar))
 
     print("Found similar URLs to ", doc_url, urls_to_add)
@@ -124,6 +128,7 @@ async def generate_feed_from_liked(client: Prisma, lp: models.LikedPage):
         })
     return similar
 
+
 @pytest.mark.asyncio
 async def test_query_similar():
     await client.connect()
@@ -151,7 +156,8 @@ async def store_embeddings_for_pages(client: Prisma, pages: list[Page]):
         to_append.extend(data)
 
     cur = db.cursor()
-    cur.executemany("""INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES (%s, %s, %s)""", [(x[0], x[1], x[2]) for x in to_append])
+    cur.executemany("""INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES (%s, %s, %s)""", [
+                    (x[0], x[1], x[2]) for x in to_append])
     db.commit()
 
 

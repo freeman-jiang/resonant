@@ -1,17 +1,19 @@
 from collections import defaultdict
-from nltk import sent_tokenize
-from prisma.models import Page
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from prisma import Prisma
+from prisma.models import CrawlTask, Page
 from pydantic import BaseModel
 
-from link import Link
-from prisma import Prisma
+from .link import Link
+from .recommendation.embedding import generate_feed_from_liked
+
+from nltk import sent_tokenize
 from recommendation.embedding import generate_feed_from_liked
 app = FastAPI()
 client = Prisma()
 
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
@@ -27,9 +29,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
 @app.on_event("startup")
 async def startup():
     await client.connect()
+
 
 async def find_or_create_user(userid):
     # Check if the user exists
@@ -47,6 +52,8 @@ async def find_or_create_user(userid):
     )
 
     return new_user
+
+
 @app.get("/like/{userid}/{pageid}")
 async def like(userid: int, pageid: int):
     page = await client.page.find_first(where={"id": pageid})
@@ -64,10 +71,10 @@ async def like(userid: int, pageid: int):
         }
     }, include={'page': True, 'user': True})
     urls = await generate_feed_from_liked(client, lp)
+    print(urls)
+
     return urls
 
-def sentences(text: str) -> list[str]:
-    return sent_tokenize(input_string)
 class PageResponse(BaseModel):
     id: int
     url: str
@@ -89,20 +96,24 @@ class PageResponse(BaseModel):
             excerpt='. '.join(excerpt)
         )
 
-@app.get("/pages")
+
+@app.get("/feed")
 async def pages() -> list[PageResponse]:
-    crawltasks = await client.crawltask.find_many(take = 120, where = {
+    crawltasks = await client.crawltask.find_many(take=120, where={
         "depth": {
             'lt': 2
         },
         'status': 'COMPLETED'
     })
 
+    # CONVERT the above to a raw query
+    # crawltasks = await client.query_raw("""SELECT * FROM "CrawlTask" WHERE depth <= 1 AND status = 'COMPLETED' ORDER BY RANDOM() LIMIT 120""", model=CrawlTask)
+
     domain_count = defaultdict(int)
 
     pages_to_return = []
     for ct in crawltasks:
-        page = await client.page.find_first(where = {'url': ct.url})
+        page = await client.page.find_first(where={'url': ct.url})
 
         if page:
             domain = Link.from_url(page.url).domain()

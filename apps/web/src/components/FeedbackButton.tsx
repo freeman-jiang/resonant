@@ -41,11 +41,11 @@ export const FeedbackButton = ({ link, ...props }: Props) => {
 
     const renderRelatedArticles = () => {
       return (
-        <div className="w-[90%]">
+        <div className="w-3/4">
           {relatedArticles.map((article) => (
             <div
               key={article.url}
-              className="w-10/12 truncate rounded-md p-1 transition-all hover:bg-sky-100"
+              className="w-full truncate rounded-md p-1 transition-all hover:bg-sky-100"
             >
               <a href={article.url} target="_blank" className="">
                 {article.title}
@@ -57,9 +57,9 @@ export const FeedbackButton = ({ link, ...props }: Props) => {
     };
 
     switch (feedback) {
-      case Feedback.Liked:
+      case (Feedback.Liked, Feedback.Loved):
         toast({
-          title: "Here are 3 similar articles you might like",
+          title: "Here similar articles you might like",
           description: renderRelatedArticles(),
         });
         break;
