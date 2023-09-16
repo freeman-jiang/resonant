@@ -2,10 +2,9 @@ from collections import defaultdict
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from prisma.models import Page
-from pydantic import BaseModel
-
 from prisma import Prisma
+from prisma.models import CrawlTask, Page
+from pydantic import BaseModel
 
 from .link import Link
 from .recommendation.embedding import generate_feed_from_liked
@@ -71,6 +70,7 @@ async def like(userid: int, pageid: int):
     }, include={'page': True, 'user': True})
     urls = await generate_feed_from_liked(client, lp)
     print(urls)
+
     return urls
 
 
@@ -90,7 +90,7 @@ class PageResponse(BaseModel):
         )
 
 
-@app.get("/pages")
+@app.get("/feed")
 async def pages() -> list[PageResponse]:
     crawltasks = await client.crawltask.find_many(take=120, where={
         "depth": {
@@ -98,6 +98,9 @@ async def pages() -> list[PageResponse]:
         },
         'status': 'COMPLETED'
     })
+
+    # CONVERT the above to a raw query
+    # crawltasks = await client.query_raw("""SELECT * FROM "CrawlTask" WHERE depth <= 1 AND status = 'COMPLETED' ORDER BY RANDOM() LIMIT 120""", model=CrawlTask)
 
     domain_count = defaultdict(int)
 
