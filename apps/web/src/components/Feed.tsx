@@ -1,11 +1,11 @@
-import { BASE_URL } from "@/config";
+import { NEXT_PUBLIC_BASE_URL } from "@/config";
 import { cn } from "@/lib/utils";
 import { Link } from "@/types/api";
 import { Entry } from "./Entry";
 import { Skeleton } from "./ui/skeleton";
 
 async function getData() {
-  const response = await fetch(`${BASE_URL}/feed`, {
+  const response = await fetch(`${NEXT_PUBLIC_BASE_URL}/feed`, {
     cache: "no-store",
     next: {
       tags: ["pages"],

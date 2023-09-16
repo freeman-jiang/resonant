@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BASE_URL } from "@/config";
+import { NEXT_PUBLIC_BASE_URL } from "@/config";
 import { Link } from "@/types/api";
 import { Ban, Heart, MoreHorizontal, ThumbsUp } from "lucide-react";
 import { useToast } from "./ui/use-toast";
@@ -18,9 +18,11 @@ enum Feedback {
 }
 
 const getRelatedArticles = async ({ id }: Link) => {
-  const response = await fetch(
-    `${BASE_URL}/like/${Math.floor(Math.random() * 1000)}/${id}`,
-  );
+  const url = `${NEXT_PUBLIC_BASE_URL}/like/${Math.floor(
+    Math.random() * 1000,
+  )}/${id}`;
+
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error("Failed to fetch data");
