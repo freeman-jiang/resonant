@@ -1,14 +1,15 @@
+import { BASE_URL } from "@/config";
 import { cn } from "@/lib/utils";
 import { Link } from "@/types/api";
 import { Entry } from "./Entry";
 import { Skeleton } from "./ui/skeleton";
 
 async function getData() {
-  const response = await fetch("http://127.0.0.1:8000/feed", {
+  const response = await fetch(`${BASE_URL}/feed`, {
     cache: "no-store",
     next: {
       tags: ["pages"],
-      // revalidate: 30, // Clear cache every 30 seconds
+      // revalidate: 30, // Clear cache every 30 seconds (there is a bug with this that causes the entire page to hang instead of just the Suspense component)
     },
   });
   return response.json() as Promise<Link[]>;
@@ -34,7 +35,7 @@ const LoadingEntry = ({ index, ...rest }: Props) => {
   const isLarger = index % 3 === 0;
 
   return (
-    <div {...rest}>
+    <>
       <Skeleton
         className={cn("bg-slate-200", {
           "h-12": isLarger,
@@ -42,7 +43,7 @@ const LoadingEntry = ({ index, ...rest }: Props) => {
         })}
       />
       <Skeleton className="mt-2 h-6" />
-    </div>
+    </>
   );
 };
 

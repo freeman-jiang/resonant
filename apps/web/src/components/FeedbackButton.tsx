@@ -6,6 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { BASE_URL } from "@/config";
 import { Link } from "@/types/api";
 import { Ban, Heart, MoreHorizontal, ThumbsUp } from "lucide-react";
 import { useToast } from "./ui/use-toast";
@@ -18,7 +19,7 @@ enum Feedback {
 
 const getRelatedArticles = async ({ id }: Link) => {
   const response = await fetch(
-    `http://127.0.0.1:8000/like/${Math.floor(Math.random() * 1000)}/${id}`,
+    `${BASE_URL}/like/${Math.floor(Math.random() * 1000)}/${id}`,
   );
 
   if (!response.ok) {
@@ -37,15 +38,14 @@ export const FeedbackButton = ({ link, ...props }: Props) => {
 
   const handleFeedback = async (feedback: Feedback) => {
     const relatedArticles = await getRelatedArticles(link);
-    console.log("relatedArticles", relatedArticles);
 
     const renderRelatedArticles = () => {
       return (
-        <div className="w-3/4">
+        <div>
           {relatedArticles.map((article) => (
             <div
               key={article.url}
-              className="w-full truncate rounded-md p-1 transition-all hover:bg-sky-100"
+              className="max-w-[35ch] truncate rounded-md p-1 transition-all hover:bg-sky-100"
             >
               <a href={article.url} target="_blank" className="">
                 {article.title}
