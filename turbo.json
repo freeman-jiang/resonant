@@ -1,5 +1,5 @@
 {
-  "globalEnv": ["BASE_URL"],
+  "globalEnv": ["NEXT_PUBLIC_BASE_URL"],
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
   "pipeline": {
