@@ -1,7 +1,7 @@
 import pytest
+from aiohttp import ClientSession
 from crawler.link import Link
 from crawler.parse import parse_html
-from aiohttp import ClientSession
 
 
 @pytest.mark.asyncio
