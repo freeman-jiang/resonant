@@ -2,11 +2,10 @@ from collections import defaultdict
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-# from nltk import sent_tokenize
+from nltk import sent_tokenize
+from prisma import Prisma
 from prisma.models import CrawlTask, Page
 from pydantic import BaseModel
-
-from prisma import Prisma
 
 from .link import Link
 from .recommendation.embedding import generate_feed_from_liked
@@ -82,19 +81,19 @@ class PageResponse(BaseModel):
     url: str
     title: str
     date: str
-    # excerpt: str
+    excerpt: str
 
     @classmethod
     def from_prisma_page(cls, p: Page) -> 'PageResponse':
         # Get first two sentences from p.content
-        # excerpt = sent_tokenize(p.content)[:2]
+        excerpt = sent_tokenize(p.content)[:2]
 
         return PageResponse(
             id=p.id,
             url=p.url,
             title=p.title,
             date=p.date,
-            # excerpt='. '.join(excerpt)
+            excerpt='. '.join(excerpt)
         )
 
 
