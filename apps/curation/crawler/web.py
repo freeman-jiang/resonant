@@ -2,6 +2,7 @@ from collections import defaultdict
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from nltk import sent_tokenize
 from prisma import Prisma
 from prisma.models import CrawlTask, Page
 from pydantic import BaseModel
@@ -9,7 +10,6 @@ from pydantic import BaseModel
 from .link import Link
 from .recommendation.embedding import generate_feed_from_liked
 
-from nltk import sent_tokenize
 app = FastAPI()
 client = Prisma()
 
@@ -19,6 +19,7 @@ app = FastAPI()
 origins = [
     "http://localhost:3000",
     "http://localhost:8080",
+    "https://app-superstack.vercel.app"
 ]
 
 app.add_middleware(
@@ -74,6 +75,7 @@ async def like(userid: int, pageid: int):
 
     return urls
 
+
 class PageResponse(BaseModel):
     id: int
     url: str
@@ -81,17 +83,16 @@ class PageResponse(BaseModel):
     date: str
     excerpt: str
 
-
     @classmethod
     def from_prisma_page(cls, p: Page) -> 'PageResponse':
         # Get first two sentences from p.content
         excerpt = sent_tokenize(p.content)[:2]
 
         return PageResponse(
-            id = p.id,
-            url = p.url,
-            title = p.title,
-            date = p.date,
+            id=p.id,
+            url=p.url,
+            title=p.title,
+            date=p.date,
             excerpt='. '.join(excerpt)
         )
 
