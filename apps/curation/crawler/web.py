@@ -10,7 +10,6 @@ from .link import Link
 from .recommendation.embedding import generate_feed_from_liked
 
 from nltk import sent_tokenize
-from recommendation.embedding import generate_feed_from_liked
 app = FastAPI()
 client = Prisma()
 
@@ -129,3 +128,9 @@ async def pages() -> list[PageResponse]:
 
             pages_to_return.append(PageResponse.from_prisma_page(page))
     return pages_to_return
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="127.0.0.1", port=8000)
