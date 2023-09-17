@@ -22,6 +22,7 @@ model Page {
   content_hash  String       @unique // A 128-bit MurmurHash3 hash of the content
   created_at    DateTime     @default(now())
   updated_at    DateTime     @updatedAt
+  depth Int         @default(0)
   outbound_urls String[]
   embeddings    Embeddings[]
 
