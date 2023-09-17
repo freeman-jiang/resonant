@@ -37,7 +37,7 @@ export const Feed = () => {
   return (
     <FeedContext.Provider value={{ setLinks }}>
       <Search />
-      <div className="mt-4 space-y-2">
+      <div className="mt-5 space-y-2">
         {links.map((link) => (
           <Entry key={link.url} {...link} />
         ))}

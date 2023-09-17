@@ -24,7 +24,7 @@ export function Search() {
 
   return (
     <form
-      className="mt-4 flex w-full items-center space-x-2"
+      className="mt-3 flex w-full items-center space-x-2"
       onSubmit={handleSearch}
     >
       <Input
