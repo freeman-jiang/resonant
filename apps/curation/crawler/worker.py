@@ -2,6 +2,8 @@ import asyncio
 import random
 from asyncio import Queue
 from typing import Optional, Tuple
+
+import numpy as np
 from prisma.models import CrawlTask
 
 from aiohttp import ClientError, ClientSession, ClientTimeout
@@ -12,6 +14,7 @@ from . import filters
 from .link import Link
 from .parse import CrawlResult, parse_html
 from .prismac import PrismaClient
+from .recommendation.embedding import model
 
 
 class Worker:
@@ -114,7 +117,10 @@ class Worker:
         return response
 
     async def crawl(self, link: Link, session: ClientSession) -> Tuple[Optional[CrawlResult], list[Link]]:
-        """Crawl and parse the given `link`, returning a `CrawlResult` if successful, or `None` if not"""
+        """
+        Crawl and parse the given `link`, returning a `CrawlResult` if successful, or `None` if not.
+        The second tuple element is a list of RSS links found on that *domain*.
+        """
         should_rss = not await self.prisma.is_already_explored(link.domain())
 
         async with session.get(link.url) as response:
@@ -124,6 +130,28 @@ class Worker:
 
             return parse_html(response, link, should_rss)
 
+
+async def crawl_interactive(link: Link) -> np.ndarray | None:
+    """
+    Used for realtime search when the user gives us an unknown URL. We need to crawl it right away, calculate the
+    embeddings, and return.
+
+    For now, don't add it to our database (as users might submit bad links).
+    """
+
+    async with ClientSession(timeout=ClientTimeout(connect=4)) as session:
+        spoof_chrome_user_agent(session)
+
+        async with session.get(link.url) as response:
+            if not response.ok:
+                return None
+            response, _rss_links = parse_html(await response.read(), link, False)
+
+        vectors = model.embed(response.title + " " + response.content)
+
+        # Potentially long document, so the first few windows are most representative of what the user wants
+        avg_two_windows = np.mean(vectors[:4], axis = 0)
+        return avg_two_windows
 
 def spoof_chrome_user_agent(session: ClientSession):
     # or else we get blocked by cloudflare sites

@@ -7,8 +7,9 @@ from prisma import Prisma
 from prisma.models import CrawlTask, Page
 from pydantic import BaseModel
 
+from crawler.worker import crawl_interactive
 from .link import Link
-from .recommendation.embedding import generate_feed_from_liked
+from .recommendation.embedding import generate_feed_from_liked, NearestNeighboursQuery, _query_similar, SimilarArticles
 
 app = FastAPI()
 client = Prisma()
@@ -97,6 +98,25 @@ class PageResponse(BaseModel):
         )
 
 
+@app.get("/search/{url:path}")
+async def search(url: str) -> list[SimilarArticles]:
+    print("Searching for similar URLs to", url)
+
+    want_vec = await crawl_interactive(Link.from_url(url))
+
+    query = NearestNeighboursQuery(vector = want_vec, url = url)
+    similar = await _query_similar(query)
+
+    print("Similar articles to", url, similar)
+    return similar
+
+
+def test_search():
+    import asyncio
+    asyncio.run(search('https://www.theguardian.com/lifeandstyle/2017/aug/11/why-we-fell-for-clean-eating'))
+
+
+
 @app.get("/feed")
 async def pages() -> list[PageResponse]:
     crawltasks = await client.crawltask.find_many(take=120, where={
@@ -132,6 +152,9 @@ async def pages() -> list[PageResponse]:
 
 
 if __name__ == "__main__":
-    import uvicorn
+    import uvicorn, os
 
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    host = os.getenv("HOST", "127.0.0.1")
+    port = os.getenv("PORT", 8001)
+
+    uvicorn.run(app, host=host, port=port)

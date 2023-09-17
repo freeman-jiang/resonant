@@ -14,17 +14,22 @@ SUPPRESSED_DOMAINS = {
     'electrive.com', 'techcrunch.com',
     'ssrn.com', 'sciencedirect.com', 'springer.com', 'jstor.org', 'nature.com', 'sciencemag.org', 'sciencenews.org',
     'sciencemuseum.org.uk',
+    'slimemoldtimemold',
+    'exfatloss',
+    'achemicalhunger',
+    '9to5toys',
     'bloomberg.com', 'forbes.com', 'bbc.com', 'economist.com', 'ft.com', 'vimeo.com', 'youtube.com',
     'pittsburghlive.com', 'linkedin.com', 'soundcloud.com', 'albawa.com',
+    'theage.com'
     'prnewswire.com', 'archive.org', 'stackexchange.com', 'doi.org', 'mail-archive.com', 'ncbi.nlm.nih.gov',
     'vice.com',
     'biorxiv.org',
     'psychologytoday.com',
-    'dailymail.com',
+    'dailymail',
     'unsongbook.com'
     'goodreads.com',
     '.gov',
-    'cdc.gov',
+    'knowyourmeme'
     'technologyreview.com',
     'businessinsider.com',
     'investopedia.com',
@@ -38,7 +43,13 @@ SUPPRESSED_DOMAINS = {
     'cnbc.com',
     'brookings.edu',
     'thekrazycouponlady.com'
-
+    'princeton.edu',
+    'tvtropes.org',
+    'theregister.com',
+    'theonion.com',
+    'telegraph.co.uk',
+    'quoteinvestigator.com',
+    'bmj.com'
 }
 
 UNSUPPORTED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.ppt', '.pptx',

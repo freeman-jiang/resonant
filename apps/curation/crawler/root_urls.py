@@ -1,5 +1,7 @@
 # TODO: add other links in the same domain too
 ROOT_URLS = [
+    {"url": "https://www.theguardian.com/lifeandstyle/2017/aug/11/why-we-fell-for-clean-eating",
+     "title": "Why we fell for clean eating"},
     {
         "title": "Hiring and the market for lemons",
         "url": "https://danluu.com/hiring-lemons",
