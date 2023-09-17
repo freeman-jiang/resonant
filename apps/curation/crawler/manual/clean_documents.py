@@ -2,6 +2,8 @@ from prisma import Prisma
 
 from crawler.link import SUPPRESSED_DOMAINS
 
+from crawler.recommendation.metrics import get_readability_metrics, coherence
+
 
 async def main():
     client = Prisma()
@@ -13,7 +15,7 @@ async def main():
     to_delete = []
 
     while True:
-        pages = await client.page.find_many(take = 100, skip = processed)
+        pages = await client.page.find_many(take=100, skip=processed)
         if len(pages) == 0:
             break
         print(f"Processing {len(pages)} pages")
@@ -24,9 +26,9 @@ async def main():
                 if suppressed in p.url:
                     to_delete.append(p.id)
 
-    print("Deleting {} pages".format(len(to_delete)))
     if len(to_delete) > 0:
-        await client.page.delete_many(where = {
+        print("Deleting {} pages".format(len(to_delete)))
+        await client.page.delete_many(where={
             'id': {
                 'in': to_delete
             }

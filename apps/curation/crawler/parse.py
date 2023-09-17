@@ -186,6 +186,7 @@ def test_1():
     content = requests.get("https://www.aldaily.com/essays-and-opinions/?page=3", headers={
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
     })
-    print(parse_html(content.content, Link.from_url("https://www.aldaily.com/essays-and-opinions/?page=3"), False))
+    print(parse_html(content.content, Link.from_url(
+        "https://www.aldaily.com/essays-and-opinions/?page=3"), False))
     # print(trafilatura.feeds.find_feed_urls("http://paulgraham.com"))
     # print(trafilatura.sitemaps.sitemap_search("http://paulgraham.com"))

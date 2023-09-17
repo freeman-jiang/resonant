@@ -1,10 +1,12 @@
 from prisma import Prisma
+from typing import Optional
+
 
 from crawler.config import Config
 from .link import Link
 from .parse import CrawlResult
 from prisma.enums import TaskStatus
-from prisma.models import CrawlTask
+from prisma.models import CrawlTask, Page
 from prisma.types import CrawlTaskCreateWithoutRelationsInput
 from prisma.errors import UniqueViolationError
 import mmh3
@@ -73,8 +75,9 @@ class PrismaClient:
         except UniqueViolationError as e:
             if "content_hash" not in str(e):
                 raise  # only re-raise if it's not a content_hash error
+            return None
 
-    async def store_page(self, task: CrawlTask, crawl_result: CrawlResult):
+    async def store_page(self, task: CrawlTask, crawl_result: CrawlResult) -> Optional[Page]:
         try:
             # TODO: Currently these actions are not done in a transaction. Ideally they are
             # But prisma is very buggy with transactions right now, returning 422 errors

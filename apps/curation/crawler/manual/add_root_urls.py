@@ -54,11 +54,13 @@ def add_dm_hn_urls():
     print(urls)
     return urls
 
+
 def add_aldaily_urls():
     li = []
     for page in range(1, 41):
         li.append(f"https://www.aldaily.com/essays-and-opinions/?page={page}")
     return li
+
 
 def add_blogshn_urls():
     blog_directory = "https://raw.githubusercontent.com/surprisetalk/blogs.hn/main/blogs.json"
@@ -66,8 +68,10 @@ def add_blogshn_urls():
     urls = response.json()
     return [x["url"] for x in urls]
 
+
 def add_ooh_directory_urls():
-    files = ["futures.xml", "humanities.xml", "personal.xml", "technology.xml", "society.xml", "history.xml", "language.xml", "economics.xml"]
+    files = ["futures.xml", "humanities.xml", "personal.xml", "technology.xml",
+             "society.xml", "history.xml", "language.xml", "economics.xml"]
 
     pattern = r'htmlUrl="([^"]*)"'
     urls = []
@@ -77,6 +81,7 @@ def add_ooh_directory_urls():
             html_urls = re.findall(pattern, text)
             urls += html_urls
     return urls
+
 
 async def main():
     config = Config()
@@ -91,7 +96,6 @@ async def main():
     urls += add_dm_hn_urls()
     urls += add_aldaily_urls()
     urls += add_ooh_directory_urls()
-
 
     links = []
 

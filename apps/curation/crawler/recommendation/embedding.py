@@ -22,12 +22,12 @@ print(os.environ['DATABASE_URL'])
 db = psycopg.connect(os.environ['DATABASE_URL'])
 
 
-def overlapping_windows(s: str) -> Iterator[str]:
+def overlapping_windows(s: str, stride: int = 100, size: int = 120) -> Iterator[str]:
     arr: list[str] = nltk.word_tokenize(s)
     # Generate overlapping windows of arr as sentence-transformers token limit is 128
-    for i in range(0, len(arr), 100):
+    for i in range(0, len(arr), stride):
         # i goes from 0, 0 + 100
-        yield ' '.join(arr[i:i + 120])
+        yield ' '.join(arr[i:i + size])
 
 
 class Embedder:
@@ -36,7 +36,7 @@ class Embedder:
     def __init__(self):
         self.model = SentenceTransformer('all-mpnet-base-v2')
 
-    def embed(self, text: str) -> np.ndarray:
+    def embed(self, text: str, stride: int = 100, size: int = 120) -> np.ndarray:
         """
         Sentence-transformers only supports small inputs, so we split the text into overlapping windows of X tokens each,
         and return the vectors for each window
@@ -44,7 +44,7 @@ class Embedder:
         :param text:
         :return: ndarray of shape (n, 768) where n is the number of windows
         """
-        windows = list(overlapping_windows(text))
+        windows = list(overlapping_windows(text, stride, size))
         # Trim to first 7 windows only to save computation
         if len(windows) > 7:
             windows = windows[0:7]
@@ -83,12 +83,14 @@ class SimilarArticles(BaseModel):
     def __hash__(self):
         return hash(self.url)
 
+
 class NearestNeighboursQuery(BaseModel):
     vector: Optional[np.ndarray]
     url: Optional[str]
 
     class Config:
         arbitrary_types_allowed = True
+
     def __init__(self, **data):
         if 'vector' not in data and 'url' not in data:
             raise ValueError("Must provide either vector or url")
@@ -99,6 +101,7 @@ class NearestNeighboursQuery(BaseModel):
             return f'SELECT CAST(%(vec)s as vector(768)) as vec, %(url)s as url', dict(vec=str(self.vector.tolist()), url=self.url or '')
         else:
             return 'SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %(url)s AND index <= 3 GROUP BY url', dict(url=self.url)
+
 
 async def _query_similar(query: NearestNeighboursQuery) -> list[SimilarArticles]:
     cursor = db.cursor(row_factory=dict_row)
@@ -135,7 +138,6 @@ WITH want AS ({want_cte}),
 
     similar = sorted(similar, key=lambda x: x['score'], reverse=True)
 
-
     urls_to_add = [SimilarArticles(
         title=x['title'],
         url=x['url'],
@@ -150,7 +152,7 @@ WITH want AS ({want_cte}),
 
 async def generate_feed_from_liked(client: Prisma, lp: models.LikedPage):
     liked = lp.page
-    query = NearestNeighboursQuery(url = liked.url or None)
+    query = NearestNeighboursQuery(url=liked.url or None)
     similar = await _query_similar(query)
 
     for article in similar:
@@ -177,6 +179,8 @@ async def generate_feed_from_liked(client: Prisma, lp: models.LikedPage):
 
 @pytest.mark.asyncio
 async def test_query_similar():
+    l = Link.from_url(
+        "http://worrydream.com/ABriefRantOnTheFutureOfInteractionDesign/")
     await client.connect()
     user = await client.user.create(data={})
     lp = await client.likedpage.create(data={

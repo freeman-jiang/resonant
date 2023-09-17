@@ -106,7 +106,7 @@ async def search(url: str) -> list[SimilarArticles]:
 
     want_vec = await crawl_interactive(Link.from_url(url))
 
-    query = NearestNeighboursQuery(vector = want_vec, url = url)
+    query = NearestNeighboursQuery(vector=want_vec, url=url)
     similar = await _query_similar(query)
 
     print("Similar articles to", url, similar)
@@ -115,8 +115,8 @@ async def search(url: str) -> list[SimilarArticles]:
 
 def test_search():
     import asyncio
-    asyncio.run(search('https://www.theguardian.com/lifeandstyle/2017/aug/11/why-we-fell-for-clean-eating'))
-
+    asyncio.run(search(
+        'https://www.theguardian.com/lifeandstyle/2017/aug/11/why-we-fell-for-clean-eating'))
 
 
 @app.get("/feed")

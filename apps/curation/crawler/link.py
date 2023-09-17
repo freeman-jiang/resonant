@@ -4,53 +4,24 @@ from urllib.parse import urlparse, urlunparse
 import validators
 from pydantic import BaseModel, validator
 
-
-SUPPRESSED_DOMAINS = {
-    "wikipedia.org", "amazon.com", "youtube.com", "twitter.com", "facebook.com", "reddit.com", "instagram.com",
-    'google.com/patent', 'wikimedia.org',
-    't.co', 'amzn.to', 'github.com', 'codeforces.com', 'tandfonline.com', 'wiley.com', 'oup.com', 'sagepub.com',
-    'sexbuzz.com', 'arxiv.org',
-    'detnews.com', 'cbsnews.com', 'cnn.com', 'scholar.google.com', 'play.google.com', 'goo.gl', 'cnevpost.com',
-    'electrive.com', 'techcrunch.com',
-    'ssrn.com', 'sciencedirect.com', 'springer.com', 'jstor.org', 'nature.com', 'sciencemag.org', 'sciencenews.org',
-    'sciencemuseum.org.uk',
-    'slimemoldtimemold',
-    'exfatloss',
-    'achemicalhunger',
-    '9to5toys',
-    'bloomberg.com', 'forbes.com', 'bbc.com', 'economist.com', 'ft.com', 'vimeo.com', 'youtube.com',
-    'pittsburghlive.com', 'linkedin.com', 'soundcloud.com', 'albawa.com',
-    'theage.com'
-    'prnewswire.com', 'archive.org', 'stackexchange.com', 'doi.org', 'mail-archive.com', 'ncbi.nlm.nih.gov',
-    'vice.com',
-    'biorxiv.org',
-    'psychologytoday.com',
-    'dailymail',
-    'unsongbook.com'
-    'goodreads.com',
-    '.gov',
-    'knowyourmeme'
-    'technologyreview.com',
-    'businessinsider.com',
-    'investopedia.com',
-    'qualiacomputing.com',
-    'smithsonianmag.com',
-    'sciencedaily.com',
-    'plus.google.com',
-    'genomebiology.biomedcentral.com',
-    'openid.net',
-    'developer.apple.com',
-    'cnbc.com',
-    'brookings.edu',
-    'thekrazycouponlady.com'
-    'princeton.edu',
-    'tvtropes.org',
-    'theregister.com',
-    'theonion.com',
-    'telegraph.co.uk',
-    'quoteinvestigator.com',
-    'bmj.com'
-}
+SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com", "facebook.com", "reddit.com",
+                      "instagram.com", 'google.com/patent', 'wikimedia.org', 't.co', 'amzn.to', 'github.com',
+                      'codeforces.com', 'tandfonline.com', 'wiley.com', 'oup.com', 'sagepub.com', 'sexbuzz.com',
+                      'arxiv.org', 'detnews.com', 'cbsnews.com', 'cnn.com', 'scholar.google.com', 'play.google.com',
+                      'goo.gl', 'cnevpost.com', 'electrive.com', 'techcrunch.com', 'ssrn.com', 'sciencedirect.com',
+                      'springer.com', 'jstor.org', 'nature.com', 'sciencemag.org', 'sciencenews.org',
+                      'sciencemuseum.org.uk', 'elifesciences', 'fool.com', 'slimemoldtimemold', 'exfatloss',
+                      'achemicalhunger', '9to5toys', 'bloomberg.com', 'forbes.com', 'bbc.com', 'economist.com',
+                      'ft.com', 'vimeo.com', 'youtube.com', 'pittsburghlive.com', 'linkedin.com', 'soundcloud.com',
+                      'albawa.com', 'theage.com', 'prnewswire.com', 'archive.org', 'stackexchange.com', 'doi.org',
+                      'mail-archive.com', 'ncbi.nlm.nih.gov', 'vice.com', 'biorxiv.org', 'psychologytoday.com',
+                      'dailymail', 'unsongbook.comgoodreads.com', '.gov', 'knowyourmeme', 'technologyreview.com',
+                      'businessinsider.com', 'investopedia.com', 'qualiacomputing.com', 'smithsonianmag.com',
+                      'sciencedaily.com', 'plus.google.com', 'genomebiology.biomedcentral.com', 'openid.net',
+                      'developer.apple.com', 'cnbc.com', 'brookings.edu', 'thekrazycouponlady.comprinceton.edu',
+                      'tvtropes.org', 'theregister.com', 'theonion.com', 'telegraph.co.uk', 'quoteinvestigator.com',
+                      'biomedcentral', 'tumblr.com', '9to5google', 'washingtonmonthly', 'ifstudies', 'awardworld.net',
+                      'bmj.com'}
 
 UNSUPPORTED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.ppt', '.pptx',
                           '.xls', '.xlsx', '.zip', '.rar', '.7z', '.gz', '.png', '.jpg', '.jpeg', }
@@ -66,6 +37,11 @@ def is_valid_url(url: str) -> bool:
         return False
 
     return True
+
+
+def test_valid():
+    assert is_valid_url(
+        'http://worrydream.com/ABriefRantOnThefuture0fInteractionDesign/') == True
 
 
 def clean_url(url: str):

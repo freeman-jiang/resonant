@@ -96,7 +96,8 @@ class Worker:
 
             if filters.should_keep(response):
                 page = await self.prisma.store_page(task, response)
-                print(f"SUCCESS: Crawled page: {page.url}")
+                if page is not None:
+                    print(f"SUCCESS: Crawled page: {page.url}")
             else:
                 print(f"WARN: Filtered out link: {link.url}")
                 page = await self.prisma.filter_page(task)
@@ -150,8 +151,9 @@ async def crawl_interactive(link: Link) -> np.ndarray | None:
         vectors = model.embed(response.title + " " + response.content)
 
         # Potentially long document, so the first few windows are most representative of what the user wants
-        avg_two_windows = np.mean(vectors[:4], axis = 0)
+        avg_two_windows = np.mean(vectors[:4], axis=0)
         return avg_two_windows
+
 
 def spoof_chrome_user_agent(session: ClientSession):
     # or else we get blocked by cloudflare sites

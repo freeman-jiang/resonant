@@ -110,7 +110,7 @@ def cluster_documents_with_bertopic(pages: List[PageWithVec]):
     # Fit the model on the documents
     model.fit(documents, embeddings)
 
-    topic_distr, _ = model.approximate_distribution(DOC, window = 10, stride = 3)
+    topic_distr, _ = model.approximate_distribution(DOC, window=10, stride=3)
     viz = model.visualize_distribution(topic_distr[0])
     viz.write_html("b.html")
 
