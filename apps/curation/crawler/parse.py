@@ -129,8 +129,12 @@ def extract_links_from_html(html: str, link: Link) -> list[Link]:
 
 
 @functools.lru_cache
+def find_feed_urls(base_domain: str):
+    return list(set(trafilatura.feeds.find_feed_urls(base_domain) + trafilatura.feeds.find_feed_urls(base_domain + '/rss')))
+
+
 def find_feed_urls_cached(base_domain: Link) -> list[str]:
-    rss_feed_urls = trafilatura.feeds.find_feed_urls(base_domain.url)
+    rss_feed_urls = find_feed_urls(base_domain.url)
 
     print(f"Found {len(rss_feed_urls)} RSS links from {base_domain.url}")
 

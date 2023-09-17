@@ -21,6 +21,15 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
                       'developer.apple.com', 'cnbc.com', 'brookings.edu', 'thekrazycouponlady.comprinceton.edu',
                       'tvtropes.org', 'theregister.com', 'theonion.com', 'telegraph.co.uk', 'quoteinvestigator.com',
                       'biomedcentral', 'tumblr.com', '9to5google', 'washingtonmonthly', 'ifstudies', 'awardworld.net',
+                      'webpronews.com',
+                      'brill.com',
+                      'stackoverflow.com',
+                      'britannica.com',
+                      'popsci.com',
+                      'christianitytoday.com',
+                      'circlinginstitute.com',
+                      'en.wikiquote.org',
+                      'actexpo.com',
                       'bmj.com'}
 
 UNSUPPORTED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.ppt', '.pptx',

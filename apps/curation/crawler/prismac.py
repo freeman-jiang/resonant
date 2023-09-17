@@ -46,7 +46,7 @@ class PrismaClient:
         count = await self.add_tasks(links_to_add)
         print(f"PRISMA: Added {count} tasks to db")
 
-    async def store_raw_page(self, crawl_result: CrawlResult):
+    async def store_raw_page(self, depth: int, crawl_result: CrawlResult):
         content_hash = str(mmh3.hash128(
             crawl_result.content, signed=False))
 
@@ -62,7 +62,8 @@ class PrismaClient:
                         'date': crawl_result.date,
                         'author': crawl_result.author,
                         'content': crawl_result.content,
-                        'outbound_urls': [link.url for link in crawl_result.outbound_links]
+                        'outbound_urls': [link.url for link in crawl_result.outbound_links],
+                        'depth': depth,
                     },
                     'update': {}
                 },
@@ -83,7 +84,7 @@ class PrismaClient:
             # But prisma is very buggy with transactions right now, returning 422 errors
             # They also don't support transactions in raw queries
 
-            page = await self.store_raw_page(crawl_result)
+            page = await self.store_raw_page(task.depth, crawl_result)
             await self.finish_task(task)
             await self.add_outgoing_links(crawl_result.outbound_links)
             return page
