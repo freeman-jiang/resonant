@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from crawler.worker import crawl_interactive
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from nltk import sent_tokenize
@@ -7,9 +8,10 @@ from prisma import Prisma
 from prisma.models import CrawlTask, Page
 from pydantic import BaseModel
 
-from crawler.worker import crawl_interactive
 from .link import Link
-from .recommendation.embedding import generate_feed_from_liked, NearestNeighboursQuery, _query_similar, SimilarArticles
+from .recommendation.embedding import (NearestNeighboursQuery, SimilarArticles,
+                                       _query_similar,
+                                       generate_feed_from_liked)
 
 app = FastAPI()
 client = Prisma()
@@ -152,7 +154,9 @@ async def pages() -> list[PageResponse]:
 
 
 if __name__ == "__main__":
-    import uvicorn, os
+    import os
+
+    import uvicorn
 
     host = os.getenv("HOST", "127.0.0.1")
     port = os.getenv("PORT", 8001)

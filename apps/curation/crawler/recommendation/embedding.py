@@ -7,15 +7,13 @@ import nltk
 import numpy as np
 import psycopg
 import pytest
+from crawler.link import Link
 from dotenv import load_dotenv
+from prisma import Prisma, models
 from prisma.models import Page
 from psycopg.rows import class_row, dict_row
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
-
-from prisma import Prisma, models
-
-from crawler.link import Link
 
 load_dotenv()
 
@@ -152,7 +150,8 @@ WITH want AS ({want_cte}),
 
 async def generate_feed_from_liked(client: Prisma, lp: models.LikedPage):
     liked = lp.page
-    similar = await _query_similar(liked.url)
+    query = NearestNeighboursQuery(url = liked.url or None)
+    similar = await _query_similar(query)
 
     for article in similar:
         url = article.url

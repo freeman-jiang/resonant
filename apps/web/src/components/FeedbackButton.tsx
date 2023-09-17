@@ -44,7 +44,7 @@ export const FeedbackButton = ({ link, ...props }: Props) => {
     const renderRelatedArticles = () => {
       return (
         <div>
-          {relatedArticles.map((article) => (
+          {relatedArticles.slice(0, 15).map((article) => (
             <div
               key={article.url}
               className="max-w-[35ch] truncate rounded-md p-1 transition-all hover:bg-sky-100"
