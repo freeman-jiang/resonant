@@ -1,9 +1,14 @@
+"use client";
 import { NEXT_PUBLIC_BASE_URL } from "@/config";
+import { FeedContext } from "@/context/FeedContext";
 import { cn } from "@/lib/utils";
 import { Link } from "@/types/api";
+import { useEffect, useState } from "react";
 import { Entry } from "./Entry";
+import { Search } from "./Search";
 import { Skeleton } from "./ui/skeleton";
 
+// TODO: Consider using SSR by making this a server component
 async function getData() {
   const response = await fetch(`${NEXT_PUBLIC_BASE_URL}/feed`, {
     cache: "no-store",
@@ -15,15 +20,29 @@ async function getData() {
   return response.json() as Promise<Link[]>;
 }
 
-export const Feed = async () => {
-  const links = await getData();
+export const Feed = () => {
+  // TODO: Replace with tanstack-query
+  const [links, setLinks] = useState<Link[]>([]);
+
+  useEffect(() => {
+    getData().then((data) => {
+      setLinks(data);
+    });
+  }, []);
+
+  if (links.length === 0) {
+    return <LoadingFeed />;
+  }
 
   return (
-    <div className="mt-4 space-y-2">
-      {links.map((link) => (
-        <Entry key={link.url} {...link} />
-      ))}
-    </div>
+    <FeedContext.Provider value={{ setLinks }}>
+      <Search />
+      <div className="mt-4 space-y-2">
+        {links.map((link) => (
+          <Entry key={link.url} {...link} />
+        ))}
+      </div>
+    </FeedContext.Provider>
   );
 };
 
