@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "build": "poetry install && poetry run prisma generate",
+    "dev": "poetry run uvicorn api.main:app --reload",
+    "start": "poetry run python -m api.main"
+  }
+}

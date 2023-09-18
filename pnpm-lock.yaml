@@ -24,6 +24,8 @@ importers:
         specifier: latest
         version: 1.10.14
 
+  apps/backend: {}
+
   apps/web:
     dependencies:
       '@radix-ui/react-accordion':

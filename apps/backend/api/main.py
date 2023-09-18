@@ -1,21 +1,19 @@
-from datetime import datetime
 from collections import defaultdict
+from datetime import datetime
 from typing import Optional
 
 import pytest
-from crawler.worker import crawl_interactive
+from crawler.link import Link
+from crawler.recommendation.embedding import (NearestNeighboursQuery,
+                                              SimilarArticles, _query_similar,
+                                              generate_feed_from_liked, model)
+from crawler.worker import crawl_interactive, get_window_avg
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from nltk import sent_tokenize
 from prisma import Prisma
 from prisma.models import Page
 from pydantic import BaseModel, validator
-
-from .link import Link
-from .recommendation.embedding import (NearestNeighboursQuery, SimilarArticles,
-                                       _query_similar,
-                                       generate_feed_from_liked, model)
-from .worker import get_window_avg
 
 app = FastAPI()
 client = Prisma()
@@ -140,7 +138,7 @@ class SearchQuery(BaseModel):
         return v
 
 
-@app.post("/search/")
+@app.post("/search")
 async def search(body: SearchQuery) -> list[SimilarArticles]:
     if body.url:
         url = body.url
@@ -151,13 +149,11 @@ async def search(body: SearchQuery) -> list[SimilarArticles]:
         query = NearestNeighboursQuery(vector=want_vec, url=url)
         similar = await _query_similar(query)
 
-        print("Similar articles to", url, similar)
         return similar
     else:
         want_vec = get_window_avg(body.query)
         query = NearestNeighboursQuery(vector=want_vec)
         similar = await _query_similar(query)
-        print("Similar articles to", body.query, similar)
         return similar
 
 
@@ -249,11 +245,12 @@ async def random_feed() -> list[PageResponse]:
     seed = current_datetime.strftime("%Y-%m-%d")
 
     random_pages = await client.query_raw("""
-    WITH random_ids AS (SELECT id, MD5(CONCAT($1, content_hash)) FROM "Page" ORDER BY md5 LIMIT $2)
-    SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1
-    """, seed, 10, model = Page)
+    WITH random_ids AS (SELECT id, MD5(CONCAT($1, content_hash)) FROM "Page" ORDER BY md5)
+    SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1 LIMIT $2
+    """, seed, 10, model=Page)
 
     return [PageResponse.from_prisma_page(p) for p in random_pages]
+
 
 @pytest.mark.asyncio
 async def test_random_feed():
