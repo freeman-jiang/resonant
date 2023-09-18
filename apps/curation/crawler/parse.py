@@ -150,7 +150,8 @@ def parse_html(html: bytes, link: Link, should_rss: bool) -> Tuple[Optional[Craw
     if a is None:
         a = parse_html_newspaper(html, link)
 
-    base_domain = Link.from_url(link.domain())
+    base_domain = link.copy()
+    base_domain.url = link.domain()
 
     if should_rss:
         rss_links = find_feed_urls_cached(base_domain)
