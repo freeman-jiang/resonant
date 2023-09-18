@@ -1,4 +1,5 @@
 from collections import defaultdict
+import pytest
 
 from crawler.worker import crawl_interactive
 from fastapi import FastAPI
@@ -15,7 +16,6 @@ from .recommendation.embedding import (NearestNeighboursQuery, SimilarArticles,
 
 app = FastAPI()
 client = Prisma()
-
 
 app = FastAPI()
 
@@ -58,24 +58,40 @@ async def find_or_create_user(userid):
 
 
 @app.get("/like/{userid}/{pageid}")
-async def like(userid: int, pageid: int):
+async def like(userid: int, pageid: int) -> list[SimilarArticles]:
     page = await client.page.find_first(where={"id": pageid})
     user = await find_or_create_user(userid)
-    lp = await client.likedpage.create(data={
-        'user': {
-            'connect': {
-                'id': user.id
-            }
-        },
-        'page': {
-            'connect': {
-                'id': page.id
-            }
-        }
-    }, include={'page': True, 'user': True})
-    urls = await generate_feed_from_liked(client, lp)
-    print(urls)
 
+    lp = await client.likedpage.find_first(where={
+        'user_id': user.id,
+        'page_id': page.id,
+    }, include={'page': True, 'user': True, 'suggestions': {
+        'include': {'page': True}
+    }})
+    if lp:
+        suggestions = lp.suggestions
+
+        urls = []
+
+        for s in suggestions:
+            urls.append(SimilarArticles(title=s.page.title,
+                                        url=s.page.url, score=s.score))
+    else:
+        lp = await client.likedpage.create(data={
+            'user': {
+                'connect': {
+                    'id': user.id
+                }
+            },
+            'page': {
+                'connect': {
+                    'id': page.id
+                }
+            }
+        }, include={'page': True, 'user': True})
+        urls = await generate_feed_from_liked(client, lp)
+
+    print("Recommended", urls)
     return urls
 
 
@@ -83,8 +99,8 @@ class PageResponse(BaseModel):
     id: int
     url: str
     title: str
-    date: str
     excerpt: str
+    date: str = ""
 
     @classmethod
     def from_prisma_page(cls, p: Page) -> 'PageResponse':
@@ -95,7 +111,7 @@ class PageResponse(BaseModel):
             id=p.id,
             url=p.url,
             title=p.title,
-            date=p.date,
+            date=p.date or "",
             excerpt='. '.join(excerpt)
         )
 
@@ -117,6 +133,37 @@ def test_search():
     import asyncio
     asyncio.run(search(
         'https://www.theguardian.com/lifeandstyle/2017/aug/11/why-we-fell-for-clean-eating'))
+
+
+@pytest.mark.asyncio
+async def test_like():
+    await startup()
+
+    await like(1, 5330)
+
+
+@app.get("/topic/{topic}")
+async def get_topic(topic: str) -> list[PageResponse]:
+    topic_url = f'https://{topic}.topics.superstack-web.vercel.app'
+    query = NearestNeighboursQuery(url=topic_url)
+
+    suggestions = await _query_similar(query)
+    url_list = [s.url for s in suggestions]
+
+    pages = await client.page.find_many(where={
+        'url': {
+            'in': url_list
+        }
+    })
+
+    return [PageResponse.from_prisma_page(p) for p in pages]
+
+
+@pytest.mark.asyncio
+async def test_get_topic():
+    await startup()
+
+    print(await get_topic("philosophy"))
 
 
 @app.get("/feed")

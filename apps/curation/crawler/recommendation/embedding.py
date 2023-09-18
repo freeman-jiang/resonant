@@ -5,6 +5,7 @@ from typing import Iterator, Optional
 
 import nltk
 import numpy as np
+import prisma.errors
 import psycopg
 import pytest
 from crawler.link import Link
@@ -110,7 +111,11 @@ async def _query_similar(query: NearestNeighboursQuery) -> list[SimilarArticles]
     similar = cursor.execute(f"""
     -- Get average of the first X vectors for the article we WANT
 WITH want AS ({want_cte}),
- matching_vecs AS (SELECT e.vec <=> w.vec as dist, e.url as url from vecs."Embeddings" as e, want as w WHERE e.url != w.url AND e.index <= 4 order by dist LIMIT 100),
+ matching_vecs AS (
+        SELECT e.vec <=> w.vec as dist, e.url as url from vecs."Embeddings" as e, want as w 
+            WHERE e.url != w.url AND e.index <= 4 AND e.url NOT LIKE '%%.superstack-web.vercel.app' 
+            ORDER BY dist LIMIT 100
+ ),
  domain_counts AS (SELECT COUNT(url) as num_matching_windows, AVG(dist) as dist, MIN(url) as url FROM matching_vecs GROUP BY url)
  select "Page".*, domain_counts.dist, domain_counts.num_matching_windows from "Page" INNER JOIN domain_counts ON domain_counts.url = "Page".url ORDER BY dist
     """, want_cte_dict).fetchall()
@@ -145,35 +150,38 @@ WITH want AS ({want_cte}),
         score=x['score']
     ) for x in similar]
 
-    print("Found similar URLs to ", query, urls_to_add)
-
     return urls_to_add
 
 
-async def generate_feed_from_liked(client: Prisma, lp: models.LikedPage):
+async def generate_feed_from_liked(client: Prisma, lp: models.LikedPage) -> list[SimilarArticles]:
     liked = lp.page
     query = NearestNeighboursQuery(url=liked.url or None)
     similar = await _query_similar(query)
 
     for article in similar:
         url = article.url
-        await client.feedpage.create(data={
-            'page': {
-                'connect': {
-                    'url': url
-                }
-            },
-            'user': {
-                'connect': {
-                    'id': lp.user.id
-                }
-            },
-            'suggested_from': {
-                'connect': {
-                    'id': lp.id
-                }
-            }
-        })
+
+        try:
+            await client.feedpage.create(data={
+                'page': {
+                    'connect': {
+                        'url': url
+                    }
+                },
+                'user': {
+                    'connect': {
+                        'id': lp.user.id
+                    }
+                },
+                'suggested_from': {
+                    'connect': {
+                        'id': lp.id
+                    }
+                },
+                'score': article.score,
+            })
+        except prisma.errors.UniqueViolationError:
+            pass
     return similar
 
 

@@ -79,6 +79,7 @@ model FeedPage {
   user_id           Int
   page_id           Int
   suggested_from_id Int
+  score            Float @default(0)
 
   user           User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
   page           Page      @relation(fields: [page_id], references: [id], onDelete: Cascade)

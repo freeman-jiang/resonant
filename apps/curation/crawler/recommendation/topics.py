@@ -2,14 +2,14 @@ import asyncio
 
 from prisma import Prisma
 
-from ..config import Config
+from crawler.config import Config
 import os
 from datetime import datetime
 
 import psycopg
-from ..prismac import PrismaClient
+from crawler.prismac import PrismaClient
 
-from crawler.recommendation.embedding import Embedder, store_embeddings_for_pages
+from crawler.recommendation.embedding import store_embeddings_for_pages
 from crawler.link import Link
 from crawler.parse import CrawlResult
 
@@ -33,7 +33,7 @@ async def seed_database_topics(client: PrismaClient):
             outbound_links=[]
         )
 
-        pages.append(await client.store_raw_page(cr))
+        pages.append(await client.store_raw_page(1, cr))
 
     print("Stored pages", pages)
     await store_embeddings_for_pages(client.db, pages)
