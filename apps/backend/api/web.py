@@ -3,19 +3,17 @@ from datetime import datetime
 from typing import Optional
 
 import pytest
-from crawler.worker import crawl_interactive
+from crawler.link import Link
+from crawler.recommendation.embedding import (NearestNeighboursQuery,
+                                              SimilarArticles, _query_similar,
+                                              generate_feed_from_liked, model)
+from crawler.worker import crawl_interactive, get_window_avg
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from nltk import sent_tokenize
 from prisma import Prisma
 from prisma.models import Page
 from pydantic import BaseModel, validator
-
-from .link import Link
-from .recommendation.embedding import (NearestNeighboursQuery, SimilarArticles,
-                                       _query_similar,
-                                       generate_feed_from_liked, model)
-from .worker import get_window_avg
 
 app = FastAPI()
 client = Prisma()
