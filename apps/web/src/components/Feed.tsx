@@ -1,50 +1,27 @@
 "use client";
-import { NEXT_PUBLIC_BASE_URL } from "@/config";
+import { fetchFeed } from "@/api";
 import { FeedContext } from "@/context/FeedContext";
 import { cn } from "@/lib/utils";
 import { Link } from "@/types/api";
 import { useEffect, useState } from "react";
 import { Entry } from "./Entry";
 import { Search } from "./Search";
-import { Badge } from "./ui/badge";
+import { Topics } from "./Topics";
 import { Skeleton } from "./ui/skeleton";
-
-// TODO: Consider using SSR by making this a server component
-async function getData() {
-  const response = await fetch(`${NEXT_PUBLIC_BASE_URL}/feed`, {
-    cache: "no-store",
-    next: {
-      tags: ["pages"],
-      // revalidate: 30, // Clear cache every 30 seconds (there is a bug with this that causes the entire page to hang instead of just the Suspense component)
-    },
-  });
-  return response.json() as Promise<Link[]>;
-}
 
 export const Feed = () => {
   // TODO: Replace with tanstack-query
   const [links, setLinks] = useState<Link[]>([]);
 
   useEffect(() => {
-    getData().then((data) => {
+    fetchFeed().then((data) => {
       setLinks(data);
     });
   }, []);
 
   return (
     <FeedContext.Provider value={{ setLinks }}>
-      <div className="mt-3 flex flex-row gap-2 pb-2">
-        <Badge className="cursor-pointer text-sm">All</Badge>
-        <Badge className="cursor-pointer text-sm" variant="outline">
-          Software
-        </Badge>
-        <Badge className="cursor-pointer text-sm" variant="outline">
-          Climate
-        </Badge>
-        <Badge className="cursor-pointer text-sm" variant="outline">
-          Philosophy
-        </Badge>
-      </div>
+      <Topics />
       <Search />
       <div className="mt-5 space-y-2">
         {links.length > 0 ? (

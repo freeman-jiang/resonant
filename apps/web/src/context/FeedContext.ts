@@ -1,5 +1,10 @@
+import { Link } from "@/types/api";
 import { createContext, useContext } from "react";
 
-export const FeedContext = createContext(null);
+interface Context {
+  setLinks: (links: Link[]) => void;
+}
+
+export const FeedContext = createContext<Context>(null);
 
 export const useFeed = () => useContext(FeedContext);
