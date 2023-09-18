@@ -5,10 +5,8 @@ import axios from "axios";
 // TODO: Consider using SSR by making this a server component
 export async function fetchFeed() {
   const response = await fetch(`${NEXT_PUBLIC_BASE_URL}/random-feed`, {
-    cache: "no-store",
     next: {
-      tags: ["pages"],
-      // revalidate: 30, // Clear cache every 30 seconds (there is a bug with this that causes the entire page to hang instead of just the Suspense component)
+      revalidate: 1800, // Refresh every half hour
     },
   });
   return response.json() as Promise<Link[]>;

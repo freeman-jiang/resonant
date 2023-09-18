@@ -1,23 +1,26 @@
 "use client";
-import { fetchFeed } from "@/api";
 import { FeedContext } from "@/context/FeedContext";
 import { cn } from "@/lib/utils";
 import { Link } from "@/types/api";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Entry } from "./Entry";
 import { Search } from "./Search";
 import { Topics } from "./Topics";
 import { Skeleton } from "./ui/skeleton";
 
-export const Feed = () => {
-  // TODO: Replace with tanstack-query
-  const [links, setLinks] = useState<Link[]>([]);
+interface Props {
+  links: Link[];
+}
 
-  useEffect(() => {
-    fetchFeed().then((data) => {
-      setLinks(data);
-    });
-  }, []);
+export const Feed = (props: Props) => {
+  // TODO: Replace with tanstack-query
+  const [links, setLinks] = useState<Link[]>(props.links);
+
+  // useEffect(() => {
+  //   fetchFeed().then((data) => {
+  //     setLinks(data);
+  //   });
+  // }, []);
 
   return (
     <FeedContext.Provider value={{ setLinks }}>
@@ -34,11 +37,11 @@ export const Feed = () => {
   );
 };
 
-interface Props extends React.HTMLAttributes<HTMLDivElement> {
+interface LoadingEntryProps extends React.HTMLAttributes<HTMLDivElement> {
   index: number;
 }
 
-const LoadingEntry = ({ index, ...rest }: Props) => {
+const LoadingEntry = ({ index, ...rest }: LoadingEntryProps) => {
   const isLarger = index % 3 === 0;
 
   return (
