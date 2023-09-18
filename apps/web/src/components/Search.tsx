@@ -23,7 +23,8 @@ export function Search() {
 
     // TODO: Refactor base url into base axios instance, also consider if this link logic should be in the api
     const { data } = await axios.post(`${NEXT_PUBLIC_BASE_URL}/search`, body);
-    setLinks(data);
+    // Take the first 15 results
+    setLinks(data.slice(0, 15));
   };
 
   return (

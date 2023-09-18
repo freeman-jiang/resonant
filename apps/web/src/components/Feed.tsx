@@ -6,6 +6,7 @@ import { Link } from "@/types/api";
 import { useEffect, useState } from "react";
 import { Entry } from "./Entry";
 import { Search } from "./Search";
+import { Badge } from "./ui/badge";
 import { Skeleton } from "./ui/skeleton";
 
 // TODO: Consider using SSR by making this a server component
@@ -30,17 +31,27 @@ export const Feed = () => {
     });
   }, []);
 
-  if (links.length === 0) {
-    return <LoadingFeed />;
-  }
-
   return (
     <FeedContext.Provider value={{ setLinks }}>
+      <div className="mt-3 flex flex-row gap-2 pb-2">
+        <Badge className="cursor-pointer text-sm">All</Badge>
+        <Badge className="cursor-pointer text-sm" variant="outline">
+          Software
+        </Badge>
+        <Badge className="cursor-pointer text-sm" variant="outline">
+          Climate
+        </Badge>
+        <Badge className="cursor-pointer text-sm" variant="outline">
+          Philosophy
+        </Badge>
+      </div>
       <Search />
       <div className="mt-5 space-y-2">
-        {links.map((link) => (
-          <Entry key={link.url} {...link} />
-        ))}
+        {links.length > 0 ? (
+          links.map((link) => <Entry key={link.url} {...link} />)
+        ) : (
+          <LoadingFeed />
+        )}
       </div>
     </FeedContext.Provider>
   );
