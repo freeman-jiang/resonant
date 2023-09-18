@@ -1,19 +1,21 @@
 from datetime import datetime
 from collections import defaultdict
-import pytest
+from typing import Optional
 
+import pytest
 from crawler.worker import crawl_interactive
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from nltk import sent_tokenize
 from prisma import Prisma
 from prisma.models import Page
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from .link import Link
 from .recommendation.embedding import (NearestNeighboursQuery, SimilarArticles,
                                        _query_similar,
-                                       generate_feed_from_liked)
+                                       generate_feed_from_liked, model)
+from .worker import get_window_avg
 
 app = FastAPI()
 client = Prisma()
@@ -117,17 +119,46 @@ class PageResponse(BaseModel):
         )
 
 
-@app.get("/search/{url:path}")
-async def search(url: str) -> list[SimilarArticles]:
-    print("Searching for similar URLs to", url)
+class SearchQuery(BaseModel):
+    url: Optional[str]
+    query: Optional[str]
 
-    want_vec = await crawl_interactive(Link.from_url(url))
+    def __init__(self, **data: dict[str, str]):
+        if 'query' not in data and 'url' not in data:
+            raise ValueError("Must provide either 'query' or 'url'")
+        super().__init__(**data)
 
-    query = NearestNeighboursQuery(vector=want_vec, url=url)
-    similar = await _query_similar(query)
+    @validator("query")
+    def check_valid_query(cls, v: str):
+        if not v:
+            raise ValueError("Query must not be empty string")
+        return v
 
-    print("Similar articles to", url, similar)
-    return similar
+    @validator("url")
+    def check_url(cls, v: str):
+        Link.from_url(v)
+        return v
+
+
+@app.post("/search/")
+async def search(body: SearchQuery) -> list[SimilarArticles]:
+    if body.url:
+        url = body.url
+        print("Searching for similar URLs to", url)
+
+        want_vec = await crawl_interactive(Link.from_url(url))
+
+        query = NearestNeighboursQuery(vector=want_vec, url=url)
+        similar = await _query_similar(query)
+
+        print("Similar articles to", url, similar)
+        return similar
+    else:
+        want_vec = get_window_avg(body.query)
+        query = NearestNeighboursQuery(vector=want_vec)
+        similar = await _query_similar(query)
+        print("Similar articles to", body.query, similar)
+        return similar
 
 
 def test_search():
