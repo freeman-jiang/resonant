@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NEXT_PUBLIC_BASE_URL } from "@/config";
 import { useFeed } from "@/context/FeedContext";
+import axios from "axios";
 import { useState } from "react";
 
 // TODO: Replace with react hook form
@@ -17,9 +18,12 @@ export function Search() {
       return;
     }
 
-    const response = await fetch(`${NEXT_PUBLIC_BASE_URL}/search/${search}`);
-    const results = await response.json();
-    setLinks(results);
+    const linkRegex = /https?:\/\/[^\s]+/g;
+    const body = linkRegex.test(search) ? { url: search } : { query: search };
+
+    // TODO: Refactor base url into base axios instance, also consider if this link logic should be in the api
+    const { data } = await axios.post(`${NEXT_PUBLIC_BASE_URL}/search`, body);
+    setLinks(data);
   };
 
   return (
@@ -30,7 +34,7 @@ export function Search() {
       <Input
         onChange={(e) => setSearch(e.target.value)}
         type="text"
-        placeholder="Paste a URL to find similar content"
+        placeholder="Search by content or URL"
       />
       <Button type="submit">Search</Button>
     </form>
