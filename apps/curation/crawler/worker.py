@@ -151,8 +151,8 @@ async def crawl_interactive(link: Link) -> np.ndarray | None:
         vectors = model.embed(response.title + " " + response.content)
 
         # Potentially long document, so the first few windows are most representative of what the user wants
-        avg_two_windows = np.mean(vectors[:4], axis=0)
-        return avg_two_windows
+        avg_windows = np.mean(vectors[:4], axis=0)
+        return avg_windows
 
 
 def spoof_chrome_user_agent(session: ClientSession):

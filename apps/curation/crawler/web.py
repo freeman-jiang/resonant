@@ -1,3 +1,4 @@
+from datetime import datetime
 from collections import defaultdict
 import pytest
 
@@ -6,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from nltk import sent_tokenize
 from prisma import Prisma
-from prisma.models import CrawlTask, Page
+from prisma.models import Page
 from pydantic import BaseModel
 
 from .link import Link
@@ -199,6 +200,35 @@ async def pages() -> list[PageResponse]:
             pages_to_return.append(PageResponse.from_prisma_page(page))
     return pages_to_return
 
+
+@app.get("/random-feed")
+async def random_feed() -> list[PageResponse]:
+    """
+    Gets a random set of Pages with depth <= 1, based on the seed.
+    We calculate the MD5 of (seed + content_hash), then get the first X elements with the highest MD5.
+    Whenever we have a new seed, there will be a completely new set of pages.
+
+    Seed is currently calculated as current YYYY-MM-DD.
+    """
+    # seed = str(random.randint(0, 100))
+    # Get the current date and time
+    current_datetime = datetime.now()
+
+    # Format it as "YYYY-MM-DD"
+    seed = current_datetime.strftime("%Y-%m-%d")
+
+    random_pages = await client.query_raw("""
+    WITH random_ids AS (SELECT id, MD5(CONCAT($1, content_hash)) FROM "Page" ORDER BY md5 LIMIT $2)
+    SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1
+    """, seed, 10, model = Page)
+
+    return [PageResponse.from_prisma_page(p) for p in random_pages]
+
+@pytest.mark.asyncio
+async def test_random_feed():
+    await startup()
+
+    print(await random_feed())
 
 if __name__ == "__main__":
     import os
