@@ -35,17 +35,20 @@ def url_to_domain(url: str) -> str:
     return answer
 
 
-def print_top_domains(trustrank_values: dict):
+def top_domains(trustrank_values: dict):
     trust_domains = defaultdict(int)
+    trust_domains_len = defaultdict(int)
 
     for url, score in trustrank_values.items():
         trust_domains[url_to_domain(url)] += score
-    trustrank_sorted = [(url, score) for url, score in trust_domains.items()]
+        trust_domains_len[url_to_domain(url)] += 1
+
+    trustrank_sorted = [(url, score / (trust_domains_len[url] + 3)) for url, score in trust_domains.items()]
     trustrank_sorted.sort(key=lambda k: k[1])
     return trustrank_sorted
 
 
-def trustrank(graph: dict[str, Node], damping_factor=0.85, max_iterations=100, tolerance=1e-2):
+def trustrank(graph: dict[str, Node], damping_factor=0.85, max_iterations=7, tolerance=1e-2):
     trusted_nodes = [url for url, node in graph.items() if node.score >= 0.99]
 
     # Initialize TrustRank values
@@ -68,7 +71,6 @@ def trustrank(graph: dict[str, Node], damping_factor=0.85, max_iterations=100, t
                 share = damping_factor * \
                     trustrank_values[node_url] / len(node.out)
                 for neighbor_url in node.out:
-                    # Only propagate TrustRank to trusted nodes
                     new_trustrank_values[neighbor_url] += damping_factor * share
 
         for key in trustrank_values:
@@ -81,11 +83,11 @@ def trustrank(graph: dict[str, Node], damping_factor=0.85, max_iterations=100, t
             break
         else:
             print(total_diff)
-            print(print_top_domains(trustrank_values))
+            print(top_domains(trustrank_values))
 
         # print("Current values", trustrank_values)
 
-    return print_top_domains(trustrank_values)
+    return top_domains(trustrank_values)
 
 
 async def main():

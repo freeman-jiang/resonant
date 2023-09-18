@@ -1,5 +1,7 @@
 import functools
 import json
+
+import feedparser
 from lxml import etree
 
 import trafilatura.feeds
@@ -130,7 +132,19 @@ def extract_links_from_html(html: str, link: Link) -> list[Link]:
 
 @functools.lru_cache
 def find_feed_urls(base_domain: str):
-    return list(set(trafilatura.feeds.find_feed_urls(base_domain) + trafilatura.feeds.find_feed_urls(base_domain + '/rss')))
+    urls = set(trafilatura.feeds.find_feed_urls(base_domain))
+
+    for suffix in ['feed', 'rss', 'atom.xml']:
+        # Parse the RSS feed
+        feed_url = base_domain + "/" + suffix
+        feed = feedparser.parse(feed_url)
+
+        # Loop through the entries in the RSS feed and extract URLs
+        for entry in feed.entries:
+            if 'link' in entry:
+                urls.add(entry.link)
+
+    return list(urls)
 
 
 def find_feed_urls_cached(base_domain: Link) -> list[str]:
@@ -187,11 +201,4 @@ def extract_meta_title(html: str) -> Optional[str]:
 
 
 def test_1():
-    import requests
-    content = requests.get("https://www.aldaily.com/essays-and-opinions/?page=3", headers={
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
-    })
-    print(parse_html(content.content, Link.from_url(
-        "https://www.aldaily.com/essays-and-opinions/?page=3"), False))
-    # print(trafilatura.feeds.find_feed_urls("http://paulgraham.com"))
-    # print(trafilatura.sitemaps.sitemap_search("http://paulgraham.com"))
+    print(find_feed_urls('https://danluu.com'))
