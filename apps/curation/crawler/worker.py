@@ -4,11 +4,9 @@ from asyncio import Queue
 from typing import Optional, Tuple
 
 import numpy as np
-from prisma.models import CrawlTask
-
 from aiohttp import ClientError, ClientSession, ClientTimeout
-
 from crawler.config import Config
+from prisma.models import CrawlTask
 
 from . import filters
 from .link import Link
@@ -148,11 +146,18 @@ async def crawl_interactive(link: Link) -> np.ndarray | None:
                 return None
             response, _rss_links = parse_html(await response.read(), link, False)
 
-        vectors = model.embed(response.title + " " + response.content)
+        return get_window_avg(response.title + " " + response.content)
 
-        # Potentially long document, so the first few windows are most representative of what the user wants
-        avg_two_windows = np.mean(vectors[:4], axis=0)
-        return avg_two_windows
+
+def get_window_avg(content: str) -> np.ndarray:
+    """
+    Embed the given content using the sentence-transformers model
+    """
+    vectors = model.embed(content)
+
+    # Potentially long document, so the first few windows are most representative of what the user wants
+    avg_two_windows = np.mean(vectors[:4], axis=0)
+    return avg_two_windows
 
 
 def spoof_chrome_user_agent(session: ClientSession):
