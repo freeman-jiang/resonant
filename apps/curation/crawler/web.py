@@ -247,8 +247,8 @@ async def random_feed() -> list[PageResponse]:
     seed = current_datetime.strftime("%Y-%m-%d")
 
     random_pages = await client.query_raw("""
-    WITH random_ids AS (SELECT id, MD5(CONCAT($1, content_hash)) FROM "Page" ORDER BY md5 LIMIT $2)
-    SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1
+    WITH random_ids AS (SELECT id, MD5(CONCAT($1, content_hash)) FROM "Page" ORDER BY md5)
+    SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1 LIMIT $2
     """, seed, 10, model=Page)
 
     return [PageResponse.from_prisma_page(p) for p in random_pages]

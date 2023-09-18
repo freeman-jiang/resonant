@@ -1,4 +1,4 @@
-import { searchFor } from "@/api";
+import { fetchFeed, searchFor } from "@/api";
 import { useFeed } from "@/context/FeedContext";
 import { Badge } from "./ui/badge";
 
@@ -13,7 +13,15 @@ export const Topics = () => {
 
   return (
     <div className="mt-3 flex flex-row gap-2 pb-2">
-      <Badge className="cursor-pointer text-sm">All</Badge>
+      <Badge
+        className="cursor-pointer text-sm"
+        onClick={async () => {
+          const data = await fetchFeed();
+          setLinks(data);
+        }}
+      >
+        All
+      </Badge>
       {TOPICS.map((topic) => (
         <Badge
           key={topic}

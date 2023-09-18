@@ -4,7 +4,7 @@ import axios from "axios";
 
 // TODO: Consider using SSR by making this a server component
 export async function fetchFeed() {
-  const response = await fetch(`${NEXT_PUBLIC_BASE_URL}/feed`, {
+  const response = await fetch(`${NEXT_PUBLIC_BASE_URL}/random-feed`, {
     cache: "no-store",
     next: {
       tags: ["pages"],
