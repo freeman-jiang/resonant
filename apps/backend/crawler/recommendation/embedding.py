@@ -12,14 +12,16 @@ from crawler.link import Link
 from dotenv import load_dotenv
 from prisma import Prisma, models
 from prisma.models import Page
-from psycopg.rows import class_row, dict_row
+from psycopg.rows import dict_row
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 
 load_dotenv()
 
 client = Prisma()
-print(os.environ['DATABASE_URL'])
+
+assert len(os.environ['DATABASE_URL']) > 1, "DATABASE_URL not set"
+
 db = psycopg.connect(os.environ['DATABASE_URL'])
 
 

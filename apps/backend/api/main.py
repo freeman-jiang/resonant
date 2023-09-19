@@ -170,62 +170,38 @@ async def test_like():
     await like(1, 5330)
 
 
-@app.get("/topic/{topic}")
-async def get_topic(topic: str) -> list[PageResponse]:
-    topic_url = f'https://{topic}.topics.superstack-web.vercel.app'
-    query = NearestNeighboursQuery(url=topic_url)
-
-    suggestions = await _query_similar(query)
-    url_list = [s.url for s in suggestions]
-
-    pages = await client.page.find_many(where={
-        'url': {
-            'in': url_list
-        }
-    })
-
-    return [PageResponse.from_prisma_page(p) for p in pages]
-
-
-@pytest.mark.asyncio
-async def test_get_topic():
-    await startup()
-
-    print(await get_topic("philosophy"))
-
-
-@app.get("/feed")
-async def pages() -> list[PageResponse]:
-    crawltasks = await client.crawltask.find_many(take=120, where={
-        "depth": {
-            'lt': 2
-        },
-        'status': 'COMPLETED'
-    })
-
-    # CONVERT the above to a raw query
-    # crawltasks = await client.query_raw("""SELECT * FROM "CrawlTask" WHERE depth <= 1 AND status = 'COMPLETED' ORDER BY RANDOM() LIMIT 120""", model=CrawlTask)
-
-    domain_count = defaultdict(int)
-
-    pages_to_return = []
-    for ct in crawltasks:
-        page = await client.page.find_first(where={'url': ct.url})
-
-        if page:
-            domain = Link.from_url(page.url).domain()
-
-            if domain == page.url.strip('/'):
-                # Filter out home pages (they are not articles)
-                continue
-
-            domain_count[domain] += 1
-
-            if domain_count[domain] > 3:
-                continue
-
-            pages_to_return.append(PageResponse.from_prisma_page(page))
-    return pages_to_return
+# @app.get("/feed")
+# async def pages() -> list[PageResponse]:
+#     crawltasks = await client.crawltask.find_many(take=120, where={
+#         "depth": {
+#             'lt': 2
+#         },
+#         'status': 'COMPLETED'
+#     })
+#
+#     # CONVERT the above to a raw query
+#     # crawltasks = await client.query_raw("""SELECT * FROM "CrawlTask" WHERE depth <= 1 AND status = 'COMPLETED' ORDER BY RANDOM() LIMIT 120""", model=CrawlTask)
+#
+#     domain_count = defaultdict(int)
+#
+#     pages_to_return = []
+#     for ct in crawltasks:
+#         page = await client.page.find_first(where={'url': ct.url})
+#
+#         if page:
+#             domain = Link.from_url(page.url).domain()
+#
+#             if domain == page.url.strip('/'):
+#                 # Filter out home pages (they are not articles)
+#                 continue
+#
+#             domain_count[domain] += 1
+#
+#             if domain_count[domain] > 3:
+#                 continue
+#
+#             pages_to_return.append(PageResponse.from_prisma_page(page))
+#     return pages_to_return
 
 
 @app.get("/random-feed")

@@ -9,6 +9,7 @@ from prisma import Prisma
 from crawler.config import Config
 from crawler.link import Link
 from crawler.prismac import PrismaClient
+from ..root_urls import ROOT_URLS
 
 load_dotenv()
 
@@ -90,12 +91,14 @@ async def main():
     pc = PrismaClient(config, db)
 
     urls = []
+
+    urls += [x["url"] for x in ROOT_URLS]
     # with open("crawler/ROOT_URLS.txt", "r") as f:
     #     urls = f.readlines()
 
-    urls += add_dm_hn_urls()
-    urls += add_aldaily_urls()
-    urls += add_ooh_directory_urls()
+    # urls += add_dm_hn_urls()
+    # urls += add_aldaily_urls()
+    # urls += add_ooh_directory_urls()
 
     links = []
 
