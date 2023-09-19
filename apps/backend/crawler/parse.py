@@ -31,6 +31,14 @@ class CrawlResult(BaseModel):
         assert len(v) < 2 ** 25, "Content too large to store in database"
         return v
 
+    @classmethod
+    def testing_crawl_link(cls, link: str):
+        import requests
+        r = requests.get(link)
+        return parse_html(r.content, Link.from_url(link), False)[0]
+
+
+
 
 def parse_html_newspaper(html: str, link: Link) -> Optional[CrawlResult]:
     article = newspaper.Article(link.url, keep_article_html=True)

@@ -1,4 +1,6 @@
 from prisma import Prisma
+
+from crawler.link import SUPPRESSED_DOMAINS
 from crawler.parse import find_feed_urls
 import requests
 
@@ -21,28 +23,28 @@ async def main():
 
     while True:
         pages = await client.page.find_many(take=100, skip=processed)
-        if len(pages) == 0 or processed >= 600:
+        if len(pages) == 0:
             break
         print(f"Processing {len(pages)} pages")
         processed += len(pages)
 
         for p in pages:
-            domains.add(url_to_domain(p.url))
-            # for suppressed in SUPPRESSED_DOMAINS:
-            #     if suppressed in p.url:
-            #         to_delete.append(p.id)
-            # if not is_english(p.title + " " + p.content):
-            #     print("NOT ENGLISH", p.url)
-            #     to_delete.append(p.id)
+            # domains.add(url_to_domain(p.url))
+            for suppressed in SUPPRESSED_DOMAINS:
+                if suppressed in p.url:
+                    to_delete.append(p.id)
+            if not is_english(p.title + " " + p.content):
+                print("NOT ENGLISH", p.url)
+                to_delete.append(p.id)
 
-    for d in domains:
-        try:
-            # if requests.get("http://" + d + "/rss").status_code != 200:
-            #     if requests.get("http://" + d + "/feed").status_code != 200:
-            if find_feed_urls("https://" + d) == []:
-                print("NO RSS", d)
-        except requests.exceptions.ConnectionError:
-            print("NO RSS", d)
+    # for d in domains:
+    #     try:
+    #         # if requests.get("http://" + d + "/rss").status_code != 200:
+    #         #     if requests.get("http://" + d + "/feed").status_code != 200:
+    #         if find_feed_urls("https://" + d) == []:
+    #             print("NO RSS", d)
+    #     except requests.exceptions.ConnectionError:
+    #         print("NO RSS", d)
 
     if len(to_delete) > 0:
         print("Deleting {} pages".format(len(to_delete)))
