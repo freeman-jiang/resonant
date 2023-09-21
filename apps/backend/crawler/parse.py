@@ -38,8 +38,6 @@ class CrawlResult(BaseModel):
         return parse_html(r.content, Link.from_url(link), False)[0]
 
 
-
-
 def parse_html_newspaper(html: str, link: Link) -> Optional[CrawlResult]:
     article = newspaper.Article(link.url, keep_article_html=True)
     try:

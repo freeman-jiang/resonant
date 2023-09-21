@@ -7,8 +7,10 @@ import requests
 from crawler.recommendation.pagerank import url_to_domain
 from langdetect import detect
 
+
 def is_english(s: str):
     return detect(s) == 'en'
+
 
 async def main():
     client = Prisma()

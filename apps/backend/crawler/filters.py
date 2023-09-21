@@ -85,6 +85,7 @@ async def test_1():
             print("Will filter out", page.url)
             pass
 
+
 def test_2():
     url = 'https://charlesyang.substack.com/p/notes-on-japanese-political-economy'
     cr = CrawlResult.testing_crawl_link(url)
