@@ -9,7 +9,7 @@ from crawler.config import Config
 from prisma.models import CrawlTask
 
 from . import filters
-from .link import Link
+from .link import Link, SUPPRESSED_DOMAINS
 from .parse import CrawlResult, parse_html
 from .prismac import PrismaClient
 from .recommendation.embedding import model
@@ -121,6 +121,10 @@ class Worker:
         The second tuple element is a list of RSS links found on that *domain*.
         """
         should_rss = not await self.prisma.is_already_explored(link.domain())
+
+        for suppressed in SUPPRESSED_DOMAINS:
+            if suppressed in link.url:
+                return None, []
 
         async with session.get(link.url) as response:
             if not response.ok:

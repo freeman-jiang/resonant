@@ -90,7 +90,7 @@ class PrismaClient:
             return page
         except UniqueViolationError:
             print(f"EXCEPTION! Page already exists: {crawl_result.link.url}")
-            raise
+            # raise
 
     async def get_task(self) -> CrawlTask | None:
         """Get the next link to crawl from the queue in the database"""

@@ -23,6 +23,7 @@ model Page {
   created_at    DateTime     @default(now())
   updated_at    DateTime     @updatedAt
   depth Int         @default(0)
+  page_rank Float?
   outbound_urls String[]
   embeddings    Embeddings[]
 

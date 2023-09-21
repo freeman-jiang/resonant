@@ -14,6 +14,8 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
                       'achemicalhunger', '9to5toys', 'bloomberg.com', 'forbes.com', 'bbc.com', 'economist.com',
                       'ft.com', 'vimeo.com', 'youtube.com', 'pittsburghlive.com', 'linkedin.com', 'soundcloud.com',
                       'albawa.com', 'theage.com', 'prnewswire.com', 'archive.org', 'stackexchange.com', 'doi.org',
+                      'jamanetwork',
+                      ''
                       'mail-archive.com', 'ncbi.nlm.nih.gov', 'vice.com', 'biorxiv.org', 'psychologytoday.com',
                       'dailymail', 'unsongbook.com', 'goodreads.com', '.gov', 'knowyourmeme', 'technologyreview.com',
                       'businessinsider.com', 'investopedia.com', 'qualiacomputing.com', 'smithsonianmag.com',

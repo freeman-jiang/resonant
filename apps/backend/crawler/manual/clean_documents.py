@@ -31,7 +31,7 @@ async def main():
         for p in pages:
             # domains.add(url_to_domain(p.url))
             for suppressed in SUPPRESSED_DOMAINS:
-                if suppressed in p.url:
+                if suppressed in p.url or (p.parent_url and suppressed in p.parent_url):
                     to_delete.append(p.id)
             if not is_english(p.title + " " + p.content):
                 print("NOT ENGLISH", p.url)
