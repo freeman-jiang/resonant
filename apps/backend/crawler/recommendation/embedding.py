@@ -37,7 +37,7 @@ class Embedder:
     model: SentenceTransformer
 
     def __init__(self):
-        self.model = SentenceTransformer('all-mpnet-base-v2')
+        self.model = SentenceTransformer('all-mpnet-base-v2', device='cpu')
 
     def embed(self, text: str, stride: int = 100, size: int = 120) -> np.ndarray:
         """
