@@ -40,7 +40,7 @@ class Node(BaseModel):
             # p.outbound_urls = [x for x in p.outbound_urls if url_to_domain(x) != domain]
 
         d = {p.url: Node(out=p.outbound_urls, url=p.url, score=(
-            (3 - p.depth) ** 4) / 27, best_depth=p.depth) for p in pages}
+            (5 - p.depth) ** 1.6), best_depth=p.depth) for p in pages}
 
         return d
 
@@ -178,7 +178,7 @@ def combine_domain_and_page_scores(domains: dict[str, float], pages: dict[str, f
         domain = url_to_domain(url)
         domain_score = domains[domain]
 
-        pages_combined[url] = ((domain_score ** 2) * page_score) ** (1 / 3)
+        pages_combined[url] = ((domain_score ** 1.5) * page_score)
 
     return pages_combined
 
@@ -203,12 +203,10 @@ async def main():
     topdomains = trustrank(domains)
 
     for domain in topdomains:
-        topdomains[domain] = topdomains[domain] / \
-            (domains[domain].individual_pages ** (1/1.5))
+        topdomains[domain] = topdomains[domain] / (domains[domain].individual_pages)
+
     topurls = trustrank(nodes)
 
-    print(topdomains, file=open("topdomains.txt", "w+"))
-    print(topurls, file=open("topurls.txt", "w+"))
 
     page_score = combine_domain_and_page_scores(topdomains, topurls)
 

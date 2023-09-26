@@ -49,20 +49,21 @@ async def main():
 
     # When the shared done_queue size reaches max_links, the first worker to reach it
     # will send a sentinel value to this queue
-    queue_done = asyncio.create_task(sentinel_queue.get())
+    # queue_done = asyncio.create_task(sentinel_queue.get())
 
     # allow the first exception to bubble up
-    workers_done = asyncio.gather(*tasks)
+    workers_done = await asyncio.gather(*tasks, return_exceptions=True)
 
     # Wait for either the queue to be done or the workers to be done
-    await asyncio.wait([queue_done, workers_done], return_when=asyncio.FIRST_COMPLETED)
+    # done, pending = await asyncio.wait([queue_done, workers_done], return_when=asyncio.FIRST_COMPLETED)
 
     # Cancel the other task because we just want to shut down
-    for task in tasks:
-        task.cancel()
-    queue_done.cancel()
+    # for task in tasks:
+    #     task.cancel()
+    print("FINISHING")
 
     await db.disconnect()
+
 
     print(
         f"Finished in {time.time() - start_time} seconds. Processed {done_queue.qsize()} links.")

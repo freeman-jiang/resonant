@@ -24,7 +24,7 @@ async def main():
     domains = set()
 
     while True:
-        pages = await client.page.find_many(take=100, skip=processed)
+        pages = await client.page.find_many(take=500, skip=processed)
         if len(pages) == 0:
             break
         print(f"Processing {len(pages)} pages")

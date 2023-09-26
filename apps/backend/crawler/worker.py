@@ -54,7 +54,7 @@ class Worker:
         """Get, crawl, and parse links from the queue one at a time"""
         # Prevents exhausting the queue and exiting all at once
         await asyncio.sleep(random.uniform(0, 1) * 5)
-        async with ClientSession(timeout=ClientTimeout(connect=4)) as session:
+        async with ClientSession(timeout=ClientTimeout(connect=4, total = 10)) as session:
             spoof_chrome_user_agent(session)
 
             while not self.done:
@@ -126,13 +126,15 @@ class Worker:
             if suppressed in link.url:
                 return None, []
 
-        async with session.get(link.url) as response:
-            if not response.ok:
-                return None, []
-            response = await response.read()
+        try:
+            async with session.get(link.url) as response:
+                if not response.ok:
+                    return None, []
+                response = await response.read()
 
-            return parse_html(response, link, should_rss)
-
+                return parse_html(response, link, should_rss)
+        except asyncio.TimeoutError:
+            return None, []
 
 async def crawl_interactive(link: Link) -> np.ndarray | None:
     """

@@ -133,9 +133,13 @@ class PrismaClient:
                 'text': link.text,
             }
 
-        count = await self.db.crawltask.create_many(
-            data=[create_task(link) for link in links],
-            skip_duplicates=True)
+        try:
+            count = await self.db.crawltask.create_many(
+                data=[create_task(link) for link in links],
+                skip_duplicates=True)
+        except Exception as e:
+            print("Got exception!", e)
+            return 0
         return count
 
     async def finish_task(self, task: CrawlTask):
