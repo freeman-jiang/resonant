@@ -5,14 +5,14 @@ import validators
 from pydantic import BaseModel, validator
 
 SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com", "facebook.com", "reddit.com",
-                      "instagram.com", 'google.com/patent', 'wikimedia.org', 't.co', 'amzn.to', 'github.com',
+                      "instagram.com", 'google.com/patent', 'wikimedia.org', 'https://t.co', 'amzn.to',
                       'codeforces.com', 'tandfonline.com', 'wiley.com', 'oup.com', 'sagepub.com', 'sexbuzz.com',
                       'arxiv.org', 'detnews.com', 'cbsnews.com', 'cnn.com', 'scholar.google.com', 'play.google.com',
                       'goo.gl', 'cnevpost.com', 'electrive.com', 'techcrunch.com', 'ssrn.com', 'sciencedirect.com',
                       'springer.com', 'jstor.org', 'nature.com', 'sciencemag.org', 'sciencenews.org',
                       'sciencemuseum.org.uk', 'elifesciences', 'fool.com', 'slimemoldtimemold', 'exfatloss',
                       'achemicalhunger', '9to5toys', 'bloomberg.com', 'forbes.com', 'bbc.com', 'economist.com',
-                      'ft.com', 'vimeo.com', 'youtube.com', 'pittsburghlive.com', 'linkedin.com', 'soundcloud.com',
+                        'vimeo.com', 'youtube.com', 'pittsburghlive.com', 'linkedin.com', 'soundcloud.com',
                       'albawa.com', 'theage.com', 'prnewswire.com', 'archive.org', 'stackexchange.com', 'doi.org',
                       'jamanetwork',
                       'inverse.com',
@@ -227,3 +227,8 @@ class Link(BaseModel):
                 self.url,
                 self.parent_url,
                 self.depth).__hash__()
+
+def test_suppressed():
+    for suppressed in SUPPRESSED_DOMAINS:
+        if suppressed in 'https://bayesianbiologist.com/2020/04/20/the-treachery-of-models/':
+            print(suppressed)

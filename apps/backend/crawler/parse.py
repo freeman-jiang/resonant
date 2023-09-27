@@ -140,9 +140,9 @@ def extract_links_from_html(html: str, link: Link) -> list[Link]:
 def find_feed_urls(base_domain: str):
     urls = set(trafilatura.feeds.find_feed_urls(base_domain))
 
-    for suffix in ['feed', 'rss', 'atom.xml']:
+    for suffix in ['/feed', '/rss', '/atom.xml', '']:
         # Parse the RSS feed
-        feed_url = base_domain + "/" + suffix
+        feed_url = base_domain + suffix
         feed = feedparser.parse(feed_url)
 
         # Loop through the entries in the RSS feed and extract URLs
@@ -153,7 +153,7 @@ def find_feed_urls(base_domain: str):
     return list(urls)
 
 
-def find_feed_urls_cached(base_domain: Link) -> list[str]:
+def find_feed_urls_cached(base_domain: Link) -> list[Link]:
     rss_feed_urls = find_feed_urls(base_domain.url)
 
     print(f"Found {len(rss_feed_urls)} RSS links from {base_domain.url}")
@@ -164,6 +164,8 @@ def find_feed_urls_cached(base_domain: Link) -> list[str]:
     return rss_links
 
 
+def test_amasad():
+    assert len(find_feed_urls_cached(Link.from_url('http://aviadas.com'))) > 1
 def parse_html(html: bytes, link: Link, should_rss: bool) -> Tuple[Optional[CrawlResult], list[Link]]:
     html = filter_out_ugc_sponsored(html)
     a = parse_html_trafilatura(html, link)
