@@ -116,34 +116,19 @@ WITH want AS ({want_cte}),
  matching_vecs AS (
         SELECT e.vec <=> w.vec as dist, e.url as url from vecs."Embeddings" as e, want as w 
             WHERE e.url != w.url AND e.index <= 4 AND e.url NOT LIKE '%%.superstack-web.vercel.app' 
-            ORDER BY dist LIMIT 100
+            ORDER BY dist LIMIT 200
  ),
  domain_counts AS (SELECT COUNT(url) as num_matching_windows, AVG(dist) as dist, MIN(url) as url FROM matching_vecs GROUP BY url)
- select "Page".*, domain_counts.dist, domain_counts.num_matching_windows from "Page" INNER JOIN domain_counts ON domain_counts.url = "Page".url ORDER BY dist
+ select "Page".*,
+ -- Scoring algorithm: (similarity * page_rank * (amount of matching windows ^ 0.15))
+ -- Higher is better
+ (1 - dist) * "Page".page_rank * (domain_counts.num_matching_windows ^ 0.15) as score
+  
+  from "Page" INNER JOIN domain_counts ON domain_counts.url = "Page".url ORDER BY score DESC
     """, want_cte_dict).fetchall()
 
     # Rerank based on number of matching windows + distance
 
-    domain_counts = defaultdict(int)
-
-    for idx, x in enumerate(similar):
-        # Convert to higher score is better, simply based on the rank (e.g. first is highest)
-        rank = len(similar) - idx
-
-        domain = Link.from_url(x['url']).domain()
-        domain_counts[domain] += 1
-
-        if domain_counts[domain] >= 4:
-            x['score'] = -1e10
-            continue
-        if domain_counts[domain] >= 1:
-            rank -= 2 * (domain_counts[domain] ** 2) + 3
-
-        # Boost based on how many matching windows the document has
-        # The more matching windows, the more parts of the document are relevant
-        x['score'] = rank + x['num_matching_windows']
-
-    similar = sorted(similar, key=lambda x: x['score'], reverse=True)
 
     urls_to_add = [SimilarArticles(
         title=x['title'],

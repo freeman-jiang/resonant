@@ -159,8 +159,7 @@ async def search(body: SearchQuery) -> list[SimilarArticles]:
 
 def test_search():
     import asyncio
-    asyncio.run(search(
-        'https://www.theguardian.com/lifeandstyle/2017/aug/11/why-we-fell-for-clean-eating'))
+    print(asyncio.run(search(SearchQuery(url='https://www.theguardian.com/lifeandstyle/2017/aug/11/why-we-fell-for-clean-eating'))))
 
 
 @pytest.mark.asyncio

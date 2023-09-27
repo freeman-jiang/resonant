@@ -49,6 +49,7 @@ model CrawlTask {
   status     TaskStatus
   url        String     @unique
   depth      Int        @default(0)
+  boost     Float      @default(1)
   text       String
   parent_url String?
   created_at DateTime   @default(now())

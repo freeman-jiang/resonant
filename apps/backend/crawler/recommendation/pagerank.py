@@ -37,6 +37,7 @@ class Node(BaseModel):
     async def from_db(cls, pages: list[PageAsNode]) -> dict[str, 'Node']:
         for p in pages:
             domain = url_to_domain(p.url)
+            p.outbound_urls = [x for x in p.outbound_urls if x != p.url]
             # p.outbound_urls = [x for x in p.outbound_urls if url_to_domain(x) != domain]
 
         d = {p.url: Node(out=p.outbound_urls, url=p.url, score=(
@@ -86,18 +87,17 @@ def top_domains(trustrank_values: dict) -> dict[str, float]:
     return trustrank_values_sorted
 
 
+from collections import defaultdict
+NORMAL_ADDS = defaultdict(int)
 def add_rank(d, url, value, msg=""):
-    # if msg == 'random' or msg == 'dead':
-    #     return
-    # if (url == 'redbuckman.substack.com' or url == 'danluu.com') and msg != 'random':
-    #     curvalue = d[url]
-    #     if url == 'redbuckman.substack.com' and curvalue >= 4:
-    #         wtf = 5
-    #     print(msg, value, "add to", url, curvalue)
+    global NORMAL_ADDS
+    if msg.startswith('normal'):
+        NORMAL_ADDS[url] += value
+
     d[url] += value
 
 
-def trustrank(graph: dict[str, Node], damping_factor=0.87, max_iterations=100, tolerance=0.2):
+def trustrank(graph: dict[str, Node], damping_factor=0.82, max_iterations=100, tolerance=1.0):
     trusted_nodes = [(url, node.individual_pages)
                      for url, node in graph.items() if node.best_depth <= 1]
     trusted_nodes_len = sum(
@@ -108,7 +108,8 @@ def trustrank(graph: dict[str, Node], damping_factor=0.87, max_iterations=100, t
     initial_values = {url: 0 for url, node in graph.items()}
     new_trustrank_values = initial_values.copy()
 
-    for _ in range(max_iterations):
+    for iters in range(max_iterations):
+        NORMAL_ADDS.clear()
         total_diff = 0.0
         for node_url, node in graph.items():
             pagerank_lost = 0
@@ -117,7 +118,7 @@ def trustrank(graph: dict[str, Node], damping_factor=0.87, max_iterations=100, t
                 pagerank_lost += damping_factor * trustrank_values[node_url]
             else:
                 share = damping_factor * \
-                    trustrank_values[node_url] / len(node.out)
+                    trustrank_values[node_url] / (len(node.out) + 1)
                 for neighbor_url in node.out:
                     if neighbor_url in new_trustrank_values:
                         add_rank(new_trustrank_values, neighbor_url,
@@ -126,13 +127,14 @@ def trustrank(graph: dict[str, Node], damping_factor=0.87, max_iterations=100, t
                         # Loosing pagerank value here...add it back to trusted_nodes at the random_jump stage
                         # print("Out-link to domain that we don't know: ", neighbor_url)
                         pagerank_lost += share
+                pagerank_lost += share * 1
 
             random_jump = (
                 (1 - damping_factor) * trustrank_values[node_url] + pagerank_lost) / trusted_nodes_len
 
             for neighbor_url, multiplier in trusted_nodes:
                 add_rank(new_trustrank_values, neighbor_url,
-                         random_jump * multiplier, 'random')
+                         random_jump * multiplier, 'random' if iters >= 6 else 'fda')
 
         old_sum = sum(trustrank_values.values())
         new_sum = sum(new_trustrank_values.values())
@@ -178,7 +180,7 @@ def combine_domain_and_page_scores(domains: dict[str, float], pages: dict[str, f
         domain = url_to_domain(url)
         domain_score = domains[domain]
 
-        pages_combined[url] = ((domain_score ** 1.5) * page_score)
+        pages_combined[url] = ((domain_score ** 0.2) * (page_score + 1))
 
     return pages_combined
 
@@ -190,10 +192,10 @@ async def main():
     cursor = db.cursor(row_factory=kwargs_row(PageAsNode))
     pages = cursor.execute(
         "SELECT id, url,outbound_urls,depth  FROM \"Page\" LIMIT 120000").fetchall()
-    json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
-
-    pages = json.load(open("/tmp/file.json", "r"))
-    pages = [PageAsNode(**p) for p in pages]
+    # json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
+    #
+    # pages = json.load(open("/tmp/file.json", "r"))
+    # pages = [PageAsNode(**p) for p in pages]
     print(pages, file=open("pages.txt", "w+"))
     print("Got pages", len(pages))
 
@@ -206,16 +208,13 @@ async def main():
         topdomains[domain] = topdomains[domain] / (domains[domain].individual_pages)
 
     topurls = trustrank(nodes)
-
-
     page_score = combine_domain_and_page_scores(topdomains, topurls)
 
-    print(topdomains)
+    print(topdomains, file = open("topdomains.txt", "w+"))
+    print(topurls, file = open("topurls.txt", "w+"))
     insert_pagerank(db, pages, page_score)
 
-    # scored_by_num_articles = sorted([(x[2] / x[1], x[0]) for x in topdomains])
 
-    # print(topdomains)
 
 
 if __name__ == "__main__":

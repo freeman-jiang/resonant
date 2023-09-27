@@ -108,7 +108,7 @@ class PrismaClient:
             WHERE id = (
                 SELECT id FROM "CrawlTask"
                 WHERE status::text = $2
-                ORDER BY depth ASC, id ASC
+                ORDER BY depth ASC, boost DESC, id ASC
                 FOR UPDATE SKIP LOCKED
                 LIMIT 1
             )
