@@ -1,8 +1,8 @@
 generator client {
   provider             = "prisma-client-py"
-  interface            = "asyncio"
-  recursive_type_depth = "5"
   previewFeatures      = ["multiSchema"]
+  recursive_type_depth = "5"
+  interface            = "asyncio"
 }
 
 datasource db {
@@ -13,33 +13,21 @@ datasource db {
 
 model Page {
   id            Int          @id @default(autoincrement())
-  url           String       @unique
-  parent_url    String?
   title         String?
   date          String?
   author        String?
   content       String
-  content_hash  String       @unique // A 128-bit MurmurHash3 hash of the content
   created_at    DateTime     @default(now())
   updated_at    DateTime     @updatedAt
-  depth Int         @default(0)
-  page_rank Float?
   outbound_urls String[]
+  parent_url    String?
+  url           String       @unique
+  content_hash  String       @unique
+  depth         Int          @default(0)
+  page_rank     Float?
+  feeded_by     FeedPage[]
+  liked_by      LikedPage[]
   embeddings    Embeddings[]
-
-  liked_by  LikedPage[]
-  feeded_by FeedPage[]
-
-  @@schema("public")
-}
-
-
-enum TaskStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-  FILTERED
 
   @@schema("public")
 }
@@ -49,62 +37,70 @@ model CrawlTask {
   status     TaskStatus
   url        String     @unique
   depth      Int        @default(0)
-  boost     Float      @default(1)
   text       String
   parent_url String?
   created_at DateTime   @default(now())
   updated_at DateTime   @updatedAt
+  boost      Float      @default(1)
 
   @@schema("public")
 }
 
 model Embeddings {
-  id__  Int                        @id @default(autoincrement())
-  url   String
+  id__  Int                   @id @default(autoincrement())
+  vec   Unsupported("vector")
   index Int
-  page  Page                       @relation(fields: [url], references: [url], onDelete: Cascade)
-  vec   Unsupported("vector(768)")
+  url   String
+  page  Page                  @relation(fields: [url], references: [url], onDelete: Cascade)
 
+  @@index([vec])
   @@schema("vecs")
 }
 
 model User {
   id          Int         @id @default(autoincrement())
-  liked_pages LikedPage[]
   feed        FeedPage[]
+  liked_pages LikedPage[]
 
   @@schema("public")
 }
 
 model FeedPage {
-  id                Int @id @default(autoincrement())
+  id                Int       @id @default(autoincrement())
   user_id           Int
   page_id           Int
   suggested_from_id Int
-  score            Float @default(0)
-
-  user           User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  page           Page      @relation(fields: [page_id], references: [id], onDelete: Cascade)
-  suggested_from LikedPage @relation(fields: [suggested_from_id], references: [id], onDelete: Cascade)
+  score             Float     @default(0)
+  page              Page      @relation(fields: [page_id], references: [id], onDelete: Cascade)
+  suggested_from    LikedPage @relation(fields: [suggested_from_id], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, page_id, suggested_from_id], name: "feed_pages_user_id_page_id_suggested_from_id")
-  @@index([user_id], name: "feed_pages_user_id")
-  @@index([page_id], name: "feed_pages_page_id")
+  @@index([user_id], map: "feed_pages_user_id")
+  @@index([page_id], map: "feed_pages_page_id")
   @@schema("public")
 }
 
 model LikedPage {
-  id      Int @id @default(autoincrement())
-  user_id Int
-  page_id Int
-
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  page Page @relation(fields: [page_id], references: [id], onDelete: Cascade)
-
+  id          Int        @id @default(autoincrement())
+  user_id     Int
+  page_id     Int
   suggestions FeedPage[]
+  page        Page       @relation(fields: [page_id], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, page_id], name: "liked_pages_user_id_page_id")
-  @@index([user_id], name: "liked_pages_user_id")
-  @@index([page_id], name: "liked_pages_page_id")
+  @@index([user_id], map: "liked_pages_user_id")
+  @@index([page_id], map: "liked_pages_page_id")
+  @@schema("public")
+}
+
+enum TaskStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  FILTERED
+
   @@schema("public")
 }

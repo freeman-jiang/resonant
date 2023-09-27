@@ -164,8 +164,6 @@ def find_feed_urls_cached(base_domain: Link) -> list[Link]:
     return rss_links
 
 
-def test_amasad():
-    assert len(find_feed_urls_cached(Link.from_url('http://aviadas.com'))) > 1
 def parse_html(html: bytes, link: Link, should_rss: bool) -> Tuple[Optional[CrawlResult], list[Link]]:
     html = filter_out_ugc_sponsored(html)
     a = parse_html_trafilatura(html, link)
