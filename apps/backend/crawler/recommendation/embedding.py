@@ -81,7 +81,7 @@ model = Embedder()
 class SimilarArticles(BaseModel):
     title: str
     url: str
-    score: float
+    score: float = 0
 
     def __hash__(self):
         return hash(self.url)
@@ -140,60 +140,13 @@ WITH want AS ({want_cte}),
     return urls_to_add
 
 
-async def generate_feed_from_liked(client: Prisma, lp: models.LikedPage) -> list[SimilarArticles]:
-    liked = lp.page
-    query = NearestNeighboursQuery(url=liked.url or None)
+async def generate_feed_from_page(page: models.Page) -> list[SimilarArticles]:
+    query = NearestNeighboursQuery(url=page.url or None)
     similar = await _query_similar(query)
-
-    for article in similar:
-        url = article.url
-
-        try:
-            await client.feedpage.create(data={
-                'page': {
-                    'connect': {
-                        'url': url
-                    }
-                },
-                'user': {
-                    'connect': {
-                        'id': lp.user.id
-                    }
-                },
-                'suggested_from': {
-                    'connect': {
-                        'id': lp.id
-                    }
-                },
-                'score': article.score,
-            })
-        except prisma.errors.UniqueViolationError:
-            pass
     return similar
 
 
-@pytest.mark.asyncio
-async def test_query_similar():
-    l = Link.from_url(
-        "http://worrydream.com/ABriefRantOnTheFutureOfInteractionDesign/")
-    await client.connect()
-    user = await client.user.create(data={})
-    lp = await client.likedpage.create(data={
-        'user': {
-            'connect': {
-                'id': user.id
-            }
-        },
-        'page': {
-            'connect': {
-                'id': 42
-            }
-        }
-    }, include={'page': True, 'user': True})
-    await generate_feed_from_liked(lp)
-
-
-async def store_embeddings_for_pages(client: Prisma, pages: list[Page]):
+async def store_embeddings_for_pages(pages: list[Page]):
     to_append = []
     print("Calculating embeddings for {} pages".format(len(pages)))
     for p in pages:
@@ -223,7 +176,7 @@ async def generate_embeddings():
             print("ERR: No pages to process")
             return
 
-        await store_embeddings_for_pages(client, pages)
+        await store_embeddings_for_pages( pages)
 
 
 if __name__ == "__main__":

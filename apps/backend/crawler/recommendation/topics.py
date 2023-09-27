@@ -36,7 +36,7 @@ async def seed_database_topics(client: PrismaClient):
         pages.append(await client.store_raw_page(1, cr))
 
     print("Stored pages", pages)
-    await store_embeddings_for_pages(client.db, pages)
+    await store_embeddings_for_pages(pages)
 
 
 async def main():

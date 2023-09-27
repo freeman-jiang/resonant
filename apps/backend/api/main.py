@@ -1,12 +1,14 @@
 from collections import defaultdict
+import random
 from datetime import datetime
 from typing import Optional
 
+import prisma
 import pytest
 from crawler.link import Link
 from crawler.recommendation.embedding import (NearestNeighboursQuery,
                                               SimilarArticles, _query_similar,
-                                              generate_feed_from_liked, model)
+                                              generate_feed_from_page)
 from crawler.worker import crawl_interactive, get_window_avg
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -57,7 +59,34 @@ async def find_or_create_user(userid):
 
     return new_user
 
+@app.get('/recommend')
+async def recommend(userid: int) -> list[SimilarArticles]:
+    """
+    Get a random sample of similar pages from the pages user has already liked from LikedPage
+    :param userid:
+    :return:
+    """
 
+    user = await find_or_create_user(userid)
+
+    # Get a random sample of pages the user has liked
+    liked_pages = await client.likedpage.find_many(take=100, where={
+        'user_id': user.id
+    }, include={'page': True})
+
+    # Select K random pages to generate feed from
+    selected_liked_pages = random.choices(liked_pages, k=10)
+
+    if len(selected_liked_pages) == 0:
+        return []
+
+    similar = []
+
+    for lp in selected_liked_pages:
+        page = lp.page
+        similar.extend(await generate_feed_from_page(page))
+
+    return similar
 @app.get("/like/{userid}/{pageid}")
 async def like(userid: int, pageid: int) -> list[SimilarArticles]:
     page = await client.page.find_first(where={"id": pageid})
@@ -90,7 +119,29 @@ async def like(userid: int, pageid: int) -> list[SimilarArticles]:
                 }
             }
         }, include={'page': True, 'user': True})
-        urls = await generate_feed_from_liked(client, lp)
+        urls = await generate_feed_from_page(page)
+
+        for article in urls:
+            url = article.url
+
+            await client.feedpage.create(data={
+                'page': {
+                    'connect': {
+                        'url': url
+                    }
+                },
+                'user': {
+                    'connect': {
+                        'id': lp.user.id
+                    }
+                },
+                'suggested_from': {
+                    'connect': {
+                        'id': lp.id
+                    }
+                },
+                'score': article.score,
+            })
 
     print("Recommended", urls)
     return urls
@@ -222,7 +273,7 @@ async def random_feed() -> list[PageResponse]:
     random_pages = await client.query_raw("""
     WITH random_ids AS (SELECT id, MD5(CONCAT($1, content_hash)) FROM "Page" ORDER BY md5)
     SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1 LIMIT $2
-    """, seed, 10, model=Page)
+    """, seed, 100, model=Page)
 
     return [PageResponse.from_prisma_page(p) for p in random_pages]
 

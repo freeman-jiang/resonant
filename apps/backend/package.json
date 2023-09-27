@@ -2,6 +2,7 @@
   "scripts": {
     "build": "poetry install && poetry run prisma generate",
     "dev": "poetry run uvicorn api.main:app --reload",
-    "start": "poetry run python -m api.main"
+    "start": "poetry run python -m api.main",
+    "prod": "poetry run nohup python3 -m api.main & tail -f nohup.out"
   }
 }
