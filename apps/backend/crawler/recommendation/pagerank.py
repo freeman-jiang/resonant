@@ -40,7 +40,7 @@ class Node(BaseModel):
             # p.outbound_urls = [x for x in p.outbound_urls if url_to_domain(x) != domain]
 
         d = {p.url: Node(out=p.outbound_urls, url=p.url, score=(
-            (5 - p.depth) ** 1.6), best_depth=p.depth) for p in pages}
+            (5 - p.depth) ** 2), best_depth=p.depth) for p in pages}
 
         return d
 

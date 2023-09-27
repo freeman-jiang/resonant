@@ -1,3 +1,5 @@
+import asyncio.exceptions
+
 from prisma import Prisma
 from typing import Optional
 
@@ -137,7 +139,7 @@ class PrismaClient:
             count = await self.db.crawltask.create_many(
                 data=[create_task(link) for link in links],
                 skip_duplicates=True)
-        except Exception as e:
+        except asyncio.exceptions.CancelledError as e:
             print("Got exception!", e)
             return 0
         return count

@@ -39,8 +39,11 @@ class Worker:
         """
         try:
             print("Worker started")
-            # for debugging
-            await self.run_sequential()
+            while True:
+                try:
+                    await self.run_sequential()
+                except asyncio.CancelledError:
+                    print("Worker cancelled (prisma bug???)")
             # await self.run_parallel()
         except Exception as e:
             print(f"Worker encountered exception: {e}")
@@ -70,6 +73,7 @@ class Worker:
                 print(f"Working on task: {task.id}")
 
                 await self.process_task(task, session)
+
 
             print("Worker exiting...")
             return
@@ -152,6 +156,8 @@ async def crawl_interactive(link: Link) -> np.ndarray | None:
                 return None
             response, _rss_links = parse_html(await response.read(), link, False)
 
+        if response is None:
+            return None
         return get_window_avg(response.title + " " + response.content)
 
 

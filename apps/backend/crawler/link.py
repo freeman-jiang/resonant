@@ -67,8 +67,31 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
 UNSUPPORTED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.ppt', '.pptx',
                           '.xls', '.xlsx', '.zip', '.rar', '.7z', '.gz', '.png', '.jpg', '.jpeg', }
 
+import re
+emoj = re.compile("["
+    u"\U0001F600-\U0001F64F"  # emoticons
+    u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+    u"\U0001F680-\U0001F6FF"  # transport & map symbols
+    u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+    u"\U00002500-\U00002BEF"  # chinese char
+    u"\U00002702-\U000027B0"
+    u"\U000024C2-\U0001F251"
+    u"\U0001f926-\U0001f937"
+    u"\U00010000-\U0010ffff"
+    u"\u2640-\u2642" 
+    u"\u2600-\u2B55"
+    u"\u200d"
+    u"\u23cf"
+    u"\u23e9"
+    u"\u231a"
+    u"\ufe0f"  # dingbats
+    u"\u3030"
+                  "]+", re.UNICODE)
+def _remove_emojis(data):
+    return re.sub(emoj, '', data)
 
 def is_valid_url(url: str) -> bool:
+    url = _remove_emojis(url)
     if not (url.startswith("http://") or url.startswith("https://")):
         return False
 
@@ -79,10 +102,11 @@ def is_valid_url(url: str) -> bool:
 
     return True
 
-
 def test_valid():
     assert is_valid_url(
         'http://worrydream.com/ABriefRantOnThefuture0fInteractionDesign/') == True
+
+    assert is_valid_url('https://nautil.us/your-🧠-on-emoji-365823/') == False
 
 
 def clean_url(url: str):
