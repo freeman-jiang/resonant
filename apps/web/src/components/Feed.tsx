@@ -1,8 +1,10 @@
 "use client";
+import { NEXT_PUBLIC_AMPLITUDE_API_KEY } from "@/config";
 import { FeedContext } from "@/context/FeedContext";
 import { cn } from "@/lib/utils";
 import { Link } from "@/types/api";
-import { useState } from "react";
+import * as amplitude from "@amplitude/analytics-browser";
+import { useEffect, useState } from "react";
 import { Entry } from "./Entry";
 import { Search } from "./Search";
 import { Topics } from "./Topics";
@@ -13,6 +15,15 @@ interface Props {
 }
 
 export const Feed = (props: Props) => {
+  useEffect(() => {
+    if (!NEXT_PUBLIC_AMPLITUDE_API_KEY) {
+      console.log("NEXT_PUBLIC_AMPLITUDE_API_KEY is not set");
+      return;
+    }
+    amplitude.init(NEXT_PUBLIC_AMPLITUDE_API_KEY || "", {
+      defaultTracking: true,
+    });
+  }, []);
   // TODO: Replace with tanstack-query
   const [links, setLinks] = useState<Link[]>(props.links);
 
