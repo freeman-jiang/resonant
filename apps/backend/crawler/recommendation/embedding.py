@@ -1,14 +1,12 @@
 import asyncio
 import os
-from collections import defaultdict
 from typing import Iterator, Optional
 
 import nltk
 import numpy as np
-import prisma.errors
 import psycopg
-import pytest
-from crawler.link import Link
+
+from api.page_response import PageResponse
 from dotenv import load_dotenv
 from prisma import Prisma, models
 from prisma.models import Page
@@ -81,6 +79,7 @@ model = Embedder()
 class SimilarArticles(BaseModel):
     title: str
     url: str
+    excerpt: str
     score: float = 0
 
     def __hash__(self):
@@ -106,7 +105,7 @@ class NearestNeighboursQuery(BaseModel):
             return 'SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %(url)s AND index <= 3 GROUP BY url', dict(url=self.url)
 
 
-async def _query_similar(query: NearestNeighboursQuery) -> list[SimilarArticles]:
+async def _query_similar(query: NearestNeighboursQuery) -> list[PageResponse]:
     cursor = db.cursor(row_factory=dict_row)
 
     want_cte, want_cte_dict = query.to_sql_expr()
@@ -130,17 +129,14 @@ WITH want AS ({want_cte}),
     # Rerank based on number of matching windows + distance
 
 
-    urls_to_add = [SimilarArticles(
-        title=x['title'],
-        url=x['url'],
-        # Higher distance means lower similarity, so just negate it
-        score=x['score']
-    ) for x in similar]
+    similar_urls = [
+        PageResponse.from_prisma_page(Page(**x), x['score']) for x in similar
+    ]
 
-    return urls_to_add
+    return similar_urls
 
 
-async def generate_feed_from_page(page: models.Page) -> list[SimilarArticles]:
+async def generate_feed_from_page(page: models.Page) -> list[PageResponse]:
     query = NearestNeighboursQuery(url=page.url or None)
     similar = await _query_similar(query)
     return similar

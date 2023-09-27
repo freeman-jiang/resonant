@@ -1,26 +1,25 @@
-from collections import defaultdict
 import random
 from datetime import datetime
 from typing import Optional
 
-import prisma
 import pytest
+
+from api.page_response import PageResponse
 from crawler.link import Link
-from crawler.recommendation.embedding import (NearestNeighboursQuery,
-                                              SimilarArticles, _query_similar,
+from crawler.recommendation.embedding import (NearestNeighboursQuery, _query_similar,
                                               generate_feed_from_page)
 from crawler.worker import crawl_interactive, get_window_avg
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from nltk import sent_tokenize
 from prisma import Prisma
 from prisma.models import Page
 from pydantic import BaseModel, validator
 
-app = FastAPI()
-client = Prisma()
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI()
+client = Prisma()
 
 origins = [
     "http://localhost:3000",
@@ -60,7 +59,7 @@ async def find_or_create_user(userid):
     return new_user
 
 @app.get('/recommend')
-async def recommend(userid: int) -> list[SimilarArticles]:
+async def recommend(userid: int) -> list[PageResponse]:
     """
     Get a random sample of similar pages from the pages user has already liked from LikedPage
     :param userid:
@@ -75,7 +74,7 @@ async def recommend(userid: int) -> list[SimilarArticles]:
     }, include={'page': True})
 
     # Select K random pages to generate feed from
-    selected_liked_pages = random.choices(liked_pages, k=10)
+    selected_liked_pages = random.choices(liked_pages, k=min(10, len(liked_pages)))
 
     if len(selected_liked_pages) == 0:
         return []
@@ -87,9 +86,14 @@ async def recommend(userid: int) -> list[SimilarArticles]:
         similar.extend(await generate_feed_from_page(page))
 
     return similar
+
 @app.get("/like/{userid}/{pageid}")
-async def like(userid: int, pageid: int) -> list[SimilarArticles]:
+async def like(userid: int, pageid: int) -> list[PageResponse]:
     page = await client.page.find_first(where={"id": pageid})
+
+    if page is None:
+        raise HTTPException(400, "Page does not exist")
+
     user = await find_or_create_user(userid)
 
     lp = await client.likedpage.find_first(where={
@@ -98,15 +102,8 @@ async def like(userid: int, pageid: int) -> list[SimilarArticles]:
     }, include={'page': True, 'user': True, 'suggestions': {
         'include': {'page': True}
     }})
-    if lp:
-        suggestions = lp.suggestions
 
-        urls = []
-
-        for s in suggestions:
-            urls.append(SimilarArticles(title=s.page.title,
-                                        url=s.page.url, score=s.score))
-    else:
+    if lp is None:
         lp = await client.likedpage.create(data={
             'user': {
                 'connect': {
@@ -119,53 +116,13 @@ async def like(userid: int, pageid: int) -> list[SimilarArticles]:
                 }
             }
         }, include={'page': True, 'user': True})
-        urls = await generate_feed_from_page(page)
+    urls = await generate_feed_from_page(page)
 
-        for article in urls:
-            url = article.url
-
-            await client.feedpage.create(data={
-                'page': {
-                    'connect': {
-                        'url': url
-                    }
-                },
-                'user': {
-                    'connect': {
-                        'id': lp.user.id
-                    }
-                },
-                'suggested_from': {
-                    'connect': {
-                        'id': lp.id
-                    }
-                },
-                'score': article.score,
-            })
 
     print("Recommended", urls)
     return urls
 
 
-class PageResponse(BaseModel):
-    id: int
-    url: str
-    title: str
-    excerpt: str
-    date: str = ""
-
-    @classmethod
-    def from_prisma_page(cls, p: Page) -> 'PageResponse':
-        # Get first two sentences from p.content
-        excerpt = sent_tokenize(p.content)[:2]
-
-        return PageResponse(
-            id=p.id,
-            url=p.url,
-            title=p.title,
-            date=p.date or "",
-            excerpt='. '.join(excerpt)
-        )
 
 
 class SearchQuery(BaseModel):
@@ -190,7 +147,7 @@ class SearchQuery(BaseModel):
 
 
 @app.post("/search")
-async def search(body: SearchQuery) -> list[SimilarArticles]:
+async def search(body: SearchQuery) -> list[PageResponse]:
     if body.url:
         url = body.url
         print("Searching for similar URLs to", url)
@@ -274,7 +231,6 @@ async def random_feed() -> list[PageResponse]:
     WITH random_ids AS (SELECT id, MD5(CONCAT($1, content_hash)) FROM "Page" ORDER BY md5)
     SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1 LIMIT $2
     """, seed, 100, model=Page)
-
     return [PageResponse.from_prisma_page(p) for p in random_pages]
 
 
