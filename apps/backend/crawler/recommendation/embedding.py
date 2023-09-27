@@ -120,9 +120,9 @@ WITH want AS ({want_cte}),
  ),
  domain_counts AS (SELECT COUNT(url) as num_matching_windows, AVG(dist) as dist, MIN(url) as url FROM matching_vecs GROUP BY url)
  select "Page".*,
- -- Scoring algorithm: (similarity * page_rank * (amount of matching windows ^ 0.15))
+ -- Scoring algorithm: (similarity * page_rank^0.5 * (amount of matching windows ^ 0.15))
  -- Higher is better
- (1 - dist) * "Page".page_rank * (domain_counts.num_matching_windows ^ 0.15) as score
+ (1 - dist) * ("Page".page_rank ^ 0.5) * (domain_counts.num_matching_windows ^ 0.15) as score
   
   from "Page" INNER JOIN domain_counts ON domain_counts.url = "Page".url ORDER BY score DESC
     """, want_cte_dict).fetchall()
