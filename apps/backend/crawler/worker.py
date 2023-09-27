@@ -44,6 +44,7 @@ class Worker:
                     await self.run_sequential()
                 except asyncio.CancelledError:
                     print("Worker cancelled (prisma bug???)")
+                    raise
             # await self.run_parallel()
         except Exception as e:
             print(f"Worker encountered exception: {e}")

@@ -129,7 +129,7 @@ async def test_lda():
     db = psycopg.connect(os.environ['DATABASE_URL'])
 
     cursor = db.cursor(row_factory=class_row(PageWithVec))
-    pages = cursor.execute("""WITH pages AS (SELECT * FROM "Page" LIMIT 1500)
+    pages: list[PageWithVec] = cursor.execute("""WITH pages AS (SELECT * FROM "Page" LIMIT 1500)
 SELECT * FROM pages INNER JOIN "vecs"."Embeddings" ON pages.url = "vecs"."Embeddings".url WHERE index < 4 ORDER BY pages.url, index
 """).fetchall()
 

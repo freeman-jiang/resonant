@@ -26,6 +26,8 @@ async def add_kagi_urls():
     urls = response.text.split('\n')
 
     for url in urls:
+        if url < 'https://sagi.io/rss.xml':
+            continue
         links = find_feed_urls_cached(Link.from_url(url))
         print(links)
         await pc.add_tasks(links)
