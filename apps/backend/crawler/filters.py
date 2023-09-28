@@ -68,7 +68,7 @@ def should_keep(crawl: CrawlResult) -> bool:
     avg_sent_len = len(words) / len(sentences)
     avg_word_len = sum(len(word) for word in words) / len(words)
 
-    return len(sentences) >= 15 and len(words) >= 300 and avg_word_len > 3 and avg_sent_len >= 8 and avg_sent_len <= 100
+    return len(sentences) >= 12 and len(words) >= 300 and avg_word_len > 3 and avg_sent_len >= 8 and avg_sent_len <= 100
 
 
 @pytest.mark.asyncio
@@ -87,6 +87,6 @@ async def test_1():
 
 
 def test_2():
-    url = 'https://charlesyang.substack.com/p/notes-on-japanese-political-economy'
+    url = 'https://amirbolous.com/posts/transformers/'
     cr = CrawlResult.testing_crawl_link(url)
     print(should_keep(cr))

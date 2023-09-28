@@ -76,16 +76,6 @@ class Embedder:
 model = Embedder()
 
 
-class SimilarArticles(BaseModel):
-    title: str
-    url: str
-    excerpt: str
-    score: float = 0
-
-    def __hash__(self):
-        return hash(self.url)
-
-
 class NearestNeighboursQuery(BaseModel):
     vector: Optional[np.ndarray]
     url: Optional[str]
