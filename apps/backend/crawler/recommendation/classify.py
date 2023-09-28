@@ -4,7 +4,7 @@ import psycopg
 import numpy as np
 from psycopg.rows import dict_row
 from sklearn.model_selection import train_test_split
-from sklearn.svm import SVR
+from sklearn.svm import SVR, LinearSVR
 from sklearn.metrics import mean_absolute_error, r2_score
 from dotenv import load_dotenv
 load_dotenv()
@@ -30,13 +30,13 @@ for row in rows:
     page_rank_scores.append(row['page_rank'])
 
 # Step 2: Split the Data
-X_train, X_test, y_train, y_test = train_test_split(embeddings_data, page_rank_scores, test_size=0.2, random_state=45)
+X_train, X_test, y_train, y_test = train_test_split(embeddings_data, page_rank_scores, test_size=0.12, random_state=45)
 
 # Step 3: Feature Engineering (if needed)
 # No specific feature engineering needed since you're using embeddings.
 
 # Step 4: Model Training
-svm_model = SVR()
+svm_model = LinearSVR()
 svm_model.fit(X_train, y_train)
 
 # Step 5: Model Evaluation
