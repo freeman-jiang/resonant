@@ -1,9 +1,9 @@
 "use client";
+import { amplitude } from "@/analytics/amplitude";
 import { NEXT_PUBLIC_AMPLITUDE_API_KEY } from "@/config";
 import { FeedContext } from "@/context/FeedContext";
 import { cn } from "@/lib/utils";
 import { Link } from "@/types/api";
-import * as amplitude from "@amplitude/analytics-browser";
 import { useEffect, useState } from "react";
 import { Entry } from "./Entry";
 import { Search } from "./Search";
@@ -21,7 +21,11 @@ export const Feed = (props: Props) => {
       return;
     }
     amplitude.init(NEXT_PUBLIC_AMPLITUDE_API_KEY || "", {
-      defaultTracking: true,
+      defaultTracking: {
+        formInteractions: false,
+        pageViews: true,
+        sessions: true,
+      },
     });
   }, []);
   // TODO: Replace with tanstack-query

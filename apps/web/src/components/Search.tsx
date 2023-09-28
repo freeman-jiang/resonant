@@ -1,4 +1,5 @@
 "use client";
+import { amplitude } from "@/analytics/amplitude";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NEXT_PUBLIC_BASE_URL } from "@/config";
@@ -23,6 +24,7 @@ export function Search() {
 
     // TODO: Refactor base url into base axios instance, also consider if this link logic should be in the api
     const { data } = await axios.post(`${NEXT_PUBLIC_BASE_URL}/search`, body);
+    amplitude.track("Search", { query: search });
     // Take the first 15 results
     setLinks(data.slice(0, 15));
   };
