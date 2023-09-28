@@ -89,7 +89,7 @@ class Worker:
         try:
             response, rss_links = await self.crawl(link, session)
 
-            await self.prisma.add_outgoing_links(rss_links)
+            self.prisma.add_outgoing_links(rss_links)
 
             if not response:
                 await self.done_queue.put(True)
@@ -98,7 +98,7 @@ class Worker:
                 return None
 
             if filters.should_keep(response):
-                page = await self.prisma.store_page(task, response)
+                page = self.prisma.store_page(task, response)
                 if page is not None:
                     print(f"SUCCESS: Crawled page: {page.url}")
             else:

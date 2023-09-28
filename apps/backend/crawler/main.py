@@ -30,8 +30,10 @@ async def main():
     await db.connect()
     prisma_client = PrismaClient(config, db)
 
+    await prisma_client.connect()
+
     # Initialize the shared work queue
-    await initialize_queue(prisma_client)
+    # await initialize_queue(prisma_client)
     done_queue: asyncio.Queue[bool] = asyncio.Queue()
     sentinel_queue: asyncio.Queue[bool] = asyncio.Queue()
 

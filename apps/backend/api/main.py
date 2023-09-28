@@ -12,7 +12,7 @@ from crawler.worker import crawl_interactive, get_window_avg
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from prisma import Prisma
-from prisma.models import Page
+from prisma.models import Page, User
 from pydantic import BaseModel, validator
 
 from dotenv import load_dotenv
@@ -96,15 +96,28 @@ async def like(userid: int, pageid: int) -> list[PageResponse]:
 
     user = await find_or_create_user(userid)
 
+    await upsert_liked_page(page, user)
+    urls = await generate_feed_from_page(page)
+
+    print("Recommended", urls)
+    return urls
+
+
+async def upsert_liked_page(page: Page, user: User):
+    """
+    Upserts a LikedPage for the given user and page
+    :param page:
+    :param user:
+    :return:
+    """
     lp = await client.likedpage.find_first(where={
         'user_id': user.id,
         'page_id': page.id,
     }, include={'page': True, 'user': True, 'suggestions': {
         'include': {'page': True}
     }})
-
     if lp is None:
-        lp = await client.likedpage.create(data={
+        await client.likedpage.create(data={
             'user': {
                 'connect': {
                     'id': user.id
@@ -116,13 +129,6 @@ async def like(userid: int, pageid: int) -> list[PageResponse]:
                 }
             }
         }, include={'page': True, 'user': True})
-    urls = await generate_feed_from_page(page)
-
-
-    print("Recommended", urls)
-    return urls
-
-
 
 
 class SearchQuery(BaseModel):
@@ -165,50 +171,7 @@ async def search(body: SearchQuery) -> list[PageResponse]:
         return similar
 
 
-def test_search():
-    import asyncio
-    print(asyncio.run(search(SearchQuery(url='https://www.theguardian.com/lifeandstyle/2017/aug/11/why-we-fell-for-clean-eating'))))
 
-
-@pytest.mark.asyncio
-async def test_like():
-    await startup()
-
-    await like(1, 5330)
-
-
-# @app.get("/feed")
-# async def pages() -> list[PageResponse]:
-#     crawltasks = await client.crawltask.find_many(take=120, where={
-#         "depth": {
-#             'lt': 2
-#         },
-#         'status': 'COMPLETED'
-#     })
-#
-#     # CONVERT the above to a raw query
-#     # crawltasks = await client.query_raw("""SELECT * FROM "CrawlTask" WHERE depth <= 1 AND status = 'COMPLETED' ORDER BY RANDOM() LIMIT 120""", model=CrawlTask)
-#
-#     domain_count = defaultdict(int)
-#
-#     pages_to_return = []
-#     for ct in crawltasks:
-#         page = await client.page.find_first(where={'url': ct.url})
-#
-#         if page:
-#             domain = Link.from_url(page.url).domain()
-#
-#             if domain == page.url.strip('/'):
-#                 # Filter out home pages (they are not articles)
-#                 continue
-#
-#             domain_count[domain] += 1
-#
-#             if domain_count[domain] > 3:
-#                 continue
-#
-#             pages_to_return.append(PageResponse.from_prisma_page(page))
-#     return pages_to_return
 
 
 @app.get("/random-feed")
@@ -240,12 +203,15 @@ async def test_random_feed():
 
     print(await random_feed())
 
-if __name__ == "__main__":
-    import os
 
-    import uvicorn
 
-    host = os.getenv("HOST", "0.0.0.0")
-    port = int(os.getenv("PORT", '8000'))
+def test_search():
+    import asyncio
+    print(asyncio.run(search(SearchQuery(url='https://www.theguardian.com/lifeandstyle/2017/aug/11/why-we-fell-for-clean-eating'))))
 
-    uvicorn.run(app, host=host, port=port)
+
+@pytest.mark.asyncio
+async def test_like():
+    await startup()
+
+    await like(1, 5330)

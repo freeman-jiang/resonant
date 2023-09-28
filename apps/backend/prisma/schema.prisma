@@ -18,7 +18,7 @@ model Page {
   author        String?
   content       String
   created_at    DateTime     @default(now())
-  updated_at    DateTime     @updatedAt
+  updated_at    DateTime     @updatedAt @default(now())
   outbound_urls String[]
   parent_url    String?
   url           String       @unique
@@ -40,7 +40,7 @@ model CrawlTask {
   text       String
   parent_url String?
   created_at DateTime   @default(now())
-  updated_at DateTime   @updatedAt
+  updated_at DateTime   @updatedAt @default(now())
   boost      Float      @default(1)
 
   @@schema("public")
