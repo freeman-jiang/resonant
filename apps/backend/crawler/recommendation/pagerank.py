@@ -38,10 +38,10 @@ class Node(BaseModel):
         for p in pages:
             domain = url_to_domain(p.url)
             p.outbound_urls = [x for x in p.outbound_urls if x != p.url]
-            # p.outbound_urls = [x for x in p.outbound_urls if url_to_domain(x) != domain]
+            p.outbound_urls = [x for x in p.outbound_urls if url_to_domain(x) != domain]
 
         d = {p.url: Node(out=p.outbound_urls, url=p.url, score=(
-            (5 - p.depth) ** 2), best_depth=p.depth) for p in pages}
+            (5 - p.depth) ** 2.5), best_depth=p.depth) for p in pages}
 
         return d
 
@@ -57,7 +57,7 @@ class Node(BaseModel):
                                       score=0, best_depth=node.best_depth)
 
             out = [url_to_domain(x) for x in node.out]
-            # out = [x for x in out if x != domain]
+            out = [x for x in out if x != domain]
 
             answer[domain].out += out
             answer[domain].score += node.score
@@ -180,18 +180,16 @@ def combine_domain_and_page_scores(domains: dict[str, float], pages: dict[str, f
         domain = url_to_domain(url)
         domain_score = domains[domain]
 
-        pages_combined[url] = ((domain_score ** 0.2) * (page_score + 1))
+        pages_combined[url] = ((domain_score ** 0.4) * (page_score + 1))
 
     return pages_combined
 
 
 async def main():
-    import json
-
     await prisma.connect()
     cursor = db.cursor(row_factory=kwargs_row(PageAsNode))
     pages = cursor.execute(
-        "SELECT id, url,outbound_urls,depth  FROM \"Page\" LIMIT 120000").fetchall()
+        "SELECT id, url,outbound_urls,depth  FROM \"Page\" WHERE created_at <= timestamp '2023-09-26' LIMIT 120000").fetchall()
     # json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
     #
     # pages = json.load(open("/tmp/file.json", "r"))

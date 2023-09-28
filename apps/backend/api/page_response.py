@@ -1,5 +1,5 @@
 import functools
-from typing import Optional
+from typing import Optional, Any
 
 from nltk import sent_tokenize
 from prisma.models import Page
@@ -34,3 +34,9 @@ class PageResponse(BaseModel):
             excerpt=excerpt,
             score = score
         )
+
+    @classmethod
+    def from_page_dict(cls, d: dict[str, Any]) -> 'PageResponse':
+        page = Page(**d)
+        score = d['score']
+        return PageResponse.from_prisma_page(page, score)

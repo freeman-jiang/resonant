@@ -5,7 +5,9 @@ from typing import Optional
 import pytest
 
 from api.page_response import PageResponse
+from crawler.config import Config
 from crawler.link import Link
+from crawler.prismac import PrismaClient
 from crawler.recommendation.embedding import (NearestNeighboursQuery, _query_similar,
                                               generate_feed_from_page)
 from crawler.worker import crawl_interactive, get_window_avg
@@ -20,6 +22,7 @@ load_dotenv()
 
 app = FastAPI()
 client = Prisma()
+db = PrismaClient(None)
 
 origins = [
     "http://localhost:3000",
@@ -38,7 +41,9 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup():
+    print("Connecting to database...")
     await client.connect()
+    db.connect()
 
 
 async def find_or_create_user(userid):
@@ -52,7 +57,7 @@ async def find_or_create_user(userid):
     # If the user doesn't exist, create a new user
     new_user = await client.user.create(
         data={
-            # Add other user properties as needed
+            "id": userid
         }
     )
 
@@ -77,6 +82,7 @@ async def recommend(userid: int) -> list[PageResponse]:
     selected_liked_pages = random.choices(liked_pages, k=min(10, len(liked_pages)))
 
     if len(selected_liked_pages) == 0:
+        print(f'User {userid} has no liked pages')
         return []
 
     similar = []
@@ -161,13 +167,13 @@ async def search(body: SearchQuery) -> list[PageResponse]:
         want_vec = await crawl_interactive(Link.from_url(url))
 
         query = NearestNeighboursQuery(vector=want_vec, url=url)
-        similar = await _query_similar(query)
+        similar = _query_similar(query)
 
         return similar
     else:
         want_vec = get_window_avg(body.query)
-        query = NearestNeighboursQuery(vector=want_vec)
-        similar = await _query_similar(query)
+        query = NearestNeighboursQuery(vector=want_vec, text_query = body.query)
+        similar = _query_similar(query)
         return similar
 
 
@@ -190,10 +196,12 @@ async def random_feed() -> list[PageResponse]:
     # Format it as "YYYY-MM-DD"
     seed = current_datetime.strftime("%Y-%m-%d")
 
-    random_pages = await client.query_raw("""
-    WITH random_ids AS (SELECT id, MD5(CONCAT($1, content_hash)) FROM "Page" ORDER BY md5)
-    SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1 LIMIT $2
-    """, seed, 100, model=Page)
+    random_pages = db.query("""
+    WITH random_ids AS (SELECT id, MD5(CONCAT(%s::text, content_hash)) FROM "Page" ORDER BY md5)
+    SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1 LIMIT %s
+    """, [seed, 100])
+
+    random_pages = [Page(**p) for p in random_pages]
     return [PageResponse.from_prisma_page(p) for p in random_pages]
 
 
@@ -207,7 +215,7 @@ async def test_random_feed():
 
 def test_search():
     import asyncio
-    print(asyncio.run(search(SearchQuery(url='https://www.theguardian.com/lifeandstyle/2017/aug/11/why-we-fell-for-clean-eating'))))
+    print(asyncio.run(search(SearchQuery(query = 'clean eating'))))
 
 
 @pytest.mark.asyncio

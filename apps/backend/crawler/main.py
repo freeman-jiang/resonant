@@ -30,7 +30,7 @@ async def main():
     await db.connect()
     prisma_client = PrismaClient(config, db)
 
-    await prisma_client.connect()
+    prisma_client.connect()
 
     # Initialize the shared work queue
     # await initialize_queue(prisma_client)

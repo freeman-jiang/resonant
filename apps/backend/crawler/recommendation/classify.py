@@ -1,8 +1,11 @@
+import json
 import os
+from collections import defaultdict
 
 import psycopg
 import numpy as np
 from psycopg.rows import dict_row
+from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVR, LinearSVR
 from sklearn.metrics import mean_absolute_error, r2_score
@@ -21,16 +24,34 @@ page_rank_scores = []  # List to store page_rank scores for each page
 
 # Fetch data from the database
 cur = conn.cursor(row_factory=dict_row)
-
-cur.execute('SELECT p.url, AVG(e.vec) as vec, AVG(p.page_rank) as page_rank FROM vecs."Embeddings" e INNER JOIN "Page" p ON e.url = p.url WHERE e.index <= 6 GROUP BY p.url LIMIT 10000')
+cur.execute('SELECT p.url, e.vec, p.page_rank as page_rank FROM vecs."Embeddings" e INNER JOIN "Page" p ON e.url = p.url WHERE e.index <= 5 AND p.created_at <= timestamp \'2023-09-26\' ORDER BY e.index asc LIMIT 1500000')
 rows = cur.fetchall()
+json.dump(rows, open("rows.json", "w+"))
+rows = json.load(open("rows.json", "r"))
+embeddings_url = defaultdict(list)
+page_rank_dict = {}
 for row in rows:
     embeddings = np.fromstring(row['vec'][1:-1], sep=',')  # Assuming embeddings are stored as a comma-separated string
+    embeddings_url[row['url']].append(embeddings)
+
+    page_rank_dict[row['url']] = row['page_rank']
+
+for url, embeddings in embeddings_url.items():
+
+    if len(embeddings) < 3:
+        print(f"Skipping {url}")
+        continue
+    embeddings = np.mean(embeddings[0:3], axis = 0)
     embeddings_data.append(embeddings)
-    page_rank_scores.append(row['page_rank'])
+    page_rank_scores.append(page_rank_dict[url])
 
 # Step 2: Split the Data
-X_train, X_test, y_train, y_test = train_test_split(embeddings_data, page_rank_scores, test_size=0.12, random_state=45)
+X_train, X_test, y_train, y_test = train_test_split(embeddings_data, page_rank_scores, test_size=0.15, random_state=45)
+
+n_components = 32  # Adjust the number of components as needed
+pca = PCA(n_components=n_components)
+X_train = pca.fit_transform(X_train)
+X_test = pca.transform(X_test)
 
 # Step 3: Feature Engineering (if needed)
 # No specific feature engineering needed since you're using embeddings.
@@ -45,10 +66,3 @@ mae = mean_absolute_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
 print(f"Mean Absolute Error: {mae}")
 print(f"R-squared: {r2}")
-
-# Commit changes to the database
-conn.commit()
-
-# Close the cursor and the connection
-cur.close()
-conn.close()

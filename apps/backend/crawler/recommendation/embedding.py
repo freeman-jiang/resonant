@@ -1,16 +1,17 @@
 import asyncio
 import os
-from typing import Iterator, Optional
+from typing import Iterator, Optional, Callable
 
 import nltk
 import numpy as np
 import psycopg
+from psycopg import sql
 
 from api.page_response import PageResponse
 from dotenv import load_dotenv
 from prisma import Prisma, models
 from prisma.models import Page
-from psycopg.rows import dict_row
+from psycopg.rows import dict_row, class_row
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 
@@ -78,6 +79,9 @@ model = Embedder()
 
 class NearestNeighboursQuery(BaseModel):
     vector: Optional[np.ndarray]
+    text_query: Optional[str]
+
+    # (Case 2) Search by URL similarity (article already exists in the DB)
     url: Optional[str]
 
     class Config:
@@ -86,6 +90,7 @@ class NearestNeighboursQuery(BaseModel):
     def __init__(self, **data):
         if 'vector' not in data and 'url' not in data:
             raise ValueError("Must provide either vector or url")
+
         super().__init__(**data)
 
     def to_sql_expr(self) -> tuple[str, dict]:
@@ -95,7 +100,101 @@ class NearestNeighboursQuery(BaseModel):
             return 'SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %(url)s AND index <= 3 GROUP BY url', dict(url=self.url)
 
 
-async def _query_similar(query: NearestNeighboursQuery) -> list[PageResponse]:
+def _query_fts(query: str) -> list[PageResponse]:
+    """
+    Query using full-text search for exact word matches
+
+    FTS `score` is a number between 0 and 1, where 1 is a perfect match
+    :param query:
+    :return:
+    """
+    sql_query = sql.SQL("""SELECT "Page".*,
+               ts_rank(
+                   ts,
+                   {query}
+               ) AS score
+        FROM "Page"
+        WHERE ts @@ {query}
+        ORDER BY score DESC""").format(query = sql.SQL("plainto_tsquery('english', {})").format(query))
+    cursor = db.cursor(row_factory=dict_row)
+
+    similar = cursor.execute(sql_query, ).fetchall()
+
+    return [PageResponse.from_page_dict(x) for x in similar]
+
+
+def normalize_scores(pages: list[PageResponse], func: Optional[Callable] = None):
+    """
+    Normalize scores to be between 1 and 2
+    """
+    if len(pages) == 0:
+        return
+
+    scores = [x.score for x in pages]
+    min_score = min(scores)
+    max_score = max(scores)
+
+    for p in pages:
+        p.score = (p.score - min_score) / (max_score - min_score)
+
+        if func:
+            p.score = func(p.score)
+        else:
+            p.score = p.score + 1
+
+def _query_similar(query: NearestNeighboursQuery) -> list[PageResponse]:
+    """
+    Combine results from vector search + full-text search to generate the best matching documents for a query
+
+    TODO: from the FTS documents, use their embeddings to get similar documents? -- another way to get high quality similar
+    articles
+
+    :param query:
+    :return:
+    """
+    embedding_results = _query_similar_embeddings(query)
+
+    if query.text_query:
+        fts_results = _query_fts(query.text_query)
+    else:
+        fts_results = []
+
+    # Normalize scores
+    for p in fts_results:
+        p.score = 2.5 * (p.score ** 1.5) + 1.5
+    normalize_scores(embedding_results, lambda x: x ** 2 + 1)
+
+
+    # Combine them by pageid
+    fts_results_dict = {x.id: x for x in fts_results}
+    embedding_results_dict = {x.id: x for x in embedding_results}
+
+    joined_keys = set(fts_results_dict.keys()).union(embedding_results_dict.keys())
+
+    combined: list[PageResponse] = []
+
+    for page_id in joined_keys:
+        fts: Optional[PageResponse] = fts_results_dict.get(page_id)
+        embedding: Optional[PageResponse] = embedding_results_dict.get(page_id)
+
+        actual_page = fts if fts else embedding
+
+        score = 1
+        if fts is not None:
+            score *= fts.score
+        if embedding is not None:
+            score *= embedding.score
+
+        actual_page.score = score
+        combined.append(actual_page)
+
+    combined.sort(key=lambda x: x.score, reverse=True)
+    return combined
+
+
+
+
+def _query_similar_embeddings(query: NearestNeighboursQuery) -> list[PageResponse]:
     cursor = db.cursor(row_factory=dict_row)
 
     want_cte, want_cte_dict = query.to_sql_expr()
@@ -111,13 +210,10 @@ WITH want AS ({want_cte}),
  select "Page".*,
  -- Scoring algorithm: (similarity * page_rank^0.5 * (amount of matching windows ^ 0.15))
  -- Higher is better
- (1 - dist) * ("Page".page_rank ^ 0.5) * (domain_counts.num_matching_windows ^ 0.15) as score
+ (1 - dist) * ("Page".page_rank ^ 0.50) * (domain_counts.num_matching_windows ^ 0.25) as score
   
   from "Page" INNER JOIN domain_counts ON domain_counts.url = "Page".url ORDER BY score DESC
     """, want_cte_dict).fetchall()
-
-    # Rerank based on number of matching windows + distance
-
 
     similar_urls = [
         PageResponse.from_prisma_page(Page(**x), x['score']) for x in similar
@@ -125,10 +221,9 @@ WITH want AS ({want_cte}),
 
     return similar_urls
 
-
 async def generate_feed_from_page(page: models.Page) -> list[PageResponse]:
     query = NearestNeighboursQuery(url=page.url or None)
-    similar = await _query_similar(query)
+    similar = _query_similar(query)
     return similar
 
 

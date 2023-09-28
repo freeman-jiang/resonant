@@ -16,15 +16,19 @@ import os
 class PrismaClient:
     conn: Connection
     cursor: Cursor
-    cfg: Config
+    cfg: Optional[Config]
 
-    def __init__(self, cfg: Config, *args):
+    def __init__(self, cfg: Optional[Config]):
         self.cfg = cfg
 
-    async def connect(self):
+    def connect(self):
         db_url = os.environ['DATABASE_URL']
         self.conn = psycopg.connect(db_url)
         self.cursor = self.conn.cursor(row_factory=dict_row)
+
+    def query(self, query: sql.SQL | str, *args):
+        self.cursor.execute(query, *args)
+        return self.cursor.fetchall()
 
     async def disconnect(self):
         self.cursor.close()
