@@ -211,7 +211,7 @@ WITH want AS ({want_cte}),
  -- Higher is better
  (1 - dist) * ("Page".page_rank ^ 0.50) * (domain_counts.num_matching_windows ^ 0.25) as score
   
-  from "Page" INNER JOIN domain_counts ON domain_counts.url = "Page".url ORDER BY score DESC
+  from "Page" INNER JOIN domain_counts ON domain_counts.url = "Page".url WHERE score IS NOT NONE ORDER BY score DESC
     """, want_cte_dict).fetchall()
 
     similar_urls = [
