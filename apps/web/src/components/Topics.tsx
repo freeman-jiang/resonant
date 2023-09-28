@@ -4,15 +4,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Badge } from "./ui/badge";
 
-enum Topic {
-  Software,
-  Climate,
-  Philosophy,
-  Politics,
-  Science,
-}
+const topics = {
+  Software: "software engineering",
+  Climate: "climate change",
+  Philosophy: "philosophy",
+  Politics: "politics",
+  Science: "science",
+};
 
-const TOPIC_LIST = Object.keys(Topic).filter((key) => isNaN(Number(key))); // filter out the numeric keys
 const ALL = "All";
 
 export const Topics = () => {
@@ -36,13 +35,13 @@ export const Topics = () => {
       >
         All
       </Badge>
-      {TOPIC_LIST.map((topic) => (
+      {Object.entries(topics).map(([topic, prompt]) => (
         <Badge
           key={topic}
           className="cursor-pointer text-sm"
           variant={currentTopic === topic ? "default" : "outline"}
           onClick={async () => {
-            await searchTopic(topic);
+            await searchTopic(prompt);
             setCurrentTopic(topic);
           }}
         >
