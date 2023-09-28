@@ -63,6 +63,7 @@ async def find_or_create_user(userid):
 
     return new_user
 
+
 @app.get('/recommend')
 async def recommend(userid: int) -> list[PageResponse]:
     """
@@ -79,7 +80,8 @@ async def recommend(userid: int) -> list[PageResponse]:
     }, include={'page': True})
 
     # Select K random pages to generate feed from
-    selected_liked_pages = random.choices(liked_pages, k=min(10, len(liked_pages)))
+    selected_liked_pages = random.choices(
+        liked_pages, k=min(10, len(liked_pages)))
 
     if len(selected_liked_pages) == 0:
         print(f'User {userid} has no liked pages')
@@ -92,6 +94,7 @@ async def recommend(userid: int) -> list[PageResponse]:
         similar.extend(await generate_feed_from_page(page))
 
     return similar
+
 
 @app.get("/like/{userid}/{pageid}")
 async def like(userid: int, pageid: int) -> list[PageResponse]:
@@ -172,12 +175,9 @@ async def search(body: SearchQuery) -> list[PageResponse]:
         return similar
     else:
         want_vec = get_window_avg(body.query)
-        query = NearestNeighboursQuery(vector=want_vec, text_query = body.query)
+        query = NearestNeighboursQuery(vector=want_vec, text_query=body.query)
         similar = _query_similar(query)
         return similar
-
-
-
 
 
 @app.get("/random-feed")
@@ -212,10 +212,9 @@ async def test_random_feed():
     print(await random_feed())
 
 
-
 def test_search():
     import asyncio
-    print(asyncio.run(search(SearchQuery(query = 'clean eating'))))
+    print(asyncio.run(search(SearchQuery(query='clean eating'))))
 
 
 @pytest.mark.asyncio

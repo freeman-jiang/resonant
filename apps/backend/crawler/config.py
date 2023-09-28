@@ -33,4 +33,3 @@ class Config():
 
         num_workers = DEFAULT_DEBUG_WORKERS if self.should_debug else parser.parse_args().workers
         self.num_workers = num_workers
-

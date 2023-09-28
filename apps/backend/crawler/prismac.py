@@ -13,6 +13,7 @@ from prisma.models import Page, CrawlTask
 from prisma.errors import UniqueViolationError
 import os
 
+
 class PrismaClient:
     conn: Connection
     cursor: Cursor
@@ -40,12 +41,14 @@ class PrismaClient:
         self.conn.commit()
 
     async def fail_page(self, task: CrawlTask):
-        query = sql.SQL("UPDATE {} SET status = %s WHERE id = %s;").format(sql.Identifier("CrawlTask"))
+        query = sql.SQL("UPDATE {} SET status = %s WHERE id = %s;").format(
+            sql.Identifier("CrawlTask"))
         self.cursor.execute(query, (TaskStatus.FAILED, task.id))
         self.conn.commit()
 
     def add_outgoing_links(self, links: list[Link]):
-        links_to_add = [l for l in links if l.depth <= self.cfg.max_crawl_depth]
+        links_to_add = [l for l in links if l.depth <=
+                        self.cfg.max_crawl_depth]
         count = self.add_tasks(links_to_add)
         print(f"PSYCOPG: Added {count} tasks to db")
 
@@ -53,7 +56,8 @@ class PrismaClient:
         content_hash = str(mmh3.hash128(crawl_result.content, signed=False))
 
         query = sql.SQL("INSERT INTO {} (content_hash, url, parent_url, title, date, author, content, outbound_urls, depth) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING RETURNING *;").format(sql.Identifier("Page"))
-        self.cursor.execute(query, (content_hash, crawl_result.link.url, crawl_result.link.parent_url, crawl_result.title, crawl_result.date, crawl_result.author, crawl_result.content, [link.url for link in crawl_result.outbound_links], depth))
+        self.cursor.execute(query, (content_hash, crawl_result.link.url, crawl_result.link.parent_url, crawl_result.title,
+                            crawl_result.date, crawl_result.author, crawl_result.content, [link.url for link in crawl_result.outbound_links], depth))
         self.conn.commit()
 
         if self.cursor.rowcount == 0:
@@ -71,7 +75,8 @@ class PrismaClient:
             return None
 
     async def get_task(self) -> CrawlTask | None:
-        query = sql.SQL("UPDATE {} SET status = %s WHERE id = (SELECT id FROM {} WHERE status::text = %s ORDER BY depth ASC, boost DESC, id ASC FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *;").format(sql.Identifier("CrawlTask"), sql.Identifier("CrawlTask"))
+        query = sql.SQL("UPDATE {} SET status = %s WHERE id = (SELECT id FROM {} WHERE status::text = %s ORDER BY depth ASC, boost DESC, id ASC FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *;").format(
+            sql.Identifier("CrawlTask"), sql.Identifier("CrawlTask"))
         self.cursor.execute(query, (TaskStatus.PROCESSING, TaskStatus.PENDING))
         self.conn.commit()
 
@@ -82,9 +87,11 @@ class PrismaClient:
             return None
 
     def add_tasks(self, links: list[Link]):
-        tasks_data = [{'status': TaskStatus.PENDING, 'url': link.url, 'depth': link.depth, 'parent_url': link.parent_url, 'text': link.text} for link in links]
+        tasks_data = [{'status': TaskStatus.PENDING, 'url': link.url, 'depth': link.depth,
+                       'parent_url': link.parent_url, 'text': link.text} for link in links]
 
-        query = sql.SQL("INSERT INTO \"CrawlTask\" (status, url, depth, parent_url, text) VALUES (%(status)s, %(url)s, %(depth)s, %(parent_url)s, %(text)s) ON CONFLICT DO NOTHING;").format(sql.Identifier("CrawlTask"))
+        query = sql.SQL("INSERT INTO \"CrawlTask\" (status, url, depth, parent_url, text) VALUES (%(status)s, %(url)s, %(depth)s, %(parent_url)s, %(text)s) ON CONFLICT DO NOTHING;").format(
+            sql.Identifier("CrawlTask"))
         self.cursor.executemany(query, tasks_data)
         # psycopg2.extras.execute_values(self.cursor, query, tasks_data, template="(%(status)s, %(url)s, %(depth)s, %(parent_url)s, %(text)s)")
         self.conn.commit()
@@ -92,12 +99,14 @@ class PrismaClient:
         return len(links)
 
     def finish_task(self, task: CrawlTask):
-        query = sql.SQL("UPDATE {} SET status = %s WHERE id = %s;").format(sql.Identifier("CrawlTask"))
+        query = sql.SQL("UPDATE {} SET status = %s WHERE id = %s;").format(
+            sql.Identifier("CrawlTask"))
         self.cursor.execute(query, (TaskStatus.COMPLETED, task.id))
         self.conn.commit()
 
     async def is_already_explored(self, url: str) -> bool:
-        query = sql.SQL("SELECT 1 FROM {} WHERE parent_url = %s LIMIT 1;").format(sql.Identifier("CrawlTask"))
+        query = sql.SQL("SELECT 1 FROM {} WHERE parent_url = %s LIMIT 1;").format(
+            sql.Identifier("CrawlTask"))
         self.cursor.execute(query, (url,))
         return self.cursor.fetchone() is not None
 

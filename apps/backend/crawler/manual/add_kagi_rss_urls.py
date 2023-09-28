@@ -13,6 +13,7 @@ load_dotenv()
 
 KAGI_FEED_URLS = 'https://raw.githubusercontent.com/kagisearch/smallweb/main/smallweb.txt'
 
+
 async def add_kagi_urls():
     config = Config()
 

@@ -26,9 +26,7 @@ async def main():
     print(f"Starting with {config.num_workers} workers")
 
     # Initialize Prisma
-    db = Prisma()
-    await db.connect()
-    prisma_client = PrismaClient(config, db)
+    prisma_client = PrismaClient(config)
 
     prisma_client.connect()
 
@@ -63,9 +61,6 @@ async def main():
     # for task in tasks:
     #     task.cancel()
     print("FINISHING")
-
-    await db.disconnect()
-
 
     print(
         f"Finished in {time.time() - start_time} seconds. Processed {done_queue.qsize()} links.")

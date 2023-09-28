@@ -1,4 +1,5 @@
 
+from collections import defaultdict
 import asyncio
 
 from psycopg import Connection
@@ -38,7 +39,8 @@ class Node(BaseModel):
         for p in pages:
             domain = url_to_domain(p.url)
             p.outbound_urls = [x for x in p.outbound_urls if x != p.url]
-            p.outbound_urls = [x for x in p.outbound_urls if url_to_domain(x) != domain]
+            p.outbound_urls = [
+                x for x in p.outbound_urls if url_to_domain(x) != domain]
 
         d = {p.url: Node(out=p.outbound_urls, url=p.url, score=(
             (5 - p.depth) ** 2.5), best_depth=p.depth) for p in pages}
@@ -87,8 +89,9 @@ def top_domains(trustrank_values: dict) -> dict[str, float]:
     return trustrank_values_sorted
 
 
-from collections import defaultdict
 NORMAL_ADDS = defaultdict(int)
+
+
 def add_rank(d, url, value, msg=""):
     global NORMAL_ADDS
     if msg.startswith('normal'):
@@ -203,16 +206,15 @@ async def main():
     topdomains = trustrank(domains)
 
     for domain in topdomains:
-        topdomains[domain] = topdomains[domain] / (domains[domain].individual_pages)
+        topdomains[domain] = topdomains[domain] / \
+            (domains[domain].individual_pages)
 
     topurls = trustrank(nodes)
     page_score = combine_domain_and_page_scores(topdomains, topurls)
 
-    print(topdomains, file = open("topdomains.txt", "w+"))
-    print(topurls, file = open("topurls.txt", "w+"))
+    print(topdomains, file=open("topdomains.txt", "w+"))
+    print(topurls, file=open("topurls.txt", "w+"))
     insert_pagerank(db, pages, page_score)
-
-
 
 
 if __name__ == "__main__":

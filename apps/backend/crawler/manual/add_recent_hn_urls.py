@@ -15,6 +15,7 @@ load_dotenv()
 # Get stories >= 80 points and 30 comments
 rssfeed = 'https://hnrss.org/newest?points=80&comments=30&count=100'
 
+
 async def get_rss_feed():
     config = Config()
 

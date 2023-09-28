@@ -31,7 +31,8 @@ rows = json.load(open("rows.json", "r"))
 embeddings_url = defaultdict(list)
 page_rank_dict = {}
 for row in rows:
-    embeddings = np.fromstring(row['vec'][1:-1], sep=',')  # Assuming embeddings are stored as a comma-separated string
+    # Assuming embeddings are stored as a comma-separated string
+    embeddings = np.fromstring(row['vec'][1:-1], sep=',')
     embeddings_url[row['url']].append(embeddings)
 
     page_rank_dict[row['url']] = row['page_rank']
@@ -41,12 +42,13 @@ for url, embeddings in embeddings_url.items():
     if len(embeddings) < 3:
         print(f"Skipping {url}")
         continue
-    embeddings = np.mean(embeddings[0:3], axis = 0)
+    embeddings = np.mean(embeddings[0:3], axis=0)
     embeddings_data.append(embeddings)
     page_rank_scores.append(page_rank_dict[url])
 
 # Step 2: Split the Data
-X_train, X_test, y_train, y_test = train_test_split(embeddings_data, page_rank_scores, test_size=0.15, random_state=45)
+X_train, X_test, y_train, y_test = train_test_split(
+    embeddings_data, page_rank_scores, test_size=0.15, random_state=45)
 
 n_components = 32  # Adjust the number of components as needed
 pca = PCA(n_components=n_components)

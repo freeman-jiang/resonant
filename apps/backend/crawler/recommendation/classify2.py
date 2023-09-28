@@ -1,3 +1,4 @@
+from sklearn.metrics import mean_squared_error, r2_score
 import json
 import os
 
@@ -62,7 +63,6 @@ page_rank_pred = model.predict(content_test_tfidf)
 
 # Evaluate the model (you can use appropriate metrics for regression)
 # For example, mean squared error (MSE)
-from sklearn.metrics import mean_squared_error, r2_score
 
 mse = mean_squared_error(page_rank_test, page_rank_pred)
 r2 = r2_score(page_rank_test, page_rank_pred)

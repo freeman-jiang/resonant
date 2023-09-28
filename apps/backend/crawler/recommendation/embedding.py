@@ -115,7 +115,7 @@ def _query_fts(query: str) -> list[PageResponse]:
                ) AS score
         FROM "Page"
         WHERE ts @@ {query}
-        ORDER BY score DESC""").format(query = sql.SQL("plainto_tsquery('english', {})").format(query))
+        ORDER BY score DESC""").format(query=sql.SQL("plainto_tsquery('english', {})").format(query))
     cursor = db.cursor(row_factory=dict_row)
 
     similar = cursor.execute(sql_query, ).fetchall()
@@ -142,6 +142,7 @@ def normalize_scores(pages: list[PageResponse], func: Optional[Callable] = None)
         else:
             p.score = p.score + 1
 
+
 def _query_similar(query: NearestNeighboursQuery) -> list[PageResponse]:
     """
     Combine results from vector search + full-text search to generate the best matching documents for a query
@@ -164,12 +165,12 @@ def _query_similar(query: NearestNeighboursQuery) -> list[PageResponse]:
         p.score = 2.5 * (p.score ** 1.5) + 1.5
     normalize_scores(embedding_results, lambda x: x ** 2 + 1)
 
-
     # Combine them by pageid
     fts_results_dict = {x.id: x for x in fts_results}
     embedding_results_dict = {x.id: x for x in embedding_results}
 
-    joined_keys = set(fts_results_dict.keys()).union(embedding_results_dict.keys())
+    joined_keys = set(fts_results_dict.keys()).union(
+        embedding_results_dict.keys())
 
     combined: list[PageResponse] = []
 
@@ -190,8 +191,6 @@ def _query_similar(query: NearestNeighboursQuery) -> list[PageResponse]:
 
     combined.sort(key=lambda x: x.score, reverse=True)
     return combined
-
-
 
 
 def _query_similar_embeddings(query: NearestNeighboursQuery) -> list[PageResponse]:
@@ -220,6 +219,7 @@ WITH want AS ({want_cte}),
     ]
 
     return similar_urls
+
 
 async def generate_feed_from_page(page: models.Page) -> list[PageResponse]:
     query = NearestNeighboursQuery(url=page.url or None)
@@ -257,7 +257,7 @@ async def generate_embeddings():
             print("ERR: No pages to process")
             return
 
-        await store_embeddings_for_pages( pages)
+        await store_embeddings_for_pages(pages)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+import re
 from typing import Optional, Self
 from urllib.parse import urlparse, urlunparse
 
@@ -12,29 +13,29 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
                       'springer.com', 'jstor.org', 'nature.com', 'sciencemag.org', 'sciencenews.org',
                       'sciencemuseum.org.uk', 'elifesciences', 'fool.com', 'slimemoldtimemold', 'exfatloss',
                       'achemicalhunger', '9to5toys', 'bloomberg.com', 'forbes.com', 'bbc.com', 'economist.com',
-                        'vimeo.com', 'youtube.com', 'pittsburghlive.com', 'linkedin.com', 'soundcloud.com',
+                      'vimeo.com', 'youtube.com', 'pittsburghlive.com', 'linkedin.com', 'soundcloud.com',
                       'albawa.com', 'theage.com', 'prnewswire.com', 'archive.org', 'stackexchange.com', 'doi.org',
                       'jamanetwork',
                       'inverse.com',
                       'https://www.rapamycin.news',
                       'vg247.com',
-                        'podcasts.apple.com',
-                        'demonstrations.wolfram.com',
-                        'statesummaries.ncics.org',
-                        'machinelearning.apple.com',
-                        'news.asu.edu',
-                        'dl.acm.org',
-                        'law.cornell.edu',
-                        'grammy.com',
-                        'lemonde.fr',
-                        'newscience.org',
-                        'ew.com',
-                        'sqlite.org',
-                        'healthline.com',
-                        'cs.cmu.edu',
-                        'mbl.edu',
-                        'euronews.com',
-                        'proteinatlas.org',
+                      'podcasts.apple.com',
+                      'demonstrations.wolfram.com',
+                      'statesummaries.ncics.org',
+                      'machinelearning.apple.com',
+                      'news.asu.edu',
+                      'dl.acm.org',
+                      'law.cornell.edu',
+                      'grammy.com',
+                      'lemonde.fr',
+                      'newscience.org',
+                      'ew.com',
+                      'sqlite.org',
+                      'healthline.com',
+                      'cs.cmu.edu',
+                      'mbl.edu',
+                      'euronews.com',
+                      'proteinatlas.org',
                       'rockpapershotgun.com',
                       'fandom.com',
                       'mail-archive.com', 'ncbi.nlm.nih.gov', 'vice.com', 'biorxiv.org', 'psychologytoday.com',
@@ -67,28 +68,30 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
 UNSUPPORTED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.ppt', '.pptx',
                           '.xls', '.xlsx', '.zip', '.rar', '.7z', '.gz', '.png', '.jpg', '.jpeg', }
 
-import re
 emoj = re.compile("["
-    u"\U0001F600-\U0001F64F"  # emoticons
-    u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-    u"\U0001F680-\U0001F6FF"  # transport & map symbols
-    u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-    u"\U00002500-\U00002BEF"  # chinese char
-    u"\U00002702-\U000027B0"
-    u"\U000024C2-\U0001F251"
-    u"\U0001f926-\U0001f937"
-    u"\U00010000-\U0010ffff"
-    u"\u2640-\u2642" 
-    u"\u2600-\u2B55"
-    u"\u200d"
-    u"\u23cf"
-    u"\u23e9"
-    u"\u231a"
-    u"\ufe0f"  # dingbats
-    u"\u3030"
+                  u"\U0001F600-\U0001F64F"  # emoticons
+                  u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                  u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                  u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                  u"\U00002500-\U00002BEF"  # chinese char
+                  u"\U00002702-\U000027B0"
+                  u"\U000024C2-\U0001F251"
+                  u"\U0001f926-\U0001f937"
+                  u"\U00010000-\U0010ffff"
+                  u"\u2640-\u2642"
+                  u"\u2600-\u2B55"
+                  u"\u200d"
+                  u"\u23cf"
+                  u"\u23e9"
+                  u"\u231a"
+                  u"\ufe0f"  # dingbats
+                  u"\u3030"
                   "]+", re.UNICODE)
+
+
 def _remove_emojis(data):
     return re.sub(emoj, '', data)
+
 
 def is_valid_url(url: str) -> bool:
     url = _remove_emojis(url)
@@ -101,6 +104,7 @@ def is_valid_url(url: str) -> bool:
         return False
 
     return True
+
 
 def test_valid():
     assert is_valid_url(
@@ -227,6 +231,7 @@ class Link(BaseModel):
                 self.url,
                 self.parent_url,
                 self.depth).__hash__()
+
 
 def test_suppressed():
     for suppressed in SUPPRESSED_DOMAINS:

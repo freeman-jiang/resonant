@@ -13,6 +13,7 @@ def sent_tokenize_excerpt(text: str) -> str:
     """
     return text[:350]
 
+
 class PageResponse(BaseModel):
     id: int
     url: str
@@ -22,7 +23,7 @@ class PageResponse(BaseModel):
     score: Optional[float] = None
 
     @classmethod
-    def from_prisma_page(cls, p: Page, score = None) -> 'PageResponse':
+    def from_prisma_page(cls, p: Page, score=None) -> 'PageResponse':
         # Get first two sentences from p.content
         excerpt = sent_tokenize_excerpt(p.content)
 
@@ -32,7 +33,7 @@ class PageResponse(BaseModel):
             title=p.title,
             date=p.date or "",
             excerpt=excerpt,
-            score = score
+            score=score
         )
 
     @classmethod
