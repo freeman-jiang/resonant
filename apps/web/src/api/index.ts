@@ -2,9 +2,6 @@ import { NEXT_PUBLIC_BASE_URL } from "@/config";
 import { Link } from "@/types/api";
 import axios from "axios";
 
-// TODO: Consider using SSR by making this a server component
-export const FEED_QUERY_KEY = "feed";
-
 export async function fetchFeed() {
   const response = await fetch(`${NEXT_PUBLIC_BASE_URL}/random-feed`, {
     next: {

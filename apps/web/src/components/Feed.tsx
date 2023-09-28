@@ -1,10 +1,9 @@
 "use client";
 import { amplitude } from "@/analytics/amplitude";
-import { FEED_QUERY_KEY, fetchFeed } from "@/api";
+import { useFeed } from "@/api/hooks";
 import { NEXT_PUBLIC_AMPLITUDE_API_KEY } from "@/config";
 import { cn } from "@/lib/utils";
 import { Link } from "@/types/api";
-import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Entry } from "./Entry";
 import { Search } from "./Search";
@@ -29,11 +28,7 @@ export const Feed = (props: Props) => {
       },
     });
   }, []);
-  const { data: links } = useQuery({
-    queryKey: [FEED_QUERY_KEY],
-    queryFn: () => fetchFeed(),
-    initialData: props.links,
-  });
+  const { data: links } = useFeed(props.links);
 
   return (
     <div>

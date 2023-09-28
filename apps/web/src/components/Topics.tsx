@@ -1,4 +1,5 @@
-import { FEED_QUERY_KEY, fetchFeed, searchFor } from "@/api";
+import { fetchFeed, searchFor } from "@/api";
+import { FEED_QUERY_KEY } from "@/api/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Badge } from "./ui/badge";
