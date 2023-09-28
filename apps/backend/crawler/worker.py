@@ -9,7 +9,7 @@ from crawler.config import Config
 from prisma.models import CrawlTask
 
 from . import filters
-from .link import Link, SUPPRESSED_DOMAINS
+from .link import SUPPRESSED_DOMAINS, Link
 from .parse import CrawlResult, parse_html
 from .prismac import PrismaClient
 from .recommendation.embedding import model
@@ -58,7 +58,7 @@ class Worker:
         """Get, crawl, and parse links from the queue one at a time"""
         # Prevents exhausting the queue and exiting all at once
         await asyncio.sleep(random.uniform(0, 1) * 5)
-        async with ClientSession(timeout=ClientTimeout(connect=4, total = 10)) as session:
+        async with ClientSession(timeout=ClientTimeout(connect=4, total=10)) as session:
             spoof_chrome_user_agent(session)
 
             while not self.done:
@@ -74,7 +74,6 @@ class Worker:
                 print(f"Working on task: {task.id}")
 
                 await self.process_task(task, session)
-
 
             print("Worker exiting...")
             return
@@ -97,7 +96,7 @@ class Worker:
                 print(f"FAILED: Could not crawl {link.url}")
                 return None
 
-            if filters.should_keep(response):
+            if link.depth == 0 or filters.should_keep(response):
                 page = self.prisma.store_page(task, response)
                 if page is not None:
                     print(f"SUCCESS: Crawled page: {page.url}")
@@ -140,6 +139,7 @@ class Worker:
                 return parse_html(response, link, should_rss)
         except asyncio.TimeoutError:
             return None, []
+
 
 async def crawl_interactive(link: Link) -> np.ndarray | None:
     """
