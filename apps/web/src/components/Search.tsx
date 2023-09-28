@@ -1,16 +1,15 @@
 "use client";
 import { amplitude } from "@/analytics/amplitude";
+import { FEED_QUERY_KEY, searchFor } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NEXT_PUBLIC_BASE_URL } from "@/config";
-import { useFeed } from "@/context/FeedContext";
-import axios from "axios";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 // TODO: Replace with react hook form
 export function Search() {
-  const { setLinks } = useFeed();
   const [search, setSearch] = useState("");
+  const qc = useQueryClient();
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -19,14 +18,8 @@ export function Search() {
       return;
     }
 
-    const linkRegex = /https?:\/\/[^\s]+/g;
-    const body = linkRegex.test(search) ? { url: search } : { query: search };
-
-    // TODO: Refactor base url into base axios instance, also consider if this link logic should be in the api
-    const { data } = await axios.post(`${NEXT_PUBLIC_BASE_URL}/search`, body);
+    await qc.fetchQuery([FEED_QUERY_KEY], () => searchFor(search));
     amplitude.track("Search", { query: search });
-    // Take the first 15 results
-    setLinks(data.slice(0, 15));
   };
 
   return (

@@ -1,10 +1,11 @@
 "use client";
 import { amplitude } from "@/analytics/amplitude";
+import { FEED_QUERY_KEY, fetchFeed } from "@/api";
 import { NEXT_PUBLIC_AMPLITUDE_API_KEY } from "@/config";
-import { FeedContext } from "@/context/FeedContext";
 import { cn } from "@/lib/utils";
 import { Link } from "@/types/api";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Entry } from "./Entry";
 import { Search } from "./Search";
 import { Topics } from "./Topics";
@@ -28,17 +29,14 @@ export const Feed = (props: Props) => {
       },
     });
   }, []);
-  // TODO: Replace with tanstack-query
-  const [links, setLinks] = useState<Link[]>(props.links);
-
-  // useEffect(() => {
-  //   fetchFeed().then((data) => {
-  //     setLinks(data);
-  //   });
-  // }, []);
+  const { data: links } = useQuery({
+    queryKey: [FEED_QUERY_KEY],
+    queryFn: () => fetchFeed(),
+    initialData: props.links,
+  });
 
   return (
-    <FeedContext.Provider value={{ setLinks }}>
+    <div>
       <Topics />
       <Search />
       <div className="mt-5 space-y-2">
@@ -48,7 +46,7 @@ export const Feed = (props: Props) => {
           <LoadingFeed />
         )}
       </div>
-    </FeedContext.Provider>
+    </div>
   );
 };
 

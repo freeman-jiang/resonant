@@ -1,5 +1,5 @@
-import { fetchFeed, searchFor } from "@/api";
-import { useFeed } from "@/context/FeedContext";
+import { FEED_QUERY_KEY, fetchFeed, searchFor } from "@/api";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Badge } from "./ui/badge";
 
@@ -15,11 +15,10 @@ const TOPIC_LIST = Object.keys(Topic).filter((key) => isNaN(Number(key))); // fi
 const ALL = "All";
 
 export const Topics = () => {
-  const { setLinks } = useFeed();
+  const qc = useQueryClient();
   const [currentTopic, setCurrentTopic] = useState<string>(ALL);
   const searchTopic = async (topic: string) => {
-    const data = await searchFor(topic);
-    setLinks(data);
+    await qc.fetchQuery(["feed"], () => searchFor(topic));
   };
 
   return (
@@ -27,8 +26,7 @@ export const Topics = () => {
       <Badge
         className="cursor-pointer text-sm"
         onClick={async () => {
-          const data = await fetchFeed();
-          setLinks(data);
+          await qc.fetchQuery([FEED_QUERY_KEY], fetchFeed);
           setCurrentTopic(ALL);
         }}
         variant={currentTopic === ALL ? "default" : "outline"}
