@@ -28,7 +28,11 @@ export const Feed = (props: Props) => {
       },
     });
   }, []);
-  const { data: links } = useFeed(props.links);
+  const { data: links, isRefetching } = useFeed({
+    initialData: props.links,
+  });
+
+  console.log(isRefetching);
 
   return (
     <div>

@@ -1,7 +1,7 @@
 "use client";
 import { amplitude } from "@/analytics/amplitude";
 import { searchFor } from "@/api";
-import { FEED_QUERY_KEY } from "@/api/hooks";
+import { FEED_QUERY_KEY, useFeed } from "@/api/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useQueryClient } from "@tanstack/react-query";
@@ -36,8 +36,7 @@ const Spinner = () => {
 export function Search() {
   const [search, setSearch] = useState("");
   const qc = useQueryClient();
-  const [isLoading, setIsLoading] = useState(false);
-  console.log(isLoading);
+  const { isRefetching } = useFeed();
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -46,9 +45,7 @@ export function Search() {
       return;
     }
 
-    setIsLoading(true);
     await qc.fetchQuery([FEED_QUERY_KEY], () => searchFor(search));
-    setIsLoading(false);
     amplitude.track("Search", { query: search });
   };
 
@@ -66,7 +63,7 @@ export function Search() {
         className="flex min-w-[5rem] items-center justify-center"
         type="submit"
       >
-        {isLoading ? <Spinner /> : "Search"}
+        {isRefetching ? <Spinner /> : "Search"}
       </Button>
     </form>
   );

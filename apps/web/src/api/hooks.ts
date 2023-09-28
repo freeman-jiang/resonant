@@ -5,10 +5,18 @@ import { fetchFeed } from ".";
 // TODO: Consider using SSR by making this a server component
 export const FEED_QUERY_KEY = "feed";
 
-export const useFeed = (initialData?: Link[]) => {
+interface Options {
+  initialData: Link[];
+}
+
+export const useFeed = (options?: Options) => {
+  const { initialData } = options || {};
+
   return useQuery({
     queryKey: [FEED_QUERY_KEY],
-    queryFn: ({ queryKey }) => fetchFeed(),
     initialData,
+    queryFn: fetchFeed,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 };
