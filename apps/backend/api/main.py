@@ -5,7 +5,6 @@ from typing import Optional
 import pytest
 
 from api.page_response import PageResponse
-from crawler.config import Config
 from crawler.link import Link
 from crawler.prismac import PrismaClient
 from crawler.recommendation.embedding import (NearestNeighboursQuery, _query_similar,

@@ -11,17 +11,16 @@ from api.page_response import PageResponse
 from dotenv import load_dotenv
 from prisma import Prisma, models
 from prisma.models import Page
-from psycopg.rows import dict_row, class_row
+from psycopg.rows import dict_row
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
+from ..dbaccess import db
 
 load_dotenv()
 
 client = Prisma()
 
 assert len(os.environ['DATABASE_URL']) > 1, "DATABASE_URL not set"
-
-db = psycopg.connect(os.environ['DATABASE_URL'])
 
 
 def overlapping_windows(s: str, stride: int = 100, size: int = 120) -> Iterator[str]:

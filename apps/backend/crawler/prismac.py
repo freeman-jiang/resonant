@@ -11,11 +11,11 @@ from .parse import CrawlResult
 from prisma.enums import TaskStatus
 from prisma.models import Page, CrawlTask
 from prisma.errors import UniqueViolationError
-import os
+from .dbaccess import db, DB
 
 
 class PrismaClient:
-    conn: Connection
+    conn: DB
     cursor: Cursor
     cfg: Optional[Config]
 
@@ -23,8 +23,7 @@ class PrismaClient:
         self.cfg = cfg
 
     def connect(self):
-        db_url = os.environ['DATABASE_URL']
-        self.conn = psycopg.connect(db_url)
+        self.conn = db
         self.cursor = self.conn.cursor(row_factory=dict_row)
 
     def query(self, query: sql.SQL | str, *args):
@@ -93,7 +92,6 @@ class PrismaClient:
         query = sql.SQL("INSERT INTO \"CrawlTask\" (status, url, depth, parent_url, text) VALUES (%(status)s, %(url)s, %(depth)s, %(parent_url)s, %(text)s) ON CONFLICT DO NOTHING;").format(
             sql.Identifier("CrawlTask"))
         self.cursor.executemany(query, tasks_data)
-        # psycopg2.extras.execute_values(self.cursor, query, tasks_data, template="(%(status)s, %(url)s, %(depth)s, %(parent_url)s, %(text)s)")
         self.conn.commit()
 
         return len(links)
