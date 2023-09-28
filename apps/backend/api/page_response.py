@@ -31,6 +31,6 @@ class PageResponse(BaseModel):
             url=p.url,
             title=p.title,
             date=p.date or "",
-            excerpt='. '.join(excerpt),
+            excerpt=excerpt,
             score = score
         )

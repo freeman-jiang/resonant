@@ -22,15 +22,15 @@ page_rank_scores = []  # List to store page_rank scores for each page
 # Fetch data from the database
 cur = conn.cursor(row_factory=dict_row)
 
-cur.execute('SELECT p.url, AVG(e.vec) as vec, AVG(p.page_rank) as page_rank FROM vecs."Embeddings" e INNER JOIN "Page" p ON e.url = p.url WHERE e.index <= 4 GROUP BY p.url LIMIT 100')
+cur.execute('SELECT p.url, AVG(e.vec) as vec, AVG(p.page_rank) as page_rank FROM vecs."Embeddings" e INNER JOIN "Page" p ON e.url = p.url WHERE e.index <= 6 GROUP BY p.url LIMIT 10000')
 rows = cur.fetchall()
 for row in rows:
-    embeddings = np.fromstring(row['vec'], sep=',')  # Assuming embeddings are stored as a comma-separated string
+    embeddings = np.fromstring(row['vec'][1:-1], sep=',')  # Assuming embeddings are stored as a comma-separated string
     embeddings_data.append(embeddings)
     page_rank_scores.append(row['page_rank'])
 
 # Step 2: Split the Data
-X_train, X_test, y_train, y_test = train_test_split(embeddings_data, page_rank_scores, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(embeddings_data, page_rank_scores, test_size=0.2, random_state=45)
 
 # Step 3: Feature Engineering (if needed)
 # No specific feature engineering needed since you're using embeddings.
@@ -45,21 +45,6 @@ mae = mean_absolute_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
 print(f"Mean Absolute Error: {mae}")
 print(f"R-squared: {r2}")
-
-# Step 6: Prediction (predict page_rank for each page)
-# Fetch all pages from the database
-cur.execute("SELECT url FROM Page")
-page_urls = cur.fetchall()
-for url in page_urls:
-    # Fetch embeddings for the page
-    cur.execute("SELECT vec FROM Embeddings WHERE url = %s", (url[0],))
-    row = cur.fetchone()
-    if row:
-        embeddings = np.fromstring(row[0], sep=',')  # Assuming embeddings are stored as a comma-separated string
-        predicted_page_rank = svm_model.predict([embeddings])[0]
-
-        # Update the page_rank score in the database
-        cur.execute("UPDATE Page SET page_rank = %s WHERE url = %s", (predicted_page_rank, url[0]))
 
 # Commit changes to the database
 conn.commit()
