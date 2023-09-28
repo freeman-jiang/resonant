@@ -37,7 +37,7 @@ export const Entry = (link: Link) => {
         <div className="flex flex-row items-center justify-between">
           <a href={link.url} className="cursor-pointer" target="_blank">
             <h2 className="scroll-m-20 text-xl font-semibold tracking-tight text-slate-900">
-              {link.title}
+              {link.title || link.url}
             </h2>
             <p className="text-sm font-light text-slate-700">
               {extractDomain(link.url)}
