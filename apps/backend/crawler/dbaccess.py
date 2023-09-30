@@ -1,16 +1,18 @@
 import os
 import psycopg
 from dotenv import load_dotenv
+from psycopg import Connection
 
 load_dotenv()
 
 
 class DB:
+    db: Connection
     def __init__(self):
         self.db = None
 
     def connect(self):
-        self.db = psycopg.connect(os.environ['DATABASE_URL'])
+        self.db = psycopg.connect(os.environ['DATABASE_URL_PG'])
 
     def cursor(self, *args, **kwargs):
         if self.db is None:

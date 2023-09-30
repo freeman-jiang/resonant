@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 
 import psycopg
-from crawler.prismac import PrismaClient
+from crawler.prismac import PostgresClient
 
 from crawler.recommendation.embedding import store_embeddings_for_pages
 from crawler.link import Link
@@ -43,7 +43,7 @@ async def main():
     config = Config()
     db = Prisma()
     await db.connect()
-    client = PrismaClient(config, db)
+    client = PostgresClient(config, db)
     await seed_database_topics(client)
 
 if __name__ == "__main__":

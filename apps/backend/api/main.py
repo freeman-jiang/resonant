@@ -1,3 +1,4 @@
+import os
 import random
 from datetime import datetime
 from typing import Optional
@@ -5,7 +6,7 @@ from typing import Optional
 import pytest
 from api.page_response import PageResponse
 from crawler.link import Link
-from crawler.prismac import PrismaClient
+from crawler.prismac import PostgresClient
 from crawler.recommendation.embedding import (NearestNeighboursQuery,
                                               _query_similar,
                                               generate_feed_from_page)
@@ -20,8 +21,8 @@ from pydantic import BaseModel, validator
 load_dotenv()
 
 app = FastAPI()
-client = Prisma()
-db = PrismaClient(None)
+client = Prisma(datasource={'url': os.environ['DATABASE_URL_SUPABASE']})
+db = PostgresClient(None)
 
 origins = [
     "http://localhost:3000",
@@ -75,7 +76,7 @@ class LinkQuery(BaseModel):
 @app.post("/page")
 async def link(body: LinkQuery) -> PageResponse:
     url = body.url
-    page = await db.get_page(url)
+    page = db.get_page(url = url)
     return PageResponse.from_prisma_page(page)
 
 
@@ -113,7 +114,7 @@ async def recommend(userid: int) -> list[PageResponse]:
 
 @app.get("/like/{userid}/{pageid}")
 async def like(userid: int, pageid: int) -> list[PageResponse]:
-    page = await client.page.find_first(where={"id": pageid})
+    page = db.get_page(id = pageid)
 
     if page is None:
         raise HTTPException(400, "Page does not exist")
@@ -202,6 +203,10 @@ async def search(body: SearchQuery) -> list[PageResponse]:
         return similar
 
 
+@app.get("/")
+def health_check():
+    return {"status": "ok"}
+
 @app.get("/random-feed")
 async def random_feed() -> list[PageResponse]:
     """
@@ -236,13 +241,13 @@ async def test_random_feed():
 
 @pytest.mark.asyncio
 async def test_search():
-    import asyncio
     await startup()
-    print(await search(SearchQuery(url='https://www.annahavron.com/blog/how-does-your-community-help-you-live-out-your-values/')))
+    results = await search(SearchQuery(url='http://dieordiy2.blogspot.com/2023/09/melvins-tribute-to-kinks-amphetamine.html'))
+    print([x.url for x in results])
 
 
 @pytest.mark.asyncio
 async def test_like():
     await startup()
 
-    await like(1, 5330)
+    await like(1, 14)

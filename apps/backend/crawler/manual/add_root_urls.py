@@ -8,7 +8,7 @@ from prisma import Prisma
 
 from crawler.config import Config
 from crawler.link import Link
-from crawler.prismac import PrismaClient
+from crawler.prismac import PostgresClient
 from ..root_urls import ROOT_URLS
 
 load_dotenv()
@@ -88,7 +88,7 @@ async def main():
     config = Config()
     db = Prisma()
     await db.connect()
-    pc = PrismaClient(config, db)
+    pc = PostgresClient(config, db)
 
     urls = []
 

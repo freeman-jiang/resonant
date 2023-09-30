@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Type, TypeVar, Union
 
 import mmh3
 import psycopg
@@ -7,43 +7,56 @@ from prisma.enums import TaskStatus
 from prisma.errors import UniqueViolationError
 from prisma.models import CrawlTask, Page
 from psycopg import Connection, Cursor, sql
-from psycopg.rows import dict_row
+from psycopg.rows import dict_row, class_row
 
 from .dbaccess import DB, db
 from .link import Link
 from .parse import CrawlResult
 
 
-class PrismaClient:
+class PostgresClient:
     conn: DB
-    cursor: Cursor
+    _cursor: Cursor
     cfg: Optional[Config]
 
-    def __init__(self, cfg: Optional[Config]):
+    T = TypeVar("T")
+
+    def __init__(self, cfg: Optional[Config] = None):
+        if cfg is None:
+            cfg = Config(empty = True)
         self.cfg = cfg
 
     def connect(self):
         self.conn = db
-        self.cursor = self.conn.cursor(row_factory=dict_row)
+        self._cursor = self.conn.cursor(row_factory=dict_row)
         print("Connected to database")
 
+    def cursor(self, row_class: Optional[Type[T]] = None) -> Union[Cursor[T], Cursor[dict]]:
+
+        if row_class:
+            cursor = self.conn.cursor(row_factory=class_row(row_class))
+        else:
+            cursor = self.conn.cursor(row_factory = dict_row)
+        return cursor
+
     def query(self, query: sql.SQL | str, *args):
-        self.cursor.execute(query, *args)
-        return self.cursor.fetchall()
+        self._cursor.execute(query, *args)
+        if self._cursor.rowcount > 0:
+            return self._cursor.fetchall()
 
     async def disconnect(self):
-        self.cursor.close()
+        self._cursor.close()
         self.conn.close()
 
     async def filter_page(self, task: CrawlTask):
         query = sql.SQL('UPDATE "CrawlTask" SET status = %s WHERE id = %s;')
-        self.cursor.execute(query, (TaskStatus.FILTERED, task.id))
+        self._cursor.execute(query, (TaskStatus.FILTERED, task.id))
         self.conn.commit()
 
     async def fail_page(self, task: CrawlTask):
         query = sql.SQL("UPDATE {} SET status = %s WHERE id = %s;").format(
             sql.Identifier("CrawlTask"))
-        self.cursor.execute(query, (TaskStatus.FAILED, task.id))
+        self._cursor.execute(query, (TaskStatus.FAILED, task.id))
         self.conn.commit()
 
     def add_outgoing_links(self, links: list[Link]):
@@ -56,13 +69,13 @@ class PrismaClient:
         content_hash = str(mmh3.hash128(crawl_result.content, signed=False))
 
         query = sql.SQL("INSERT INTO {} (content_hash, url, parent_url, title, date, author, content, outbound_urls, depth) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING RETURNING *;").format(sql.Identifier("Page"))
-        self.cursor.execute(query, (content_hash, crawl_result.link.url, crawl_result.link.parent_url, crawl_result.title,
-                            crawl_result.date, crawl_result.author, crawl_result.content, [link.url for link in crawl_result.outbound_links], depth))
+        self._cursor.execute(query, (content_hash, crawl_result.link.url, crawl_result.link.parent_url, crawl_result.title,
+                                     crawl_result.date, crawl_result.author, crawl_result.content, [link.url for link in crawl_result.outbound_links], depth))
         self.conn.commit()
 
-        if self.cursor.rowcount == 0:
+        if self._cursor.rowcount == 0:
             return None
-        return Page(**self.cursor.fetchone())
+        return Page(**self._cursor.fetchone())
 
     def store_page(self, task: CrawlTask, crawl_result: CrawlResult) -> Optional[Page]:
         try:
@@ -77,10 +90,10 @@ class PrismaClient:
     async def get_task(self) -> CrawlTask | None:
         query = sql.SQL("UPDATE {} SET status = %s WHERE id = (SELECT id FROM {} WHERE status::text = %s ORDER BY depth ASC, boost DESC, id ASC FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *;").format(
             sql.Identifier("CrawlTask"), sql.Identifier("CrawlTask"))
-        self.cursor.execute(query, (TaskStatus.PROCESSING, TaskStatus.PENDING))
+        self._cursor.execute(query, (TaskStatus.PROCESSING, TaskStatus.PENDING))
         self.conn.commit()
 
-        task = self.cursor.fetchone()
+        task = self._cursor.fetchone()
         if task:
             return CrawlTask(**task)
         else:
@@ -92,7 +105,7 @@ class PrismaClient:
 
         query = sql.SQL("INSERT INTO \"CrawlTask\" (status, url, depth, parent_url, text) VALUES (%(status)s, %(url)s, %(depth)s, %(parent_url)s, %(text)s) ON CONFLICT DO NOTHING;").format(
             sql.Identifier("CrawlTask"))
-        self.cursor.executemany(query, tasks_data)
+        self._cursor.executemany(query, tasks_data)
         self.conn.commit()
 
         return len(links)
@@ -100,20 +113,25 @@ class PrismaClient:
     def finish_task(self, task: CrawlTask):
         query = sql.SQL("UPDATE {} SET status = %s WHERE id = %s;").format(
             sql.Identifier("CrawlTask"))
-        self.cursor.execute(query, (TaskStatus.COMPLETED, task.id))
+        self._cursor.execute(query, (TaskStatus.COMPLETED, task.id))
         self.conn.commit()
 
     async def is_already_explored(self, url: str) -> bool:
         query = sql.SQL("SELECT 1 FROM {} WHERE parent_url = %s LIMIT 1;").format(
             sql.Identifier("CrawlTask"))
-        self.cursor.execute(query, (url,))
-        return self.cursor.fetchone() is not None
+        self._cursor.execute(query, (url,))
+        return self._cursor.fetchone() is not None
 
-    async def get_page(self, url: str) -> Page | None:
-        query = sql.SQL("SELECT * FROM {} WHERE url = %s LIMIT 1;").format(
-            sql.Identifier("Page"))
-        self.cursor.execute(query, (url,))
-        page = self.cursor.fetchone()
+    def get_page(self, **kwargs) -> Page | None:
+        if 'id' in kwargs:
+            where_field = 'id'
+        elif 'url' in kwargs:
+            where_field = 'url'
+        else:
+            raise Exception("Must specify id or url")
+        query = sql.SQL('SELECT * FROM "Page" WHERE {} = %s LIMIT 1;').format(sql.Identifier(where_field))
+        self._cursor.execute(query, (kwargs[where_field],))
+        page = self._cursor.fetchone()
         if page:
             return Page(**page)
         else:

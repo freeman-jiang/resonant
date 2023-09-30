@@ -14,7 +14,11 @@ class Config():
     max_queue_size: int
     max_crawl_depth: int
 
-    def __init__(self):
+
+
+    def __init__(self, empty = False):
+        if empty:
+            return
         parser = argparse.ArgumentParser(prog="python3 -m crawler.main")
         parser.add_argument("--max_links", type=int,
                             help="The maximum number of links to crawl", default=DEFAULT_MAX_LINKS_TO_CRAWL)

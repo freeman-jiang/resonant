@@ -6,15 +6,12 @@ from psycopg import Connection
 from psycopg.rows import kwargs_row
 
 from crawler.recommendation.embedding import db
-from prisma import models
 
-from prisma import Prisma
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
 load_dotenv()
 
-prisma = Prisma()
 
 
 class PageAsNode(BaseModel):
@@ -100,7 +97,7 @@ def add_rank(d, url, value, msg=""):
     d[url] += value
 
 
-def trustrank(graph: dict[str, Node], damping_factor=0.82, max_iterations=100, tolerance=1.0):
+def trustrank(graph: dict[str, Node], damping_factor=0.85, max_iterations=100, tolerance=1.0):
     trusted_nodes = [(url, node.individual_pages)
                      for url, node in graph.items() if node.best_depth <= 1]
     trusted_nodes_len = sum(
@@ -128,7 +125,6 @@ def trustrank(graph: dict[str, Node], damping_factor=0.82, max_iterations=100, t
                                  share, f'normal-{node_url}')
                     else:
                         # Loosing pagerank value here...add it back to trusted_nodes at the random_jump stage
-                        # print("Out-link to domain that we don't know: ", neighbor_url)
                         pagerank_lost += share
                 pagerank_lost += share * 1
 
@@ -158,10 +154,6 @@ def trustrank(graph: dict[str, Node], damping_factor=0.82, max_iterations=100, t
 
         # print("Current values", trustrank_values)
 
-    min_trusted = 100000
-    for url, _ in trusted_nodes:
-        min_trusted = min(min_trusted, trustrank_values[url])
-    print("Min trusted node is", min_trusted)
     return trustrank_values
 
 
@@ -183,16 +175,15 @@ def combine_domain_and_page_scores(domains: dict[str, float], pages: dict[str, f
         domain = url_to_domain(url)
         domain_score = domains[domain]
 
-        pages_combined[url] = ((domain_score ** 0.4) * (page_score + 1))
+        pages_combined[url] = ((domain_score ** 0.4) * (page_score + 1)) + 1
 
     return pages_combined
 
 
 async def main():
-    await prisma.connect()
-    cursor = db.cursor(row_factory=kwargs_row(PageAsNode))
+    cursor = db._cursor(row_factory=kwargs_row(PageAsNode))
     pages = cursor.execute(
-        "SELECT id, url,outbound_urls,depth  FROM \"Page\" WHERE created_at <= timestamp '2023-09-26' LIMIT 120000").fetchall()
+        "SELECT id, url,outbound_urls,depth  FROM \"Page\" WHERE created_at <= timestamp '2023-10-01' LIMIT 120000").fetchall()
     # json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
     #
     # pages = json.load(open("/tmp/file.json", "r"))
@@ -209,7 +200,7 @@ async def main():
         topdomains[domain] = topdomains[domain] / \
             (domains[domain].individual_pages)
 
-    topurls = trustrank(nodes)
+    topurls = trustrank(nodes, max_iterations=0)
     page_score = combine_domain_and_page_scores(topdomains, topurls)
 
     print(topdomains, file=open("topdomains.txt", "w+"))
