@@ -1,3 +1,4 @@
+import { NavBar } from "@/components/NavBar/NavBar";
 import { Search } from "@/components/Search";
 import { Topics } from "@/components/Topics";
 import { Toaster } from "@/components/ui/toaster";
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <NavBar />
         <div className="mx-auto p-8 lg:max-w-2xl">
           <Link href="/" className="text-3xl font-bold">
             Superstack
