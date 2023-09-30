@@ -220,8 +220,8 @@ WITH want AS ({want_cte}),
     return similar_urls
 
 
-async def generate_feed_from_page(page: models.Page) -> list[PageResponse]:
-    query = NearestNeighboursQuery(url=page.url or None)
+async def generate_feed_from_page(url: str) -> list[PageResponse]:
+    query = NearestNeighboursQuery(url=url)
     similar = _query_similar(query)
     return similar
 

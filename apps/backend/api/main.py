@@ -90,7 +90,7 @@ async def recommend(userid: int) -> list[PageResponse]:
 
     for lp in selected_liked_pages:
         page = lp.page
-        similar.extend(await generate_feed_from_page(page))
+        similar.extend(await generate_feed_from_page(page.url))
 
     return similar
 
@@ -105,7 +105,7 @@ async def like(userid: int, pageid: int) -> list[PageResponse]:
     user = await find_or_create_user(userid)
 
     await upsert_liked_page(page, user)
-    urls = await generate_feed_from_page(page)
+    urls = await generate_feed_from_page(page.url)
 
     print("Recommended", urls)
     return urls
@@ -166,9 +166,16 @@ async def search(body: SearchQuery) -> list[PageResponse]:
         url = body.url
         print("Searching for similar URLs to", url)
 
-        want_vec = await crawl_interactive(Link.from_url(url))
+        contains_url = db.query("SELECT 1 FROM \"Page\" WHERE url = %s", [url])
 
-        query = NearestNeighboursQuery(vector=want_vec, url=url)
+        if contains_url:
+            print("Found existing URL!")
+            query = NearestNeighboursQuery(url=url)
+        else:
+            print("Crawling this URL")
+            want_vec = await crawl_interactive(Link.from_url(url))
+            query = NearestNeighboursQuery(vector=want_vec, url=url)
+
         similar = _query_similar(query)
 
         return similar
@@ -211,9 +218,11 @@ async def test_random_feed():
     print(await random_feed())
 
 
-def test_search():
+@pytest.mark.asyncio
+async def test_search():
     import asyncio
-    print(asyncio.run(search(SearchQuery(query='clean eating'))))
+    await startup()
+    print(await search(SearchQuery(url='https://www.annahavron.com/blog/how-does-your-community-help-you-live-out-your-values/')))
 
 
 @pytest.mark.asyncio
