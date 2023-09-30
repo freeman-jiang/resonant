@@ -1,5 +1,5 @@
 import functools
-from typing import Optional, Any
+from typing import Any, Optional
 
 from nltk import sent_tokenize
 from prisma.models import Page

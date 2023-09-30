@@ -18,3 +18,8 @@ export const searchFor = async (query: string) => {
   const { data } = await axios.post(`${NEXT_PUBLIC_BASE_URL}/search`, body);
   return data as Link[];
 };
+
+export const findPage = async (url: string) => {
+  const { data } = await axios.post(`${NEXT_PUBLIC_BASE_URL}/page`, { url });
+  return data as Link;
+};

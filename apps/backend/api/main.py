@@ -3,20 +3,20 @@ from datetime import datetime
 from typing import Optional
 
 import pytest
-
 from api.page_response import PageResponse
 from crawler.link import Link
 from crawler.prismac import PrismaClient
-from crawler.recommendation.embedding import (NearestNeighboursQuery, _query_similar,
+from crawler.recommendation.embedding import (NearestNeighboursQuery,
+                                              _query_similar,
                                               generate_feed_from_page)
 from crawler.worker import crawl_interactive, get_window_avg
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from prisma import Prisma
 from prisma.models import Page, User
 from pydantic import BaseModel, validator
 
-from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI()
@@ -61,6 +61,22 @@ async def find_or_create_user(userid):
     )
 
     return new_user
+
+
+class LinkQuery(BaseModel):
+    url: str
+
+    @validator("url")
+    def check_url(cls, v: str):
+        Link.from_url(v)
+        return v
+
+
+@app.post("/page")
+async def link(body: LinkQuery) -> PageResponse:
+    url = body.url
+    page = await db.get_page(url)
+    return PageResponse.from_prisma_page(page)
 
 
 @app.get('/recommend')

@@ -1,6 +1,9 @@
+import { Search } from "@/components/Search";
+import { Topics } from "@/components/Topics";
 import { Toaster } from "@/components/ui/toaster";
-import type { Metadata } from "next";
+import { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -19,7 +22,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Providers>{children}</Providers>
+        <div className="mx-auto p-8 lg:max-w-2xl">
+          <Link href="/" className="text-3xl font-bold">
+            Superstack
+          </Link>
+          <Providers>
+            <Topics />
+            <Search />
+            {children}
+          </Providers>
+        </div>
         <Toaster />
       </body>
     </html>

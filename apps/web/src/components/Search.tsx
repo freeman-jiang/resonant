@@ -1,11 +1,10 @@
 "use client";
 import { amplitude } from "@/analytics/amplitude";
-import { searchFor } from "@/api";
-import { FEED_QUERY_KEY, useFeed } from "@/api/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { NEXT_PUBLIC_AMPLITUDE_API_KEY } from "@/config";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const Spinner = () => {
   return (
@@ -32,11 +31,29 @@ const Spinner = () => {
   );
 };
 
+interface Props {
+  onSubmit?: (query: string) => void;
+  initialQuery?: string;
+}
+
 // TODO: Replace with react hook form
-export function Search() {
-  const [search, setSearch] = useState("");
-  const qc = useQueryClient();
-  const { isRefetching } = useFeed();
+export function Search({ onSubmit, initialQuery }: Props) {
+  useEffect(() => {
+    if (!NEXT_PUBLIC_AMPLITUDE_API_KEY) {
+      console.log("NEXT_PUBLIC_AMPLITUDE_API_KEY is not set");
+      return;
+    }
+    amplitude.init(NEXT_PUBLIC_AMPLITUDE_API_KEY || "", {
+      defaultTracking: {
+        formInteractions: false,
+        pageViews: true,
+        sessions: true,
+      },
+    });
+  }, []);
+
+  const [search, setSearch] = useState(initialQuery || "");
+  const router = useRouter();
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -45,8 +62,16 @@ export function Search() {
       return;
     }
 
-    await qc.fetchQuery([FEED_QUERY_KEY], () => searchFor(search));
-    amplitude.track("Search", { query: search });
+    if (onSubmit) {
+      onSubmit(search);
+    } else {
+      router.push(`/search?q=${search}`);
+    }
+
+    // await qc.fetchQuery({
+    //   queryKey: [FEED_QUERY_KEY],
+    //   queryFn: () => searchFor(search),
+    // });
   };
 
   return (
@@ -55,6 +80,7 @@ export function Search() {
       onSubmit={handleSearch}
     >
       <Input
+        value={search}
         onChange={(e) => setSearch(e.target.value)}
         type="text"
         placeholder="Search by content or URL"
@@ -63,7 +89,8 @@ export function Search() {
         className="flex min-w-[5rem] items-center justify-center"
         type="submit"
       >
-        {isRefetching ? <Spinner /> : "Search"}
+        {/* TODO: Add animation to make less jarring */}
+        {"Search"}
       </Button>
     </form>
   );
