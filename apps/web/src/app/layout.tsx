@@ -1,3 +1,5 @@
+import { Search } from "@/components/Search";
+import { Topics } from "@/components/Topics";
 import { Toaster } from "@/components/ui/toaster";
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -25,10 +27,9 @@ export default function RootLayout({
             Superstack
           </Link>
           <Providers>
-            {/* <FeedBoundary> */}
-            {/* <Top /> */}
+            <Topics />
+            <Search />
             {children}
-            {/* </FeedBoundary> */}
           </Providers>
         </div>
         <Toaster />

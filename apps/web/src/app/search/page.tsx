@@ -1,5 +1,6 @@
-import { Search } from "@/components/Search";
-import { SearchFeed } from "@/components/SearchFeed";
+"use client";
+import { useSearch } from "@/api/hooks";
+import { Feed } from "@/components/Feed";
 
 interface RouteParams {
   searchParams: {
@@ -7,16 +8,14 @@ interface RouteParams {
   };
 }
 
-const Page = async (params: RouteParams) => {
+const Page = (params: RouteParams) => {
   const { q } = params.searchParams;
+  const { data } = useSearch(q);
 
   return (
-    <div>
-      <Search initialQuery={q} />
-      <div className="mt-5">
-        <div className="font-mono text-lg">{q}</div>
-        <SearchFeed query={q} />
-      </div>
+    <div className="mt-5">
+      <div className="font-mono text-lg">{q}</div>
+      <Feed feed={data} />
     </div>
   );
 };

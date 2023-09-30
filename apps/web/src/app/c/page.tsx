@@ -1,6 +1,5 @@
 import { findPage } from "@/api";
 import { RelatedFeed } from "@/components/RelatedFeed";
-import { Search } from "@/components/Search";
 import { extractDomain, formatExercept } from "@/lib/utils";
 import NextLink from "next/link";
 
@@ -16,7 +15,6 @@ export default async function Page(params: RouteParams) {
 
   return (
     <div>
-      <Search />
       <div className="mt-5">
         <NextLink href={page.url} target="_blank" className="cursor-pointer">
           <div className="border border-slate-200 px-3 py-3">

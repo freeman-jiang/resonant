@@ -5,13 +5,21 @@ import { Entry } from "./Entry";
 import { Skeleton } from "./ui/skeleton";
 
 interface Props {
-  feed: Link[];
+  feed?: Link[];
 }
 
 export const Feed = ({ feed }: Props) => {
+  if (!feed) {
+    return (
+      <div className="mt-5">
+        <LoadingFeed />
+      </div>
+    );
+  }
+
   return (
     <div className="mt-5 space-y-2">
-      {feed.map((page) => (
+      {feed.slice(0, 50).map((page) => (
         <Entry {...page} key={page.url} />
       ))}
     </div>

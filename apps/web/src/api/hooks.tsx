@@ -47,7 +47,6 @@ export const useSearch = (query: string) => {
   return useQuery({
     queryKey: [SEARCH_QUERY_KEY, query],
     queryFn: () => searchFor(query),
-    refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 };
