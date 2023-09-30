@@ -1,11 +1,10 @@
 "use client";
 import { amplitude } from "@/analytics/amplitude";
-import { searchFor } from "@/api";
-import { FEED_QUERY_KEY, useFeed } from "@/api/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NEXT_PUBLIC_AMPLITUDE_API_KEY } from "@/config";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const Spinner = () => {
@@ -49,10 +48,9 @@ export function Search() {
     });
   }, []);
 
-  const { isRefetching } = useFeed();
-
   const [search, setSearch] = useState("");
   const qc = useQueryClient();
+  const router = useRouter();
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -61,10 +59,12 @@ export function Search() {
       return;
     }
 
-    qc.fetchQuery({
-      queryKey: [FEED_QUERY_KEY],
-      queryFn: () => searchFor(search),
-    });
+    router.push(`/search?q=${search}`);
+
+    // await qc.fetchQuery({
+    //   queryKey: [FEED_QUERY_KEY],
+    //   queryFn: () => searchFor(search),
+    // });
   };
 
   return (
@@ -82,7 +82,7 @@ export function Search() {
         type="submit"
       >
         {/* TODO: Add animation to make less jarring */}
-        {isRefetching ? <Spinner /> : "Search"}
+        {"Search"}
       </Button>
     </form>
   );

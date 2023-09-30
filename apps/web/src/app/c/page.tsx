@@ -5,13 +5,13 @@ import { extractDomain, formatExercept } from "@/lib/utils";
 import NextLink from "next/link";
 import { Suspense } from "react";
 
-interface RouteProps {
+interface RouteParams {
   searchParams: {
     url: string;
   };
 }
 
-export default async function Page(params: RouteProps) {
+export default async function Page(params: RouteParams) {
   const { url } = params.searchParams;
   const page = await findPage(url);
 
