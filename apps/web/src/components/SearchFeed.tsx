@@ -4,18 +4,19 @@ import { Entry } from "./Entry";
 import { LoadingFeed } from "./Feed";
 
 interface Props {
-  url: string;
+  query: string;
 }
 
-export const RelatedFeed = ({ url }: Props) => {
-  const { data } = useSearch(url);
+export const SearchFeed = ({ query }: Props) => {
+  const { data, isLoading, isFetching } = useSearch(query);
+  console.log(isLoading, isFetching);
 
   if (!data) {
     return <LoadingFeed />;
   }
 
   return (
-    <div className="mt-5 space-y-2">
+    <div className="mt-5">
       {data.map((page) => (
         <Entry key={page.url} {...page} />
       ))}

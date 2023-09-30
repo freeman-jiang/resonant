@@ -3,7 +3,6 @@ import { amplitude } from "@/analytics/amplitude";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NEXT_PUBLIC_AMPLITUDE_API_KEY } from "@/config";
-import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -32,8 +31,13 @@ const Spinner = () => {
   );
 };
 
+interface Props {
+  onSubmit?: (query: string) => void;
+  initialQuery?: string;
+}
+
 // TODO: Replace with react hook form
-export function Search() {
+export function Search({ onSubmit, initialQuery }: Props) {
   useEffect(() => {
     if (!NEXT_PUBLIC_AMPLITUDE_API_KEY) {
       console.log("NEXT_PUBLIC_AMPLITUDE_API_KEY is not set");
@@ -48,8 +52,7 @@ export function Search() {
     });
   }, []);
 
-  const [search, setSearch] = useState("");
-  const qc = useQueryClient();
+  const [search, setSearch] = useState(initialQuery || "");
   const router = useRouter();
 
   const handleSearch = async (e) => {
@@ -59,7 +62,11 @@ export function Search() {
       return;
     }
 
-    router.push(`/search?q=${search}`);
+    if (onSubmit) {
+      onSubmit(search);
+    } else {
+      router.push(`/search?q=${search}`);
+    }
 
     // await qc.fetchQuery({
     //   queryKey: [FEED_QUERY_KEY],
@@ -73,6 +80,7 @@ export function Search() {
       onSubmit={handleSearch}
     >
       <Input
+        value={search}
         onChange={(e) => setSearch(e.target.value)}
         type="text"
         placeholder="Search by content or URL"

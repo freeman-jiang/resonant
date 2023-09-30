@@ -2,13 +2,7 @@
 
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
-import { fetchFeed } from "@/api";
-import {
-  HydrationBoundary,
-  QueryClient,
-  QueryClientProvider,
-  dehydrate,
-} from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 
 export function Providers({ children }) {
@@ -32,21 +26,3 @@ export function Providers({ children }) {
     </QueryClientProvider>
   );
 }
-
-export const FeedBoundary = async ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  const queryClient = new QueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: ["feed"],
-    queryFn: fetchFeed,
-  });
-
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      {children}
-    </HydrationBoundary>
-  );
-};

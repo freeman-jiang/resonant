@@ -1,10 +1,9 @@
-import { Top } from "@/components/Top";
 import { Toaster } from "@/components/ui/toaster";
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
-import { FeedBoundary, Providers } from "./providers";
+import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,10 +25,10 @@ export default function RootLayout({
             Superstack
           </Link>
           <Providers>
-            <FeedBoundary>
-              <Top />
-              {children}
-            </FeedBoundary>
+            {/* <FeedBoundary> */}
+            {/* <Top /> */}
+            {children}
+            {/* </FeedBoundary> */}
           </Providers>
         </div>
         <Toaster />

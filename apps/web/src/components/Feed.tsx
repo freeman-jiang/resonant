@@ -1,15 +1,17 @@
 "use client";
-import { useFeed } from "@/api/hooks";
 import { cn } from "@/lib/utils";
+import { Link } from "@/types/api";
 import { Entry } from "./Entry";
 import { Skeleton } from "./ui/skeleton";
 
-export const Feed = () => {
-  const { data } = useFeed();
+interface Props {
+  feed: Link[];
+}
 
+export const Feed = ({ feed }: Props) => {
   return (
     <div className="mt-5 space-y-2">
-      {data.map((page) => (
+      {feed.map((page) => (
         <Entry {...page} key={page.url} />
       ))}
     </div>

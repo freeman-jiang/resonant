@@ -1,7 +1,5 @@
-import { searchFor } from "@/api";
-import { Entry } from "@/components/Entry";
-import { LoadingFeed } from "@/components/Feed";
-import { Suspense } from "react";
+import { Search } from "@/components/Search";
+import { SearchFeed } from "@/components/SearchFeed";
 
 interface RouteParams {
   searchParams: {
@@ -13,27 +11,12 @@ const Page = async (params: RouteParams) => {
   const { q } = params.searchParams;
 
   return (
-    <div className="mt-5">
-      <div className="font-mono text-lg">{q}</div>
-      <Suspense fallback={<LoadingFeed />}>
-        <SearchFeed q={q} />
-      </Suspense>
-    </div>
-  );
-};
-
-interface Props {
-  q: string;
-}
-
-const SearchFeed = async ({ q }: Props) => {
-  const results = await searchFor(q);
-
-  return (
-    <div className="mt-5">
-      {results.map((page) => (
-        <Entry key={page.url} {...page} />
-      ))}
+    <div>
+      <Search initialQuery={q} />
+      <div className="mt-5">
+        <div className="font-mono text-lg">{q}</div>
+        <SearchFeed query={q} />
+      </div>
     </div>
   );
 };
