@@ -1,48 +1,17 @@
 "use client";
-import { amplitude } from "@/analytics/amplitude";
 import { useFeed } from "@/api/hooks";
-import { NEXT_PUBLIC_AMPLITUDE_API_KEY } from "@/config";
 import { cn } from "@/lib/utils";
-import { Link } from "@/types/api";
-import { useEffect } from "react";
 import { Entry } from "./Entry";
-import { Search } from "./Search";
-import { Topics } from "./Topics";
 import { Skeleton } from "./ui/skeleton";
 
-interface Props {
-  links: Link[];
-}
-
-export const Feed = (props: Props) => {
-  useEffect(() => {
-    if (!NEXT_PUBLIC_AMPLITUDE_API_KEY) {
-      console.log("NEXT_PUBLIC_AMPLITUDE_API_KEY is not set");
-      return;
-    }
-    amplitude.init(NEXT_PUBLIC_AMPLITUDE_API_KEY || "", {
-      defaultTracking: {
-        formInteractions: false,
-        pageViews: true,
-        sessions: true,
-      },
-    });
-  }, []);
-  const { data: links } = useFeed({
-    initialData: props.links,
-  });
+export const Feed = () => {
+  const { data } = useFeed();
 
   return (
-    <div>
-      <Topics />
-      <Search />
-      <div className="mt-5 space-y-2">
-        {links.length > 0 ? (
-          links.map((link) => <Entry key={link.url} {...link} />)
-        ) : (
-          <LoadingFeed />
-        )}
-      </div>
+    <div className="mt-5 space-y-2">
+      {data.map((page) => (
+        <Entry {...page} key={page.url} />
+      ))}
     </div>
   );
 };
@@ -71,7 +40,7 @@ const renderSkeletons = (count: number) => {
   const skeletons = [];
 
   for (let i = 0; i < count; i++) {
-    skeletons.push(<LoadingEntry index={i} />);
+    skeletons.push(<LoadingEntry key={i} index={i} />);
   }
   return skeletons;
 };

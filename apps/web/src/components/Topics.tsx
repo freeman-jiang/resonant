@@ -1,3 +1,4 @@
+"use client";
 import { fetchFeed, searchFor } from "@/api";
 import { FEED_QUERY_KEY } from "@/api/hooks";
 import { useQueryClient } from "@tanstack/react-query";

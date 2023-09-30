@@ -10,11 +10,8 @@ interface Options {
 }
 
 export const useFeed = (options?: Options) => {
-  const { initialData } = options || {};
-
   return useQuery({
     queryKey: [FEED_QUERY_KEY],
-    initialData,
     queryFn: fetchFeed,
     refetchOnMount: false,
     refetchOnWindowFocus: false,

@@ -4,8 +4,9 @@ import { searchFor } from "@/api";
 import { FEED_QUERY_KEY, useFeed } from "@/api/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NEXT_PUBLIC_AMPLITUDE_API_KEY } from "@/config";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const Spinner = () => {
   return (
@@ -34,9 +35,24 @@ const Spinner = () => {
 
 // TODO: Replace with react hook form
 export function Search() {
+  useEffect(() => {
+    if (!NEXT_PUBLIC_AMPLITUDE_API_KEY) {
+      console.log("NEXT_PUBLIC_AMPLITUDE_API_KEY is not set");
+      return;
+    }
+    amplitude.init(NEXT_PUBLIC_AMPLITUDE_API_KEY || "", {
+      defaultTracking: {
+        formInteractions: false,
+        pageViews: true,
+        sessions: true,
+      },
+    });
+  }, []);
+
+  const { isRefetching } = useFeed();
+
   const [search, setSearch] = useState("");
   const qc = useQueryClient();
-  const { isRefetching } = useFeed();
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -45,8 +61,10 @@ export function Search() {
       return;
     }
 
-    await qc.fetchQuery([FEED_QUERY_KEY], () => searchFor(search));
-    amplitude.track("Search", { query: search });
+    qc.fetchQuery({
+      queryKey: [FEED_QUERY_KEY],
+      queryFn: () => searchFor(search),
+    });
   };
 
   return (
@@ -63,6 +81,7 @@ export function Search() {
         className="flex min-w-[5rem] items-center justify-center"
         type="submit"
       >
+        {/* TODO: Add animation to make less jarring */}
         {isRefetching ? <Spinner /> : "Search"}
       </Button>
     </form>

@@ -109,6 +109,16 @@ class PrismaClient:
         self.cursor.execute(query, (url,))
         return self.cursor.fetchone() is not None
 
+    async def get_page(self, url: str) -> Page | None:
+        query = sql.SQL("SELECT * FROM {} WHERE url = %s LIMIT 1;").format(
+            sql.Identifier("Page"))
+        self.cursor.execute(query, (url,))
+        page = self.cursor.fetchone()
+        if page:
+            return Page(**page)
+        else:
+            return None
+
     def __enter__(self):
         self.connect()
         return self
