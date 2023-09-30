@@ -1,17 +1,17 @@
-import mmh3
-import psycopg
-from psycopg import sql, Connection, Cursor
 from typing import Optional
 
+import mmh3
+import psycopg
+from crawler.config import Config
+from prisma.enums import TaskStatus
+from prisma.errors import UniqueViolationError
+from prisma.models import CrawlTask, Page
+from psycopg import Connection, Cursor, sql
 from psycopg.rows import dict_row
 
-from crawler.config import Config
+from .dbaccess import DB, db
 from .link import Link
 from .parse import CrawlResult
-from prisma.enums import TaskStatus
-from prisma.models import Page, CrawlTask
-from prisma.errors import UniqueViolationError
-from .dbaccess import db, DB
 
 
 class PrismaClient:
@@ -25,6 +25,7 @@ class PrismaClient:
     def connect(self):
         self.conn = db
         self.cursor = self.conn.cursor(row_factory=dict_row)
+        print("Connected to database")
 
     def query(self, query: sql.SQL | str, *args):
         self.cursor.execute(query, *args)
