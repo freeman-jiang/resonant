@@ -3,13 +3,13 @@ import time
 from prisma import Prisma
 
 from .config import Config
-from .prismac import PrismaClient
+from .prismac import PostgresClient
 
 from .link import Link
 from .worker import Worker
 
 
-async def initialize_queue(prisma: PrismaClient):
+async def initialize_queue(prisma: PostgresClient):
     task = await prisma.db.crawltask.find_first()
     if task:
         # Tasks in queue. Good to go
@@ -26,7 +26,7 @@ async def main():
     print(f"Starting with {config.num_workers} workers")
 
     # Initialize Prisma
-    prisma_client = PrismaClient(config)
+    prisma_client = PostgresClient(config)
 
     prisma_client.connect()
 

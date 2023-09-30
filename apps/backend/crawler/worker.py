@@ -11,7 +11,7 @@ from prisma.models import CrawlTask
 from . import filters
 from .link import SUPPRESSED_DOMAINS, Link
 from .parse import CrawlResult, parse_html
-from .prismac import PrismaClient
+from .prismac import PostgresClient
 from .recommendation.embedding import model
 
 
@@ -20,10 +20,10 @@ class Worker:
     done_queue: Queue[bool]
     done: bool
     sentinel_queue: Queue[bool]
-    prisma: PrismaClient
+    prisma: PostgresClient
     id: int
 
-    def __init__(self, *, id: int, config: Config, done_queue: Queue[bool], sentinel_queue: Queue[bool], prisma: PrismaClient):
+    def __init__(self, *, id: int, config: Config, done_queue: Queue[bool], sentinel_queue: Queue[bool], prisma: PostgresClient):
         self.config = config
         self.done_queue = done_queue
         self.done = False

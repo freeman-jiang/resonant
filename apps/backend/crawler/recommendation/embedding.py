@@ -14,13 +14,16 @@ from prisma.models import Page
 from psycopg.rows import dict_row
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
+
+from crawler.prismac import PostgresClient
 from ..dbaccess import db
 
 load_dotenv()
 
 client = Prisma()
 
-assert len(os.environ['DATABASE_URL']) > 1, "DATABASE_URL not set"
+assert len(os.environ['DATABASE_URL_PG']) > 1, "DATABASE_URL not set"
+assert len(os.environ['DATABASE_URL_SUPABASE']) > 1, "DATABASE_URL not set"
 
 
 def overlapping_windows(s: str, stride: int = 100, size: int = 120) -> Iterator[str]:
@@ -115,7 +118,7 @@ def _query_fts(query: str) -> list[PageResponse]:
         FROM "Page"
         WHERE ts @@ {query}
         ORDER BY score DESC""").format(query=sql.SQL("plainto_tsquery('english', {})").format(query))
-    cursor = db.cursor(row_factory=dict_row)
+    cursor = db._cursor(row_factory=dict_row)
 
     similar = cursor.execute(sql_query, ).fetchall()
 
@@ -202,7 +205,7 @@ WITH want AS ({want_cte}),
  matching_vecs AS (
         SELECT e.vec <=> w.vec as dist, e.url as url from vecs."Embeddings" as e, want as w 
             WHERE e.url != w.url AND e.index <= 4 AND e.url NOT LIKE '%%.superstack-web.vercel.app' 
-            ORDER BY dist LIMIT 200
+            ORDER BY dist LIMIT 250
  ),
  domain_counts AS (SELECT COUNT(url) as num_matching_windows, AVG(dist) as dist, MIN(url) as url FROM matching_vecs GROUP BY url)
  select "Page".*,
@@ -239,18 +242,11 @@ async def store_embeddings_for_pages(pages: list[Page]):
     db.commit()
 
 
-async def generate_embeddings():
-    await client.connect()
+async def generate_embeddings(db: PostgresClient):
 
     while True:
-        pages = await client.page.find_many(take=10, where={
-            'embeddings': {
-                'none': {}
-            },
-            # 'url': {
-            #     'endsWith': 'topics.superstack-web.vercel.app'
-            # }
-        })
+        pages = db.cursor(Page).execute(
+            'SELECT * FROM "Page" WHERE "Page".url NOT IN (SELECT url FROM vecs."Embeddings" GROUP BY "url") ORDER BY "Page".created_at DESC LIMIT 10').fetchall()
 
         if len(pages) == 0:
             print("ERR: No pages to process")
@@ -260,4 +256,6 @@ async def generate_embeddings():
 
 
 if __name__ == "__main__":
-    asyncio.run(generate_embeddings())
+    client = PostgresClient()
+    client.connect()
+    asyncio.run(generate_embeddings(client))

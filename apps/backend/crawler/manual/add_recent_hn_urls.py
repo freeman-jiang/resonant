@@ -6,7 +6,7 @@ from prisma import Prisma
 from crawler.config import Config
 from crawler.link import Link
 from crawler.parse import find_feed_urls_cached
-from crawler.prismac import PrismaClient
+from crawler.prismac import PostgresClient
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -21,7 +21,7 @@ async def get_rss_feed():
 
     db = Prisma()
     await db.connect()
-    pc = PrismaClient(config, db)
+    pc = PostgresClient(config, db)
 
     links = find_feed_urls_cached(Link.from_url(rssfeed))
 

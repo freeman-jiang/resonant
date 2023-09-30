@@ -70,21 +70,23 @@ def should_keep(crawl: CrawlResult) -> bool:
 
     return len(sentences) >= 12 and len(words) >= 300 and avg_word_len > 3 and avg_sent_len >= 8 and avg_sent_len <= 100
 
-
-@pytest.mark.asyncio
-async def test_1():
-    client = Prisma()
-    await client.connect()
-    pages = await client.page.find_many(take=500, where={
-        'url': 'https://shkspr.mobi/blog/2014/07/'
-    })
-    for page in pages:
-        crawl = CrawlResult(link=Link.from_url(page.url),
-                            content=page.content, outbound_links=[])
-        if not should_keep(crawl):
-            print("Will filter out", page.url)
-            pass
-
+# @pytest.mark.asyncio
+# async def test_1():
+#     client = Prisma()
+#   """
+#   Use this test to determine why something was filtered out
+#   """
+#     await client.connect()
+#     pages = await client.page.find_many(take=500, where={
+#         'url': 'https://shkspr.mobi/blog/2014/07/'
+#     })
+#     for page in pages:
+#         crawl = CrawlResult(link=Link.from_url(page.url),
+#                             content=page.content, outbound_links=[])
+#         if not should_keep(crawl):
+#             print("Will filter out", page.url)
+#             pass
+#
 
 def test_2():
     url = 'https://amirbolous.com/posts/transformers/'

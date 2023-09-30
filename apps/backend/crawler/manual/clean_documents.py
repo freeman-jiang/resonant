@@ -1,30 +1,27 @@
 from prisma import Prisma
+from prisma.models import Page
 
 from crawler.link import SUPPRESSED_DOMAINS
-from crawler.parse import find_feed_urls
-import requests
-
-from crawler.recommendation.pagerank import url_to_domain
 from langdetect import detect
+
+from crawler.prismac import PostgresClient
 
 
 def is_english(s: str):
     return detect(s) == 'en'
 
 
-async def main():
-    client = Prisma()
-
-    await client.connect()
-
+async def main(db: PostgresClient):
     processed = 0
 
     to_delete = []
 
-    domains = set()
 
     while True:
-        pages = await client.page.find_many(take=500, skip=processed)
+        pages = db.cursor(Page).execute("SELECT * FROM \"Page\" ORDER BY \"Page\".created_at DESC LIMIT 500 OFFSET %s", (processed,)).fetchall()
+
+        if processed >= 500:
+            break
         if len(pages) == 0:
             break
         print(f"Processing {len(pages)} pages")
@@ -50,12 +47,10 @@ async def main():
 
     if len(to_delete) > 0:
         print("Deleting {} pages".format(len(to_delete)))
-        await client.page.delete_many(where={
-            'id': {
-                'in': to_delete
-            }
-        })
+        db.query("DELETE FROM \"Page\" WHERE \"Page\".id = ANY(%s) RETURNING 1", (to_delete,))
 
 if __name__ == '__main__':
     import asyncio
-    asyncio.run(main())
+    db = PostgresClient()
+    db.connect()
+    asyncio.run(main(db))
