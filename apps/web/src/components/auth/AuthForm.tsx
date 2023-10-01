@@ -4,7 +4,6 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/navigation";
 import { Icons } from "../icons";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -16,35 +15,27 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [email, setEmail] = React.useState<string>("");
   const supabase = createClientComponentClient();
-  const router = useRouter();
-
-  supabase.auth
-    .getUser()
-    .then((user) => console.log(user))
-    .catch((e) => console.log("no user"));
 
   const handleSignInEmail = async () => {
     await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/login`,
+        emailRedirectTo: `${window.location.origin}`,
       },
     });
   };
 
   const handleSignInWithGoogle = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         queryParams: {
           access_type: "offline",
           prompt: "consent",
         },
-        redirectTo: `${window.location.origin}/login`,
+        redirectTo: `${window.location.origin}`,
       },
     });
-
-    console.log(data, error);
   };
 
   async function onSubmit(event: React.SyntheticEvent) {
@@ -53,11 +44,6 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     await handleSignInEmail();
     setIsLoading(false);
   }
-
-  const handleSignout = async () => {
-    supabase.auth.signOut();
-    router.refresh();
-  };
 
   return (
     <div className={cn("grid gap-6", className)} {...props}>
@@ -79,6 +65,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
               onChange={(event) => {
                 setEmail(event.target.value);
               }}
+              variant="thin"
             />
           </div>
           <Button disabled={isLoading}>
@@ -86,9 +73,6 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
               <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
             )}
             Sign In with Email
-          </Button>
-          <Button onClick={handleSignout} variant="destructive">
-            Sign Out
           </Button>
         </div>
       </form>

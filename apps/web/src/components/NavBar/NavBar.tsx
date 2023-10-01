@@ -1,22 +1,31 @@
-"use client";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Button } from "../ui/button";
+import { UserNav } from "./UserNav";
 
-export function NavBar({
+export const dynamic = "force-dynamic";
+
+const getUser = async () => {
+  const supabase = createServerComponentClient({ cookies });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return user;
+};
+
+export async function NavBar({
   className,
   ...props
 }: React.HTMLAttributes<HTMLElement>) {
-  const path = usePathname();
-  const isLogin = path === "/login";
-
+  const user = await getUser();
   return (
     <div className="border-b">
       <div className="flex h-16 items-center justify-between px-4">
-        <h1 className="text-xl font-bold">Superstack</h1>
-        <Link href={isLogin ? "/" : "/login"}>
-          <Button variant="outline">{isLogin ? "Home" : "Login"}</Button>
+        <Link href="/" className="text-xl font-bold">
+          Superstack
         </Link>
+        <UserNav user={user} />
       </div>
     </div>
   );
