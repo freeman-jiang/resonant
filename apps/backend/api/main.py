@@ -2,6 +2,7 @@ import os
 import random
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 import pytest
 from api.page_response import PageResponse
@@ -230,6 +231,54 @@ async def random_feed() -> list[PageResponse]:
 
     random_pages = [Page(**p) for p in random_pages]
     return [PageResponse.from_prisma_page(p) for p in random_pages]
+
+
+class SendMessageRequest(BaseModel):
+    sender_id: UUID
+    page_id: int
+    message: str
+    receiver_id: UUID
+
+    # @validator("message")
+    # def check_message(cls, v: str):
+    #     if not v:
+    #         raise ValueError("Message must not be empty string")
+    #     return v
+
+@app.post('/message')
+def send_message(body: SendMessageRequest) -> None:
+    """
+    Send a message to another user
+    :param body:
+    :return:
+    """
+    pass
+
+@app.get('/feed')
+def get_user_feed(userid: UUID) -> list[PageResponse]:
+    """
+    Get the user's feed by combining their incoming messages and stuff from random-feed
+    :param userid:
+    :return:
+    """
+    pass
+
+
+class UserQueryResponse(BaseModel):
+    user_id: UUID
+    fname: str
+    lname: str
+
+
+@app.get('/users')
+def get_search_users(query: str) -> list[UserQueryResponse]:
+    """
+    Substring search users by their query
+    :param query:
+    :return:
+    """
+    pass
+
 
 
 @pytest.mark.asyncio
