@@ -1,7 +1,17 @@
-"use client";
 import { UserAuthForm } from "@/components/auth/AuthForm";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function AuthenticationPage() {
+export default async function AuthenticationPage() {
+  const supabase = createServerComponentClient({ cookies });
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (session) {
+    redirect("/");
+  }
+
   return (
     <div className="mt-10 flex w-full justify-center px-4">
       <div className="flex flex-col">

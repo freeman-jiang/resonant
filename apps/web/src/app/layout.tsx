@@ -1,4 +1,5 @@
 import { NavBar } from "@/components/NavBar/NavBar";
+import { cn } from "@/lib/utils";
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -17,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={cn(inter.className, "selection:bg-emerald-200")}>
         <Providers>
           <NavBar />
           {children}
