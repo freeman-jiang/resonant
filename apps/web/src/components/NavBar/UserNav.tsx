@@ -1,6 +1,6 @@
 "use client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,20 +11,22 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import {
   User,
   createClientComponentClient,
 } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { RightButton } from "./RightButton";
+import { Skeleton } from "../ui/skeleton";
 
 interface Props {
   user: User;
 }
 
-export function UserNav({ user: serverUser }: Props) {
-  const [user, setUser] = useState<User>(serverUser);
+export function UserNav() {
+  const [user, setUser] = useState<User>(undefined);
   const supabase = createClientComponentClient();
   useEffect(() => {
     const setUp = async () => {
@@ -51,6 +53,7 @@ export function UserNav({ user: serverUser }: Props) {
     setUp();
   }, []);
 
+  const path = usePathname();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -110,5 +113,22 @@ export function UserNav({ user: serverUser }: Props) {
     );
   }
 
-  return <RightButton />;
+  // Still getting user data
+  if (user === undefined) {
+    return <Skeleton className="block h-8 w-8 rounded-full bg-slate-400" />;
+  }
+
+  if (path === "/login") {
+    return (
+      <Link className={cn(buttonVariants({ variant: "link" }))} href="/">
+        Feed
+      </Link>
+    );
+  }
+
+  return (
+    <Link className={cn(buttonVariants({ variant: "link" }))} href="/login">
+      Login
+    </Link>
+  );
 }
