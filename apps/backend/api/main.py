@@ -183,7 +183,7 @@ async def search(body: SearchQuery) -> list[PageResponse]:
         url = body.url
         print("Searching for similar URLs to", url)
 
-        contains_url = db.query("SELECT 1 FROM \"Page\" WHERE url = %s", [url])
+        contains_url = db.query('SELECT 1 FROM "Page" p INNER JOIN vecs."Embeddings" e ON p.url = e.url WHERE p.url = %s', [url])
 
         if contains_url:
             print("Found existing URL!")
@@ -242,7 +242,7 @@ async def test_random_feed():
 @pytest.mark.asyncio
 async def test_search():
     await startup()
-    results = await search(SearchQuery(url='http://dieordiy2.blogspot.com/2023/09/melvins-tribute-to-kinks-amphetamine.html'))
+    results = await search(SearchQuery(url='https://notebook.wesleyac.com/consciousness-and-emulation/'))
     print([x.url for x in results])
 
 

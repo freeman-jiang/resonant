@@ -118,7 +118,7 @@ def _query_fts(query: str) -> list[PageResponse]:
         FROM "Page"
         WHERE ts @@ {query}
         ORDER BY score DESC""").format(query=sql.SQL("plainto_tsquery('english', {})").format(query))
-    cursor = db._cursor(row_factory=dict_row)
+    cursor = db.cursor(row_factory=dict_row)
 
     similar = cursor.execute(sql_query, ).fetchall()
 
