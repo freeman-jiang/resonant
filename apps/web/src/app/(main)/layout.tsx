@@ -12,7 +12,7 @@ export default function RootLayout({
   return (
     <div>
       <div className="mx-auto p-8 lg:max-w-2xl">
-        <Link href="/" className="text-3xl font-bold">
+        <Link href="/" className="text-2xl font-bold">
           Superstack
         </Link>
         <Topics />
