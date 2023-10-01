@@ -243,7 +243,6 @@ async def store_embeddings_for_pages(pages: list[Page]):
 
 
 async def generate_embeddings(db: PostgresClient):
-
     while True:
         pages = db.cursor(Page).execute(
             'SELECT * FROM "Page" WHERE "Page".url NOT IN (SELECT url FROM vecs."Embeddings" GROUP BY "url") ORDER BY "Page".created_at DESC LIMIT 10').fetchall()

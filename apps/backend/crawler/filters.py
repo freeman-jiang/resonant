@@ -1,12 +1,9 @@
 import re
 from typing import Tuple, List
 
-import pytest
 from nltk import sent_tokenize, word_tokenize, LineTokenizer
-from prisma import Prisma
 from crawler.constants.whitelist import WHITELIST_DOMAINS
 
-from crawler.link import Link
 from crawler.parse import CrawlResult
 
 

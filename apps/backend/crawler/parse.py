@@ -200,7 +200,7 @@ def extract_meta_title(html: str) -> Optional[str]:
     soup = BeautifulSoup(html, 'lxml')
     title = soup.find("meta", property="og:title")
     if title:
-        return title["content"]  # type: ignore
+        return title.get("content")  # type: ignore
     title = soup.find('title')
     if title:
         return title.get_text()

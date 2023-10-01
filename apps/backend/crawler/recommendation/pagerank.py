@@ -1,11 +1,10 @@
-
+import json
 from collections import defaultdict
-import asyncio
 
 from psycopg import Connection
 from psycopg.rows import kwargs_row
 
-from crawler.recommendation.embedding import db
+from crawler.dbaccess import db
 
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -32,7 +31,7 @@ class Node(BaseModel):
     individual_pages: int = 1
 
     @classmethod
-    async def from_db(cls, pages: list[PageAsNode]) -> dict[str, 'Node']:
+    def from_db(cls, pages: list[PageAsNode]) -> dict[str, 'Node']:
         for p in pages:
             domain = url_to_domain(p.url)
             p.outbound_urls = [x for x in p.outbound_urls if x != p.url]
@@ -90,14 +89,10 @@ NORMAL_ADDS = defaultdict(int)
 
 
 def add_rank(d, url, value, msg=""):
-    global NORMAL_ADDS
-    if msg.startswith('normal'):
-        NORMAL_ADDS[url] += value
-
     d[url] += value
 
 
-def trustrank(graph: dict[str, Node], damping_factor=0.85, max_iterations=100, tolerance=1.0):
+def trustrank(graph: dict[str, Node], damping_factor=0.80, max_iterations=100, tolerance=1.0):
     trusted_nodes = [(url, node.individual_pages)
                      for url, node in graph.items() if node.best_depth <= 1]
     trusted_nodes_len = sum(
@@ -109,7 +104,6 @@ def trustrank(graph: dict[str, Node], damping_factor=0.85, max_iterations=100, t
     new_trustrank_values = initial_values.copy()
 
     for iters in range(max_iterations):
-        NORMAL_ADDS.clear()
         total_diff = 0.0
         for node_url, node in graph.items():
             pagerank_lost = 0
@@ -122,7 +116,7 @@ def trustrank(graph: dict[str, Node], damping_factor=0.85, max_iterations=100, t
                 for neighbor_url in node.out:
                     if neighbor_url in new_trustrank_values:
                         add_rank(new_trustrank_values, neighbor_url,
-                                 share, f'normal-{node_url}')
+                                 share)
                     else:
                         # Loosing pagerank value here...add it back to trusted_nodes at the random_jump stage
                         pagerank_lost += share
@@ -133,7 +127,7 @@ def trustrank(graph: dict[str, Node], damping_factor=0.85, max_iterations=100, t
 
             for neighbor_url, multiplier in trusted_nodes:
                 add_rank(new_trustrank_values, neighbor_url,
-                         random_jump * multiplier, 'random' if iters >= 6 else 'fda')
+                         random_jump * multiplier)
 
         old_sum = sum(trustrank_values.values())
         new_sum = sum(new_trustrank_values.values())
@@ -180,18 +174,17 @@ def combine_domain_and_page_scores(domains: dict[str, float], pages: dict[str, f
     return pages_combined
 
 
-async def main():
-    cursor = db._cursor(row_factory=kwargs_row(PageAsNode))
+def main():
+    cursor = db.cursor(row_factory=kwargs_row(PageAsNode))
     pages = cursor.execute(
-        "SELECT id, url,outbound_urls,depth  FROM \"Page\" WHERE created_at <= timestamp '2023-10-01' LIMIT 120000").fetchall()
-    # json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
-    #
-    # pages = json.load(open("/tmp/file.json", "r"))
-    # pages = [PageAsNode(**p) for p in pages]
+        "SELECT id, url,outbound_urls,depth  FROM \"Page\"").fetchall()
+    json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
+    pages = json.load(open("/tmp/file.json", "r"))
+    pages = [PageAsNode(**p) for p in pages]
     print(pages, file=open("pages.txt", "w+"))
     print("Got pages", len(pages))
 
-    nodes = await Node.from_db(pages)
+    nodes = Node.from_db(pages)
     domains = Node.convert_to_domains(nodes)
 
     topdomains = trustrank(domains)
@@ -200,7 +193,7 @@ async def main():
         topdomains[domain] = topdomains[domain] / \
             (domains[domain].individual_pages)
 
-    topurls = trustrank(nodes, max_iterations=0)
+    topurls = trustrank(nodes, max_iterations=10)
     page_score = combine_domain_and_page_scores(topdomains, topurls)
 
     print(topdomains, file=open("topdomains.txt", "w+"))
@@ -209,4 +202,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

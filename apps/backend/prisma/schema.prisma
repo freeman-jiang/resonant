@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL_SUPABASE")
   schemas  = ["public", "vecs"]
 }
 
@@ -25,8 +25,6 @@ model Page {
   content_hash  String       @unique
   depth         Int          @default(0)
   page_rank     Float?
-  feeded_by     FeedPage[]
-  liked_by      LikedPage[]
   embeddings    Embeddings[]
 
   @@schema("public")
@@ -71,7 +69,6 @@ model FeedPage {
   page_id           Int
   suggested_from_id Int
   score             Float     @default(0)
-  page              Page      @relation(fields: [page_id], references: [id], onDelete: Cascade)
   suggested_from    LikedPage @relation(fields: [suggested_from_id], references: [id], onDelete: Cascade)
   user              User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -86,7 +83,6 @@ model LikedPage {
   user_id     Int
   page_id     Int
   suggestions FeedPage[]
-  page        Page       @relation(fields: [page_id], references: [id], onDelete: Cascade)
   user        User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, page_id], name: "liked_pages_user_id_page_id")

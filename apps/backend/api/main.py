@@ -242,7 +242,7 @@ async def test_random_feed():
 @pytest.mark.asyncio
 async def test_search():
     await startup()
-    results = await search(SearchQuery(url='https://notebook.wesleyac.com/consciousness-and-emulation/'))
+    results = await search(SearchQuery(url='http://www.naughtycomputer.uk/owned_software_servant_software.html'))
     print([x.url for x in results])
 
 
