@@ -149,6 +149,11 @@ class PostgresClient:
         else:
             return None
 
+    def get_pages_by_id(self, ids: list[int]) -> list[Page]:
+        query = sql.SQL('SELECT * FROM "Page" WHERE id = ANY(%s);')
+        self._cursor.execute(query, (ids,))
+        return [Page(**page) for page in self._cursor.fetchall()]
+
     def __enter__(self):
         self.connect()
         return self

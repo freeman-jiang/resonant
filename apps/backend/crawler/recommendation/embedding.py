@@ -38,9 +38,9 @@ class Embedder:
     model: SentenceTransformer
 
     def __init__(self):
-        self.model = SentenceTransformer('all-mpnet-base-v2', device='cpu')
+        self.model = SentenceTransformer('BAAI/bge-base-en-v1.5', device='mps')
 
-    def embed(self, text: str, stride: int = 100, size: int = 120) -> np.ndarray:
+    def embed(self, text: str, stride: int = 360, size: int = 380) -> np.ndarray:
         """
         Sentence-transformers only supports small inputs, so we split the text into overlapping windows of X tokens each,
         and return the vectors for each window
@@ -49,11 +49,11 @@ class Embedder:
         :return: ndarray of shape (n, 768) where n is the number of windows
         """
         windows = list(overlapping_windows(text, stride, size))
-        # Trim to first 7 windows only to save computation
-        if len(windows) > 7:
-            windows = windows[0:7]
+        # Trim to first N windows only to save computation
+        if len(windows) > 3:
+            windows = windows[0:3]
 
-        return self.model.encode(windows)
+        return self.model.encode(windows, normalize_embeddings=True)
 
     def generate_vecs(self, title: str, content: str, url: str) -> list[tuple[str, int, list]]:
         """
@@ -251,7 +251,7 @@ async def store_embeddings_for_pages(pages: list[Page]):
         to_append.extend(data)
 
     cur = db.cursor()
-    cur.executemany("""INSERT INTO vecs."Embeddings" ("url", "index", "vec") VALUES (%s, %s, %s)""", [
+    cur.executemany("""INSERT INTO Embeddings ("url", "index", "vec") VALUES (%s, %s, %s)""", [
                     (x[0], x[1], x[2]) for x in to_append])
     db.commit()
 
@@ -259,7 +259,7 @@ async def store_embeddings_for_pages(pages: list[Page]):
 async def generate_embeddings(db: PostgresClient):
     while True:
         pages = db.cursor(Page).execute(
-            'SELECT * FROM "Page" WHERE "Page".url NOT IN (SELECT url FROM vecs."Embeddings" GROUP BY "url") ORDER BY "Page".created_at DESC LIMIT 10').fetchall()
+            'SELECT * FROM "Page" WHERE "Page".url NOT IN (SELECT url FROM Embeddings GROUP BY "url") ORDER BY "Page".created_at DESC LIMIT 50').fetchall()
 
         if len(pages) == 0:
             print("ERR: No pages to process")

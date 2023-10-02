@@ -1,11 +1,11 @@
 import os
 import random
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 from uuid import UUID
 
 import pytest
-from api.page_response import PageResponse
+from api.page_response import PageResponse, PageResponseURLOnly
 from crawler.link import Link
 from crawler.prismac import PostgresClient
 from crawler.recommendation.embedding import (NearestNeighboursQuery,
@@ -211,7 +211,7 @@ def health_check():
 
 
 @app.get("/random-feed")
-async def random_feed() -> list[PageResponse]:
+async def random_feed(limit: int = 60) -> list[PageResponse]:
     """
     Gets a random set of Pages with depth <= 1, based on the seed.
     We calculate the MD5 of (seed + content_hash), then get the first X elements with the highest MD5.
@@ -229,7 +229,7 @@ async def random_feed() -> list[PageResponse]:
     random_pages = db.query("""
     WITH random_ids AS (SELECT id, MD5(CONCAT(%s::text, content_hash)) FROM "Page" ORDER BY md5)
     SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1 LIMIT %s
-    """, [seed, 60])
+    """, [seed, limit])
 
     random_pages = [Page(**p) for p in random_pages]
     return [PageResponse.from_prisma_page(p) for p in random_pages]
@@ -273,24 +273,76 @@ async def send_message(body: SendMessageRequest) -> None:
 async def test_send_message():
     await startup()
     await send_message(SendMessageRequest(
-        sender_id='7bc71a92-7c3f-4f5d-b77f-c937417f32db',
+        sender_id='61b98b24-18ff-43eb-af97-c58cd386e748',
         page_id=1,
         url=None,
         message='fdas',
-        receiver_id='e58a1c61-67c7-4477-82b9-6e5ddd9f33ac'
+        receiver_id='083e93f0-2fd9-4454-ad46-3444378f4b51'
     ))
 
 
+class MessageUser(BaseModel):
+    id: UUID
+    first_name: str
+    last_name: str
+
+
+class MessageResponse(BaseModel):
+    page: Union[PageResponse, PageResponseURLOnly]
+    sender: MessageUser
+    receiver: MessageUser
+
+    message: str
+
+class UserFeedResponse(BaseModel):
+    random_feed: list[PageResponse]
+    messages: list[MessageResponse]
+
 @app.get('/feed')
-def get_user_feed(userid: UUID) -> list[PageResponse]:
+async def get_user_feed(userid: UUID) -> UserFeedResponse:
     """
     Get the user's feed by combining their incoming messages and stuff from random-feed
     :param userid:
     :return:
     """
-    pass
+
+    messages = await client.message.find_many(where={'receiver_id': str(userid)}, order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True})
+
+    page_ids_to_fetch = set(
+        [m.page_id for m in messages if m.page_id is not None])
+
+    pages = db.get_pages_by_id(list(page_ids_to_fetch))
+
+    pages = {p.id: p for p in pages}
+
+    result = []
+
+    for r in messages:
+        if r.page_id is not None:
+            page = pages[r.page_id]
+            page_response = PageResponse.from_prisma_page(page)
+        else:
+            page_response = PageResponseURLOnly(url=r.url)
+
+        result.append(MessageResponse(
+            page=page_response,
+            sender=MessageUser(
+                id=r.sender_id, first_name=r.sender.first_name, last_name=r.sender.last_name),
+            receiver=MessageUser(
+                id=r.receiver_id, first_name=r.receiver.first_name, last_name=r.receiver.last_name),
+            message=r.message
+        ))
+
+    random_articles = await random_feed(limit = 30)
+
+    return UserFeedResponse(random_feed = random_articles, messages = result)
 
 
+@pytest.mark.asyncio
+async def test_get_user_feed():
+    await startup()
+    result = await get_user_feed('083e93f0-2fd9-4454-ad46-3444378f4b51')
+    print(result)
 class UserQueryResponse(BaseModel):
     user_id: UUID
     fname: str
