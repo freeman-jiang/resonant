@@ -5,9 +5,9 @@ import psycopg
 from crawler.config import Config
 from prisma.enums import TaskStatus
 from prisma.errors import UniqueViolationError
-from prisma.models import CrawlTask, Page
+from prisma.models import CrawlTask, Page, User
 from psycopg import Connection, Cursor, sql
-from psycopg.rows import dict_row, class_row
+from psycopg.rows import class_row, dict_row
 
 from .dbaccess import DB, db
 from .link import Link

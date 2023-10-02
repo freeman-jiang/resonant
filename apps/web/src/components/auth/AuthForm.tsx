@@ -5,6 +5,7 @@ import * as React from "react";
 import { amplitude } from "@/analytics/amplitude";
 import { cn } from "@/lib/utils";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { Icons } from "../icons";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -12,16 +13,20 @@ import { Label } from "../ui/label";
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
+type Inputs = {
+  email: string;
+};
+
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
-  const [email, setEmail] = React.useState<string>("");
-  const supabase = createClientComponentClient();
+  const { register, handleSubmit } = useForm<Inputs>();
 
-  const handleSignInEmail = async () => {
+  const supabase = createClientComponentClient();
+  const handleSignInWithEmail = async ({ email }: Inputs) => {
     await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
     amplitude.track("Sign In", { email });
@@ -35,47 +40,41 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           access_type: "offline",
           prompt: "consent",
         },
-        redirectTo: `${window.location.origin}`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
     amplitude.track("Sign In", { email: "google" });
   };
 
-  async function onSubmit(event: React.SyntheticEvent) {
-    event.preventDefault();
+  const onSubmit: SubmitHandler<Inputs> = async (data) => {
     setIsLoading(true);
-    await handleSignInEmail();
+    await handleSignInWithEmail(data);
     setIsLoading(false);
-  }
+  };
 
   return (
     <div className={cn("grid gap-6", className)} {...props}>
-      <form onSubmit={onSubmit}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid gap-2">
-          <div className="grid gap-1">
-            <Label className="sr-only" htmlFor="email">
-              Email
-            </Label>
+          <div className="flex flex-col space-y-2">
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              placeholder="socrates@athens.com"
+              placeholder="marcus@ancientrome.com"
               type="email"
               autoCapitalize="none"
               autoComplete="email"
               autoCorrect="off"
               disabled={isLoading}
-              value={email}
-              onChange={(event) => {
-                setEmail(event.target.value);
-              }}
               variant="thin"
+              {...register("email", { required: true })}
             />
           </div>
-          <Button disabled={isLoading}>
+          <Button className="mt-1" disabled={isLoading}>
             {isLoading && (
               <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
             )}
-            Sign In with Email
+            Sign Up with Email
           </Button>
         </div>
       </form>

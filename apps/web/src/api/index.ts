@@ -23,3 +23,22 @@ export const findPage = async (url: string) => {
   const { data } = await axios.post(`${NEXT_PUBLIC_BASE_URL}/page`, { url });
   return data as Link;
 };
+
+interface CreateUserRequest {
+  email: string;
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+export const createUser = async (user: CreateUserRequest) => {
+  const { data } = await axios.post(
+    `${NEXT_PUBLIC_BASE_URL}/create_user`,
+    user,
+  );
+  return data;
+};
+
+export const getUser = async (uuid: string) => {
+  const { data } = await axios.get(`${NEXT_PUBLIC_BASE_URL}/user/${uuid}`);
+  return data;
+};

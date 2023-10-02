@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from prisma import Prisma
-from prisma.models import Page, User, Message
+from prisma.models import Message, Page, User
 from pydantic import BaseModel, validator
 
 load_dotenv()
@@ -299,6 +299,44 @@ class UserQueryResponse(BaseModel):
     @classmethod
     def from_prisma(cls, pmodel: User):
         return UserQueryResponse(user_id=pmodel.id, fname=pmodel.first_name, lname=pmodel.last_name)
+
+
+class CreateUserRequest(BaseModel):
+    id: str
+    email: str
+    firstName: str
+    lastName: str
+
+
+@app.post('/create_user', status_code=201)
+async def create_user(body: CreateUserRequest):
+    """
+    Create a new user
+    :param body:
+    :return:
+    """
+
+    res = await client.user.create({
+        'id': body.id,
+        'email': body.email,
+        'first_name': body.firstName,
+        'last_name': body.lastName
+    })
+    return res
+
+
+@app.get('/user/{user_uuid}')
+async def get_user(user_uuid: str):
+    """
+    Get a user by their UUID
+    :param user_uuid:
+    :return:
+    """
+    user = await client.user.find_first(where={'id': user_uuid})
+
+    if user is None:
+        raise HTTPException(404, "User not found")
+    return user
 
 
 @app.get('/users')
