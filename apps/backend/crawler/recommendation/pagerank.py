@@ -1,4 +1,3 @@
-import json
 from collections import defaultdict
 
 from psycopg import Connection
@@ -6,77 +5,11 @@ from psycopg.rows import kwargs_row
 
 from crawler.dbaccess import db
 
-from pydantic import BaseModel
 from dotenv import load_dotenv
 
+from crawler.recommendation.nodes import PageAsNode, Node, url_to_domain
+
 load_dotenv()
-
-
-
-class PageAsNode(BaseModel):
-    id: int
-    url: str
-    outbound_urls: list[str]
-    depth: int
-
-    page_rank: int = 0
-
-
-class Node(BaseModel):
-    out: list[str]
-    url: str
-    score: float
-    best_depth: int
-
-    individual_pages: int = 1
-
-    @classmethod
-    def from_db(cls, pages: list[PageAsNode]) -> dict[str, 'Node']:
-        for p in pages:
-            domain = url_to_domain(p.url)
-            p.outbound_urls = [x for x in p.outbound_urls if x != p.url]
-            p.outbound_urls = [
-                x for x in p.outbound_urls if url_to_domain(x) != domain]
-
-        d = {p.url: Node(out=p.outbound_urls, url=p.url, score=(
-            (5 - p.depth) ** 2.5), best_depth=p.depth) for p in pages}
-
-        return d
-
-    @classmethod
-    def convert_to_domains(cls, nodes: dict[str, 'Node']):
-        answer = {}
-        for url, node in nodes.items():
-
-            domain = url_to_domain(url)
-
-            if domain not in answer:
-                answer[domain] = Node(out=[], url=domain,
-                                      score=0, best_depth=node.best_depth)
-
-            out = [url_to_domain(x) for x in node.out]
-            out = [x for x in out if x != domain]
-
-            answer[domain].out += out
-            answer[domain].score += node.score
-            answer[domain].individual_pages += 1
-            answer[domain].best_depth = min(
-                answer[domain].best_depth, node.best_depth)
-        return answer
-
-
-def url_to_domain(url: str) -> str:
-    if url.startswith("https://") or url.startswith("http://"):
-        index = 2
-    else:
-        index = 0
-
-    answer = url.split('/')[index]
-
-    if answer.startswith('www.'):
-        answer = answer[4:]
-
-    return answer
 
 
 def top_domains(trustrank_values: dict) -> dict[str, float]:
@@ -169,7 +102,7 @@ def combine_domain_and_page_scores(domains: dict[str, float], pages: dict[str, f
         domain = url_to_domain(url)
         domain_score = domains[domain]
 
-        pages_combined[url] = ((domain_score ** 0.4) * (page_score + 1)) + 1
+        pages_combined[url] = ((domain_score ** 0.6) * (page_score + 1)) + 1
 
     return pages_combined
 
@@ -178,10 +111,9 @@ def main():
     cursor = db.cursor(row_factory=kwargs_row(PageAsNode))
     pages = cursor.execute(
         "SELECT id, url,outbound_urls,depth  FROM \"Page\"").fetchall()
-    json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
-    pages = json.load(open("/tmp/file.json", "r"))
-    pages = [PageAsNode(**p) for p in pages]
-    print(pages, file=open("pages.txt", "w+"))
+    # json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
+    # pages = json.load(open("/tmp/file.json", "r"))
+    # pages = [PageAsNode(**p) for p in pages]
     print("Got pages", len(pages))
 
     nodes = Node.from_db(pages)
@@ -193,11 +125,9 @@ def main():
         topdomains[domain] = topdomains[domain] / \
             (domains[domain].individual_pages)
 
-    topurls = trustrank(nodes, max_iterations=10)
+    topurls = trustrank(nodes, max_iterations=15)
     page_score = combine_domain_and_page_scores(topdomains, topurls)
 
-    print(topdomains, file=open("topdomains.txt", "w+"))
-    print(topurls, file=open("topurls.txt", "w+"))
     insert_pagerank(db, pages, page_score)
 
 

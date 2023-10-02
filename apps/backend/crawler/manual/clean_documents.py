@@ -28,22 +28,12 @@ async def main(db: PostgresClient):
         processed += len(pages)
 
         for p in pages:
-            # domains.add(url_to_domain(p.url))
             for suppressed in SUPPRESSED_DOMAINS:
                 if suppressed in p.url or (p.parent_url and suppressed in p.parent_url):
                     to_delete.append(p.id)
             if not is_english(p.title + " " + p.content):
                 print("NOT ENGLISH", p.url)
                 to_delete.append(p.id)
-
-    # for d in domains:
-    #     try:
-    #         # if requests.get("http://" + d + "/rss").status_code != 200:
-    #         #     if requests.get("http://" + d + "/feed").status_code != 200:
-    #         if find_feed_urls("https://" + d) == []:
-    #             print("NO RSS", d)
-    #     except requests.exceptions.ConnectionError:
-    #         print("NO RSS", d)
 
     if len(to_delete) > 0:
         print("Deleting {} pages".format(len(to_delete)))

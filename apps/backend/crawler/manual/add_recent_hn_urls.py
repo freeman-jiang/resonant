@@ -1,6 +1,5 @@
 import asyncio
 
-import requests
 from prisma import Prisma
 
 from crawler.config import Config
@@ -17,15 +16,12 @@ rssfeed = 'https://hnrss.org/newest?points=80&comments=30&count=100'
 
 
 async def get_rss_feed():
-    config = Config()
+    pc = PostgresClient()
+    pc.connect()
 
-    db = Prisma()
-    await db.connect()
-    pc = PostgresClient(config, db)
+    links = find_feed_urls_cached(Link.from_url_raw(rssfeed))
 
-    links = find_feed_urls_cached(Link.from_url(rssfeed))
-
-    await pc.add_tasks(links)
+    pc.add_tasks(links)
 
 
 if __name__ == "__main__":

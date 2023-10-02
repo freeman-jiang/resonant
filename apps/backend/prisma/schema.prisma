@@ -52,6 +52,7 @@ model Embeddings {
   page  Page                  @relation(fields: [url], references: [url], onDelete: Cascade)
 
   @@index([vec])
+  @@index([url])
   @@schema("vecs")
 }
 
@@ -91,17 +92,16 @@ enum TaskStatus {
 
 model Message {
   id        Int    @id @default(autoincrement())
-  sender_id String @db.Uuid
-  sender    User   @relation("SentMessages", fields: [sender_id], references: [id], onDelete: Restrict)
 
+  sender_id String @db.Uuid
   receiver_id String  @db.Uuid
-  receiver    User    @relation("ReceivedMessages", fields: [receiver_id], references: [id], onDelete: Restrict)
   page_id     Int?
   url         String?
   message     String?
-
   sent_on DateTime @default(now()) @db.Timestamptz
-  userId  String?  @db.Uuid
+
+  sender    User   @relation("SentMessages", fields: [sender_id], references: [id], onDelete: Restrict)
+  receiver    User    @relation("ReceivedMessages", fields: [receiver_id], references: [id], onDelete: Restrict)
 
   @@schema("public")
 }

@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from prisma import Prisma
-from prisma.models import Page, User
+from prisma.models import Page, User, Message
 from pydantic import BaseModel, validator
 
 load_dotenv()
@@ -227,7 +227,7 @@ async def random_feed() -> list[PageResponse]:
     random_pages = db.query("""
     WITH random_ids AS (SELECT id, MD5(CONCAT(%s::text, content_hash)) FROM "Page" ORDER BY md5)
     SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1 LIMIT %s
-    """, [seed, 100])
+    """, [seed, 60])
 
     random_pages = [Page(**p) for p in random_pages]
     return [PageResponse.from_prisma_page(p) for p in random_pages]
@@ -236,8 +236,16 @@ async def random_feed() -> list[PageResponse]:
 class SendMessageRequest(BaseModel):
     sender_id: UUID
     page_id: int
+    url: str
     message: str
     receiver_id: UUID
+
+    def __init__(self, **data):
+        assert 'url' in data or 'page_id' in data, "URL or page_id must be provided"
+        super().__init__(**data)
+
+    def to_prisma_message(self):
+        return Message(sender_id = self.sender_id, page_id = self.page_id, message = self.message, receiver_id = self.receiver_id)
 
     # @validator("message")
     # def check_message(cls, v: str):

@@ -4,9 +4,9 @@ import plotly.express as px
 from matplotlib import pyplot as plt
 from sklearn.cluster import KMeans
 
-from crawler.recommendation.pagerank import PageAsNode, Node
+from crawler.recommendation.nodes import PageAsNode, Node
 import numpy as np
-from sklearn.decomposition import PCA, TruncatedSVD
+from sklearn.decomposition import TruncatedSVD
 
 
 def to_bitmaps(pages: list[Node]):
@@ -30,7 +30,9 @@ def to_bitmaps(pages: list[Node]):
             #     links_out[out] = np.zeros(total_pages_len * 2 + 1)
             # links_out[out][url_to_index[p.url] + total_pages_len] += 1
 
-            links_out[p.url][url_to_index[out]] += 1
+            links_out[p.url][url_to_index[out]] = 1
+        links_out[p.url][url_to_index[p.url]] = 1
+        links_out[p.url] = links_out[p.url] / np.sum(links_out[p.url])
 
     return links_out
 
@@ -45,7 +47,7 @@ def get_domain_graph(pages: list[Node]):
     bitmaps = list(domain_bitmaps.values())
 
     print("PCA transforming...")
-    model = TruncatedSVD(n_components=2)
+    model = TruncatedSVD(n_components=4)
     reduced_bitmaps_list = model.fit_transform(bitmaps)
 
     reduced_bitmaps = {k: v for k, v in zip(urls, reduced_bitmaps_list)}
@@ -53,10 +55,10 @@ def get_domain_graph(pages: list[Node]):
     return reduced_bitmaps
 
 
-def plot_clusters_with_plotly(urls, reduced_bitmaps, n_clusters=150):
+def plot_clusters_with_plotly(urls, reduced_bitmaps, n_clusters=60):
     # Cluster the data using K-Means
     x = reduced_bitmaps
-    reduced_bitmaps = np.sign(x) * np.abs(x) ** (1 / 31)
+    reduced_bitmaps = np.sign(x) * np.abs(x) ** (1 / 3)
     kmeans = KMeans(n_clusters=n_clusters, random_state=0)
     clusters = kmeans.fit_predict(reduced_bitmaps)
     # Create a DataFrame for Plotly

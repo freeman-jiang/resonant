@@ -16,6 +16,15 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
                       'vimeo.com', 'youtube.com', 'pittsburghlive.com', 'linkedin.com', 'soundcloud.com',
                       'albawa.com', 'theage.com', 'prnewswire.com', 'archive.org', 'stackexchange.com', 'doi.org',
                       'jamanetwork',
+                      'rust-lang.org',
+                      'https://www.cerealously.net',
+                      'tv-vcr.com',
+                      'w3.org/',
+                      'bbc.co.uk/n',
+                      'docs.djangoproject.com',
+                      'ghost.org',
+                      'codepen.io/',
+                      'freecodecamp.org/',
                       'inverse.com',
                       'radiofreemormon.org',
                       'https://www.rapamycin.news',
@@ -140,6 +149,7 @@ def get_domain(url: str):
 
 
 class Link(BaseModel):
+    raw: bool = False
     text: str
     url: str
     parent_url: str | None
@@ -153,12 +163,18 @@ class Link(BaseModel):
         url = clean_url(url)
         return Link(text="", url=url, parent_url=None, depth=0)
 
+    @classmethod
+    def from_url_raw(cls, url: str):
+        return Link(text="", url=url, parent_url=None, depth=0, raw = True)
+
     @validator('url')
-    def validate_url(cls, v: str):
+    def validate_url(cls, v: str, values):
         if not is_valid_url(v):
             raise ValueError("Invalid URL: " + v)
-
-        v = clean_url(v)
+        if values['raw']:
+            return v
+        else:
+            v = clean_url(v)
 
         return v
 

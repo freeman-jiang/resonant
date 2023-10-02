@@ -16,10 +16,20 @@ from .parse import CrawlResult
 
 class PostgresClient:
     conn: DB
-    _cursor: Cursor
+    _inner_cursor: Cursor
     cfg: Optional[Config]
 
     T = TypeVar("T")
+
+    @property
+    def _cursor(self) -> Cursor:
+        if self._inner_cursor is None:
+            raise RuntimeError("You must call .connect() first!")
+        return self._inner_cursor
+
+    @_cursor.setter
+    def _cursor(self, value: Cursor):
+        self._inner_cursor = value
 
     def __init__(self, cfg: Optional[Config] = None):
         if cfg is None:
