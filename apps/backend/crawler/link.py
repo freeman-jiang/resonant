@@ -1,5 +1,5 @@
 import re
-from typing import Optional, Self
+from typing import Optional
 from urllib.parse import urlparse, urlunparse
 
 import validators
@@ -158,7 +158,7 @@ class Link(BaseModel):
     parent_url: str | None
     depth: int = 0
 
-    def __lt__(self, other: Self):
+    def __lt__(self, other: 'Link'):
         return self.url.__lt__(other.url)
 
     @classmethod
@@ -225,7 +225,7 @@ class Link(BaseModel):
             url = self.url + '/' + url
             return Link(text=text, url=url, parent_url=self.url, depth=self.depth + 1)
 
-    def create_child_link(self, text: Optional[str], url: Optional[str]) -> Optional[Self]:
+    def create_child_link(self, text: Optional[str], url: Optional[str]) -> Optional['Link']:
         if url is None:
             return None
         if text is None:
