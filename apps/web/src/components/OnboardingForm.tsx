@@ -1,6 +1,6 @@
 "use client";
 import { amplitude } from "@/analytics/amplitude";
-import { createUser } from "@/api";
+import { CreateUserRequest, createUser } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,11 +36,12 @@ export const OnboardingForm = ({ user }: Props) => {
   const router = useRouter();
 
   const onSubmit: SubmitHandler<Inputs> = async ({ firstName, lastName }) => {
-    const body = {
+    const body: CreateUserRequest = {
       id: user.id,
       email: user.email,
       firstName,
       lastName,
+      profileUrl: user.user_metadata?.avatar_url,
     };
     await createUser(body);
     amplitude.track("Onboarded", body);

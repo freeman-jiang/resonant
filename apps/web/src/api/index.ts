@@ -24,11 +24,12 @@ export const findPage = async (url: string) => {
   return data as Link;
 };
 
-interface CreateUserRequest {
+export interface CreateUserRequest {
   email: string;
   id: string;
   firstName: string;
   lastName: string;
+  profileUrl?: string;
 }
 export const createUser = async (user: CreateUserRequest) => {
   const { data } = await axios.post(

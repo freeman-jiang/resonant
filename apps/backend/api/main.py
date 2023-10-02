@@ -362,6 +362,7 @@ class CreateUserRequest(BaseModel):
     email: str
     firstName: str
     lastName: str
+    profileUrl: Optional[str]
 
 
 @app.post('/create_user', status_code=201)
@@ -376,7 +377,8 @@ async def create_user(body: CreateUserRequest):
         'id': body.id,
         'email': body.email,
         'first_name': body.firstName,
-        'last_name': body.lastName
+        'last_name': body.lastName,
+        'profile_picture_url': body.profileUrl
     })
     return res
 

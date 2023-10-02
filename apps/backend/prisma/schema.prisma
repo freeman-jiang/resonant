@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL_PG")
+  url      = env("DATABASE_URL_SUPABASE")
   schemas  = ["public", "vecs"]
 }
 
@@ -57,13 +57,14 @@ model Embeddings {
 }
 
 model User {
-  id                String      @id @db.Uuid
-  email             String      @unique
-  first_name        String
-  last_name         String
-  liked_pages       LikedPage[]
-  sent_messages     Message[]   @relation("SentMessages")
-  received_messages Message[]   @relation("ReceivedMessages")
+  id                  String      @id @db.Uuid
+  email               String      @unique
+  first_name          String
+  last_name           String
+  profile_picture_url String?
+  liked_pages         LikedPage[]
+  sent_messages       Message[]   @relation("SentMessages")
+  received_messages   Message[]   @relation("ReceivedMessages")
 
   @@schema("public")
 }
@@ -93,17 +94,17 @@ enum TaskStatus {
 }
 
 model Message {
-  id        Int    @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  sender_id String @db.Uuid
-  receiver_id String  @db.Uuid
+  sender_id   String   @db.Uuid
+  receiver_id String   @db.Uuid
   page_id     Int?
   url         String?
   message     String?
-  sent_on DateTime @default(now()) @db.Timestamptz
+  sent_on     DateTime @default(now()) @db.Timestamptz
 
-  sender    User   @relation("SentMessages", fields: [sender_id], references: [id], onDelete: Restrict)
-  receiver    User    @relation("ReceivedMessages", fields: [receiver_id], references: [id], onDelete: Restrict)
+  sender   User @relation("SentMessages", fields: [sender_id], references: [id], onDelete: Restrict)
+  receiver User @relation("ReceivedMessages", fields: [receiver_id], references: [id], onDelete: Restrict)
 
   @@schema("public")
 }
