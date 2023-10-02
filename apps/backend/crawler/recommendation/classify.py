@@ -24,7 +24,7 @@ page_rank_scores = []  # List to store page_rank scores for each page
 
 # Fetch data from the database
 cur = conn.cursor(row_factory=dict_row)
-cur.execute('SELECT p.url, e.vec, p.page_rank as page_rank FROM vecs."Embeddings" e INNER JOIN "Page" p ON e.url = p.url WHERE e.index <= 5 AND p.created_at <= timestamp \'2023-09-26\' ORDER BY e.index asc LIMIT 1500000')
+cur.execute('SELECT p.url, e.vec, p.page_rank as page_rank FROM Embeddings e INNER JOIN "Page" p ON e.url = p.url WHERE e.index <= 5 AND p.created_at <= timestamp \'2023-09-26\' ORDER BY e.index asc LIMIT 1500000')
 rows = cur.fetchall()
 json.dump(rows, open("rows.json", "w+"))
 rows = json.load(open("rows.json", "r"))

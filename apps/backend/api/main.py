@@ -185,7 +185,7 @@ async def search(body: SearchQuery) -> list[PageResponse]:
         print("Searching for similar URLs to", url)
 
         contains_url = db.query(
-            'SELECT 1 FROM "Page" p INNER JOIN vecs."Embeddings" e ON p.url = e.url WHERE p.url = %s', [url])
+            'SELECT 1 FROM "Page" p INNER JOIN Embeddings e ON p.url = e.url WHERE p.url = %s', [url])
 
         if contains_url:
             print("Found existing URL!")

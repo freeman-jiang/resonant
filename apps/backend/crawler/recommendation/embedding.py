@@ -1,5 +1,6 @@
 import asyncio
 import os
+from multiprocessing import freeze_support
 from typing import Iterator, Optional, Callable
 
 import nltk
@@ -37,8 +38,15 @@ def overlapping_windows(s: str, stride: int = 100, size: int = 120) -> Iterator[
 class Embedder:
     model: SentenceTransformer
 
-    def __init__(self):
-        self.model = SentenceTransformer('BAAI/bge-base-en-v1.5')
+    def __init__(self, multiprocess = False):
+        self.model = SentenceTransformer('BAAI/bge-base-en-v1.5', device = 'mps')
+        print("Using device", self.model.device)
+
+        if multiprocess:
+            self.pool = self.model.start_multi_process_pool()
+        else:
+            self.pool = None
+
 
     def embed(self, text: str, stride: int = 360, size: int = 380) -> np.ndarray:
         """
@@ -53,7 +61,17 @@ class Embedder:
         if len(windows) > 3:
             windows = windows[0:3]
 
-        return self.model.encode(windows, normalize_embeddings=True)
+        return self.encode(windows)
+
+    def encode(self, windows):
+        if self.pool is not None:
+            result = self.model.encode_multi_process(windows, pool=self.pool)
+
+            # Normalize result ndarray
+            result = result / np.linalg.norm(result, axis=1, keepdims=True)
+        else:
+            result = self.model.encode(windows, normalize_embeddings=True)
+        return result
 
     def generate_vecs(self, title: str, content: str, url: str) -> list[tuple[str, int, list]]:
         """
@@ -76,7 +94,6 @@ class Embedder:
         return to_append
 
 
-model = Embedder()
 
 
 class NearestNeighboursQuery(BaseModel):
@@ -102,7 +119,7 @@ class NearestNeighboursQuery(BaseModel):
         """
         if self.vector is None:
             result = cursor.execute(
-                'SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %(url)s AND index <= 3 GROUP BY url', dict(url=self.url)).fetchall()
+                'SELECT avg(vec) as vec, url FROM Embeddings WHERE url = %(url)s AND index <= 3 GROUP BY url', dict(url=self.url)).fetchall()
             self.vector = np.array(result[0]['vec'])
 
     def to_sql_expr(self) -> tuple[str, dict]:
@@ -111,7 +128,7 @@ class NearestNeighboursQuery(BaseModel):
         else:
             raise RuntimeError(
                 "Unreachable--should have called NearestNeighboursQuery.get_vector()")
-            return 'SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %(url)s AND index <= 3 GROUP BY url', dict(url=self.url)
+            return 'SELECT avg(vec) as vec, url FROM Embeddings WHERE url = %(url)s AND index <= 3 GROUP BY url', dict(url=self.url)
 
 
 def _query_fts(query: str) -> list[PageResponse]:
@@ -217,7 +234,7 @@ def _query_similar_embeddings(query: NearestNeighboursQuery) -> list[PageRespons
     -- Get average of the first X vectors for the article we WANT
 WITH want AS ({want_cte}),
  matching_vecs AS (
-        SELECT e.vec <=> w.vec as dist, e.url as url from vecs."Embeddings" as e, want as w 
+        SELECT e.vec <=> w.vec as dist, e.url as url from Embeddings as e, want as w 
             WHERE e.url != w.url AND e.index <= 4 
             ORDER BY dist LIMIT 120
  ),
@@ -257,9 +274,12 @@ async def store_embeddings_for_pages(pages: list[Page]):
 
 
 async def generate_embeddings(db: PostgresClient):
+    global model
+
+    model = Embedder(multiprocess=True)
     while True:
         pages = db.cursor(Page).execute(
-            'SELECT * FROM "Page" WHERE "Page".url NOT IN (SELECT url FROM Embeddings GROUP BY "url") ORDER BY "Page".created_at ASC LIMIT 50').fetchall()
+            'SELECT * FROM "Page" WHERE "Page".url NOT IN (SELECT url FROM Embeddings GROUP BY "url") ORDER BY "Page".depth ASC LIMIT 50').fetchall()
 
         if len(pages) == 0:
             print("ERR: No pages to process")
@@ -267,8 +287,11 @@ async def generate_embeddings(db: PostgresClient):
 
         await store_embeddings_for_pages(pages)
 
+model = Embedder()
+
 
 if __name__ == "__main__":
+    freeze_support()
     client = PostgresClient()
     client.connect()
     asyncio.run(generate_embeddings(client))
