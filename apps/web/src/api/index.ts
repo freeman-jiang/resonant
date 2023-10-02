@@ -24,11 +24,12 @@ export const findPage = async (url: string) => {
   return data as Link;
 };
 
-interface CreateUserRequest {
+export interface CreateUserRequest {
   email: string;
   id: string;
   firstName: string;
   lastName: string;
+  profileUrl?: string;
 }
 export const createUser = async (user: CreateUserRequest) => {
   const { data } = await axios.post(
@@ -38,7 +39,10 @@ export const createUser = async (user: CreateUserRequest) => {
   return data;
 };
 
-export const getUser = async (uuid: string) => {
+// TODO: fill in object with user type
+type GetUserResponse = null | {};
+
+export const getUser = async (uuid: string): Promise<GetUserResponse> => {
   const { data } = await axios.get(`${NEXT_PUBLIC_BASE_URL}/user/${uuid}`);
-  return data;
+  return data; // replace with User;
 };

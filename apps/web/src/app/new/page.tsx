@@ -1,7 +1,9 @@
+import { getUser } from "@/api";
 import { OnboardingForm } from "@/components/OnboardingForm";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +12,14 @@ export default async function New() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (user) {
+    const u = await getUser(user.id);
+    if (u) {
+      redirect("/");
+    }
+  } else {
+    redirect("/login");
+  }
 
   return (
     <div className="mt-10 flex w-full justify-center">
