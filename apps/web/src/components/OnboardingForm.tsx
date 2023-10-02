@@ -21,7 +21,10 @@ interface Props {
 // Split from the last space and assume the last word is the last name
 const extractNames = (fullName: string | undefined) => {
   if (!fullName) return { firstName: "", lastName: "" };
+
   const names = fullName.split(" ");
+  if (names.length === 1) return { firstName: names[0], lastName: "" };
+
   const lastName = names.pop();
   const firstName = names.join(" ");
   return { firstName, lastName };
@@ -50,7 +53,7 @@ export const OnboardingForm = ({ user }: Props) => {
         <Label htmlFor="firstName">First Name</Label>
         <Input
           id="firstName"
-          placeholder={defaultValues.firstName || "Marcus"}
+          placeholder={defaultValues.firstName || ""}
           type="text"
           autoCapitalize="none"
           autoComplete="given-name"
@@ -63,7 +66,7 @@ export const OnboardingForm = ({ user }: Props) => {
         <Label htmlFor="lastName">Last Name</Label>
         <Input
           id="lastName"
-          placeholder={defaultValues.lastName || "Aurelius"}
+          placeholder={defaultValues.lastName || ""}
           type="text"
           autoCapitalize="none"
           autoComplete="family-name"
