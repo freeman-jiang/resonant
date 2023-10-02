@@ -38,7 +38,10 @@ export const createUser = async (user: CreateUserRequest) => {
   return data;
 };
 
-export const getUser = async (uuid: string) => {
+// TODO: fill in object with user type
+type GetUserResponse = null | {};
+
+export const getUser = async (uuid: string): Promise<GetUserResponse> => {
   const { data } = await axios.get(`${NEXT_PUBLIC_BASE_URL}/user/${uuid}`);
-  return data;
+  return data; // replace with User;
 };

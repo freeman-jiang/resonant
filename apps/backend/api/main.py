@@ -294,9 +294,11 @@ class MessageResponse(BaseModel):
 
     message: str
 
+
 class UserFeedResponse(BaseModel):
     random_feed: list[PageResponse]
     messages: list[MessageResponse]
+
 
 @app.get('/feed')
 async def get_user_feed(userid: UUID) -> UserFeedResponse:
@@ -333,9 +335,9 @@ async def get_user_feed(userid: UUID) -> UserFeedResponse:
             message=r.message
         ))
 
-    random_articles = await random_feed(limit = 30)
+    random_articles = await random_feed(limit=30)
 
-    return UserFeedResponse(random_feed = random_articles, messages = result)
+    return UserFeedResponse(random_feed=random_articles, messages=result)
 
 
 @pytest.mark.asyncio
@@ -343,6 +345,8 @@ async def test_get_user_feed():
     await startup()
     result = await get_user_feed('083e93f0-2fd9-4454-ad46-3444378f4b51')
     print(result)
+
+
 class UserQueryResponse(BaseModel):
     user_id: UUID
     fname: str
@@ -387,7 +391,7 @@ async def get_user(user_uuid: str):
     user = await client.user.find_first(where={'id': user_uuid})
 
     if user is None:
-        raise HTTPException(404, "User not found")
+        return None
     return user
 
 
