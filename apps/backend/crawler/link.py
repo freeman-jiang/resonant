@@ -168,7 +168,7 @@ class Link(BaseModel):
 
     @classmethod
     def from_url_raw(cls, url: str):
-        return Link(text="", url=url, parent_url=None, depth=0, raw = True)
+        return Link(text="", url=url, parent_url=None, depth=0, raw=True)
 
     @validator('url')
     def validate_url(cls, v: str, values):

@@ -8,6 +8,7 @@ load_dotenv()
 
 class DB:
     db: Connection
+
     def __init__(self):
         self.db = None
 
@@ -31,5 +32,6 @@ class DB:
 
     def close(self):
         self.db.close()
+
 
 db = DB()

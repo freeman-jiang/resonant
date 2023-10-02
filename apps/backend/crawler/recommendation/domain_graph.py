@@ -70,7 +70,8 @@ def plot_clusters_with_plotly(urls, reduced_bitmaps, n_clusters=60):
     df1.to_csv("clusters.csv")
 
     # Create a scatter plot using Plotly
-    fig = px.scatter(data, x='Component 1', y='Component 2', color='Cluster', text='URL', title='Clustered Vectors')
+    fig = px.scatter(data, x='Component 1', y='Component 2',
+                     color='Cluster', text='URL', title='Clustered Vectors')
     fig.update_traces(textposition='top center')
     fig.update_layout(showlegend=False)
     fig.write_html('clustered_vectors.html')
@@ -88,4 +89,5 @@ if __name__ == "__main__":
     pickle.dump(reduced_bitmaps, open("reduced_bitmaps.pkl", "wb+"))
     reduced_bitmaps = pickle.load(open("reduced_bitmaps.pkl", "rb+"))
 
-    plot_clusters_with_plotly(list(reduced_bitmaps.keys()), np.array(list(reduced_bitmaps.values())))
+    plot_clusters_with_plotly(
+        list(reduced_bitmaps.keys()), np.array(list(reduced_bitmaps.values())))

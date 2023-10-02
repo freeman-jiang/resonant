@@ -85,6 +85,7 @@ def should_keep(crawl: CrawlResult) -> bool:
 #             pass
 #
 
+
 def test_2():
     url = 'https://amirbolous.com/posts/transformers/'
     cr = CrawlResult.testing_crawl_link(url)

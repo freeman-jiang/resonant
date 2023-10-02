@@ -77,7 +77,7 @@ class LinkQuery(BaseModel):
 @app.post("/page")
 async def link(body: LinkQuery) -> PageResponse:
     url = body.url
-    page = db.get_page(url = url)
+    page = db.get_page(url=url)
     return PageResponse.from_prisma_page(page)
 
 
@@ -115,7 +115,7 @@ async def recommend(userid: int) -> list[PageResponse]:
 
 @app.get("/like/{userid}/{pageid}")
 async def like(userid: int, pageid: int) -> list[PageResponse]:
-    page = db.get_page(id = pageid)
+    page = db.get_page(id=pageid)
 
     if page is None:
         raise HTTPException(400, "Page does not exist")
@@ -184,7 +184,8 @@ async def search(body: SearchQuery) -> list[PageResponse]:
         url = body.url
         print("Searching for similar URLs to", url)
 
-        contains_url = db.query('SELECT 1 FROM "Page" p INNER JOIN vecs."Embeddings" e ON p.url = e.url WHERE p.url = %s', [url])
+        contains_url = db.query(
+            'SELECT 1 FROM "Page" p INNER JOIN vecs."Embeddings" e ON p.url = e.url WHERE p.url = %s', [url])
 
         if contains_url:
             print("Found existing URL!")
@@ -207,6 +208,7 @@ async def search(body: SearchQuery) -> list[PageResponse]:
 @app.get("/")
 def health_check():
     return {"status": "ok"}
+
 
 @app.get("/random-feed")
 async def random_feed() -> list[PageResponse]:
@@ -244,7 +246,7 @@ class SendMessageRequest(BaseModel):
         assert 'url' in data or 'page_id' in data, "URL or page_id must be provided"
         super().__init__(**data)
 
-    @validator("sender_id", "receiver_id", pre = False)
+    @validator("sender_id", "receiver_id", pre=False)
     def validate_uuids(cls, value):
         """
         Converts the UUIDs to a string when we call the .dict() method
@@ -254,6 +256,7 @@ class SendMessageRequest(BaseModel):
         if value:
             return str(value)
         return value
+
 
 @app.post('/message')
 async def send_message(body: SendMessageRequest) -> None:
@@ -270,11 +273,11 @@ async def send_message(body: SendMessageRequest) -> None:
 async def test_send_message():
     await startup()
     await send_message(SendMessageRequest(
-    sender_id = '7bc71a92-7c3f-4f5d-b77f-c937417f32db',
-    page_id = 1,
-    url = None,
-    message = 'fdas',
-    receiver_id = 'e58a1c61-67c7-4477-82b9-6e5ddd9f33ac'
+        sender_id='7bc71a92-7c3f-4f5d-b77f-c937417f32db',
+        page_id=1,
+        url=None,
+        message='fdas',
+        receiver_id='e58a1c61-67c7-4477-82b9-6e5ddd9f33ac'
     ))
 
 
@@ -295,7 +298,7 @@ class UserQueryResponse(BaseModel):
 
     @classmethod
     def from_prisma(cls, pmodel: User):
-        return UserQueryResponse(user_id = pmodel.id, fname = pmodel.first_name, lname = pmodel.last_name)
+        return UserQueryResponse(user_id=pmodel.id, fname=pmodel.first_name, lname=pmodel.last_name)
 
 
 @app.get('/users')
@@ -308,9 +311,10 @@ async def get_search_users(query: str) -> list[UserQueryResponse]:
 
     sql_query = """WITH users_full_name AS (SELECT CONCAT(first_name, ' ', last_name) AS full_name, "User".* FROM "User")
         select * from users_full_name uf where uf.full_name ILIKE $1;"""
-    users = await client.query_raw(sql_query, f'%{query}%', model = User)
+    users = await client.query_raw(sql_query, f'%{query}%', model=User)
 
     return [UserQueryResponse.from_prisma(u) for u in users]
+
 
 @pytest.mark.asyncio
 async def test_random_feed():

@@ -33,7 +33,7 @@ class PostgresClient:
 
     def __init__(self, cfg: Optional[Config] = None):
         if cfg is None:
-            cfg = Config(empty = True)
+            cfg = Config(empty=True)
         self.cfg = cfg
 
     def connect(self):
@@ -46,7 +46,7 @@ class PostgresClient:
         if row_class:
             cursor = self.conn.cursor(row_factory=class_row(row_class))
         else:
-            cursor = self.conn.cursor(row_factory = dict_row)
+            cursor = self.conn.cursor(row_factory=dict_row)
         return cursor
 
     def query(self, query: sql.SQL | str, *args):
@@ -100,7 +100,8 @@ class PostgresClient:
     async def get_task(self) -> CrawlTask | None:
         query = sql.SQL("UPDATE {} SET status = %s WHERE id = (SELECT id FROM {} WHERE status::text = %s ORDER BY depth ASC, boost DESC, id ASC FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *;").format(
             sql.Identifier("CrawlTask"), sql.Identifier("CrawlTask"))
-        self._cursor.execute(query, (TaskStatus.PROCESSING, TaskStatus.PENDING))
+        self._cursor.execute(
+            query, (TaskStatus.PROCESSING, TaskStatus.PENDING))
         self.conn.commit()
 
         task = self._cursor.fetchone()
@@ -139,7 +140,8 @@ class PostgresClient:
             where_field = 'url'
         else:
             raise Exception("Must specify id or url")
-        query = sql.SQL('SELECT * FROM "Page" WHERE {} = %s LIMIT 1;').format(sql.Identifier(where_field))
+        query = sql.SQL(
+            'SELECT * FROM "Page" WHERE {} = %s LIMIT 1;').format(sql.Identifier(where_field))
         self._cursor.execute(query, (kwargs[where_field],))
         page = self._cursor.fetchone()
         if page:

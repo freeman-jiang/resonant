@@ -101,15 +101,16 @@ class NearestNeighboursQuery(BaseModel):
         It's insanely slow if we do it in the same query using a CTE because postgres optimizer
         """
         if self.vector is None:
-            result = cursor.execute('SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %(url)s AND index <= 3 GROUP BY url', dict(url=self.url)).fetchall()
+            result = cursor.execute(
+                'SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %(url)s AND index <= 3 GROUP BY url', dict(url=self.url)).fetchall()
             self.vector = np.array(result[0]['vec'])
-
 
     def to_sql_expr(self) -> tuple[str, dict]:
         if self.vector is not None:
             return f'SELECT CAST(%(vec)s as vector(768)) as vec, %(url)s as url', dict(vec=str(self.vector.tolist()), url=self.url or '')
         else:
-            raise RuntimeError("Unreachable--should have called NearestNeighboursQuery.get_vector()")
+            raise RuntimeError(
+                "Unreachable--should have called NearestNeighboursQuery.get_vector()")
             return 'SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %(url)s AND index <= 3 GROUP BY url', dict(url=self.url)
 
 

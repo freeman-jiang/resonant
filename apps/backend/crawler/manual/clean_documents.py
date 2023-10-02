@@ -16,9 +16,9 @@ async def main(db: PostgresClient):
 
     to_delete = []
 
-
     while True:
-        pages = db.cursor(Page).execute("SELECT * FROM \"Page\" WHERE created_at >= '2023-09-29'::date ORDER BY \"Page\".created_at DESC LIMIT 500 OFFSET %s", (processed,)).fetchall()
+        pages = db.cursor(Page).execute(
+            "SELECT * FROM \"Page\" WHERE created_at >= '2023-09-29'::date ORDER BY \"Page\".created_at DESC LIMIT 500 OFFSET %s", (processed,)).fetchall()
 
         if len(pages) == 0:
             break
@@ -35,7 +35,8 @@ async def main(db: PostgresClient):
 
     if len(to_delete) > 0:
         print("Deleting {} pages".format(len(to_delete)))
-        db.query("DELETE FROM \"Page\" WHERE \"Page\".id = ANY(%s) RETURNING 1", (to_delete,))
+        db.query(
+            "DELETE FROM \"Page\" WHERE \"Page\".id = ANY(%s) RETURNING 1", (to_delete,))
 
 if __name__ == '__main__':
     import asyncio
