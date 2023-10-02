@@ -1,7 +1,8 @@
 import { findPage } from "@/api";
 import { RelatedFeed } from "@/components/RelatedFeed";
+import { Button } from "@/components/ui/button";
 import { extractDomain, formatExercept } from "@/lib/utils";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Heart } from "lucide-react";
 import NextLink from "next/link";
 
 interface RouteParams {
@@ -33,6 +34,12 @@ export default async function Page(params: RouteParams) {
             </p>
           </div>
         </NextLink>
+
+        <div className="mt-4 flex">
+          <Button variant="default" size="sm">
+            <Heart className="mr-2 h-4 w-4" /> Like
+          </Button>
+        </div>
         <h2 className="mt-5 text-2xl font-semibold text-slate-900">Related</h2>
 
         {/* <SearchBoundary query={url}> */}
