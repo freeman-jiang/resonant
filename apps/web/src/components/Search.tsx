@@ -2,9 +2,8 @@
 import { amplitude } from "@/analytics/amplitude";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NEXT_PUBLIC_AMPLITUDE_API_KEY } from "@/config";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface Props {
   onSubmit?: (query: string) => void;
@@ -13,20 +12,6 @@ interface Props {
 
 // TODO: Replace with react hook form
 export function Search({ onSubmit, initialQuery }: Props) {
-  useEffect(() => {
-    if (!NEXT_PUBLIC_AMPLITUDE_API_KEY) {
-      console.log("NEXT_PUBLIC_AMPLITUDE_API_KEY is not set");
-      return;
-    }
-    amplitude.init(NEXT_PUBLIC_AMPLITUDE_API_KEY || "", {
-      defaultTracking: {
-        formInteractions: false,
-        pageViews: true,
-        sessions: true,
-      },
-    });
-  }, []);
-
   const [search, setSearch] = useState(initialQuery || "");
   const router = useRouter();
 
@@ -40,6 +25,7 @@ export function Search({ onSubmit, initialQuery }: Props) {
     if (onSubmit) {
       onSubmit(search);
     } else {
+      amplitude.track("Search", { query: search });
       router.push(`/search?q=${search}`);
     }
 

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 
+import { amplitude } from "@/analytics/amplitude";
 import { cn } from "@/lib/utils";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Icons } from "../icons";
@@ -23,6 +24,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         emailRedirectTo: `${window.location.origin}`,
       },
     });
+    amplitude.track("Sign In", { email });
   };
 
   const handleSignInWithGoogle = async () => {
@@ -36,6 +38,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         redirectTo: `${window.location.origin}`,
       },
     });
+    amplitude.track("Sign In", { email: "google" });
   };
 
   async function onSubmit(event: React.SyntheticEvent) {
