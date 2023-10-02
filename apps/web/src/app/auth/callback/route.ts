@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
     const user = await getUser(supabaseUser.id);
     if (!user) {
-      return NextResponse.redirect(requestUrl.origin);
+      return NextResponse.redirect(`${requestUrl.origin}/new`);
     }
   }
   return NextResponse.redirect(requestUrl.origin);
