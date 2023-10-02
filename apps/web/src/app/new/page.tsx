@@ -12,9 +12,13 @@ export default async function New() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const u = await getUser(user.id);
-  if (u) {
-    redirect("/");
+  if (user) {
+    const u = await getUser(user.id);
+    if (u) {
+      redirect("/");
+    }
+  } else {
+    redirect("/login");
   }
 
   return (

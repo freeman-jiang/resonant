@@ -20,10 +20,12 @@ export default async function RootLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  // TODO: Maybe call supabase directly instead
-  const u = await getUser(user.id);
-  if (!u) {
-    redirect("/new");
+  if (user) {
+    // TODO: Maybe call supabase directly instead
+    const u = await getUser(user.id);
+    if (!u) {
+      redirect("/new");
+    }
   }
 
   return (
