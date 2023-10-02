@@ -235,8 +235,8 @@ async def random_feed() -> list[PageResponse]:
 
 class SendMessageRequest(BaseModel):
     sender_id: UUID
-    page_id: int
-    url: str
+    page_id: Optional[int]
+    url: Optional[str]
     message: str
     receiver_id: UUID
 
@@ -244,23 +244,39 @@ class SendMessageRequest(BaseModel):
         assert 'url' in data or 'page_id' in data, "URL or page_id must be provided"
         super().__init__(**data)
 
-    def to_prisma_message(self):
-        return Message(sender_id = self.sender_id, page_id = self.page_id, message = self.message, receiver_id = self.receiver_id)
-
-    # @validator("message")
-    # def check_message(cls, v: str):
-    #     if not v:
-    #         raise ValueError("Message must not be empty string")
-    #     return v
+    @validator("sender_id", "receiver_id", pre = False)
+    def validate_uuids(cls, value):
+        """
+        Converts the UUIDs to a string when we call the .dict() method
+        :param value:
+        :return:
+        """
+        if value:
+            return str(value)
+        return value
 
 @app.post('/message')
-def send_message(body: SendMessageRequest) -> None:
+async def send_message(body: SendMessageRequest) -> None:
     """
     Send a message to another user
     :param body:
     :return:
     """
-    pass
+    message = body.dict()
+    await client.message.create(message)
+
+
+@pytest.mark.asyncio
+async def test_send_message():
+    await startup()
+    await send_message(SendMessageRequest(
+    sender_id = '7bc71a92-7c3f-4f5d-b77f-c937417f32db',
+    page_id = 1,
+    url = None,
+    message = 'fdas',
+    receiver_id = 'e58a1c61-67c7-4477-82b9-6e5ddd9f33ac'
+    ))
+
 
 @app.get('/feed')
 def get_user_feed(userid: UUID) -> list[PageResponse]:
@@ -277,17 +293,24 @@ class UserQueryResponse(BaseModel):
     fname: str
     lname: str
 
+    @classmethod
+    def from_prisma(cls, pmodel: User):
+        return UserQueryResponse(user_id = pmodel.id, fname = pmodel.first_name, lname = pmodel.last_name)
+
 
 @app.get('/users')
-def get_search_users(query: str) -> list[UserQueryResponse]:
+async def get_search_users(query: str) -> list[UserQueryResponse]:
     """
     Substring search users by their query
     :param query:
     :return:
     """
-    pass
 
+    sql_query = """WITH users_full_name AS (SELECT CONCAT(first_name, ' ', last_name) AS full_name, "User".* FROM "User")
+        select * from users_full_name uf where uf.full_name ILIKE $1;"""
+    users = await client.query_raw(sql_query, f'%{query}%', model = User)
 
+    return [UserQueryResponse.from_prisma(u) for u in users]
 
 @pytest.mark.asyncio
 async def test_random_feed():

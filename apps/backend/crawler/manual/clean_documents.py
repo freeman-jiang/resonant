@@ -18,10 +18,8 @@ async def main(db: PostgresClient):
 
 
     while True:
-        pages = db.cursor(Page).execute("SELECT * FROM \"Page\" ORDER BY \"Page\".created_at DESC LIMIT 500 OFFSET %s", (processed,)).fetchall()
+        pages = db.cursor(Page).execute("SELECT * FROM \"Page\" WHERE created_at >= '2023-09-29'::date ORDER BY \"Page\".created_at DESC LIMIT 500 OFFSET %s", (processed,)).fetchall()
 
-        if processed >= 500:
-            break
         if len(pages) == 0:
             break
         print(f"Processing {len(pages)} pages")

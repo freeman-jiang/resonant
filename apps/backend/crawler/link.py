@@ -17,6 +17,7 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
                       'albawa.com', 'theage.com', 'prnewswire.com', 'archive.org', 'stackexchange.com', 'doi.org',
                       'jamanetwork',
                       'rust-lang.org',
+                      'www.codevscolor.com',
                       'https://www.cerealously.net',
                       'tv-vcr.com',
                       'w3.org/',
@@ -58,6 +59,8 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
                       'webpronews.com',
                       'brill.com',
                       'https://github.com/',
+                      'http://github.com/',
+                      'ramii.org',
                       'americansongwriter.com',
 
                       'caiso.com',

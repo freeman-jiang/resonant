@@ -14,6 +14,12 @@ class DB:
     def connect(self):
         self.db = psycopg.connect(os.environ['DATABASE_URL_PG'])
 
+    def transaction(self, *args, **kwargs):
+        if self.db is None:
+            self.connect()
+
+        return self.db.transaction(*args, **kwargs)
+
     def cursor(self, *args, **kwargs):
         if self.db is None:
             self.connect()

@@ -5,7 +5,7 @@ from typing import Iterator, Optional, Callable
 import nltk
 import numpy as np
 import psycopg
-from psycopg import sql
+from psycopg import sql, Cursor
 
 from api.page_response import PageResponse
 from dotenv import load_dotenv
@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 
 from crawler.prismac import PostgresClient
-from ..dbaccess import db
+from ..dbaccess import db, DB
 
 load_dotenv()
 
@@ -95,10 +95,21 @@ class NearestNeighboursQuery(BaseModel):
 
         super().__init__(**data)
 
+    def get_vector(self, cursor: Cursor):
+        """
+        Get the vector for the given URL so we can search for it
+        It's insanely slow if we do it in the same query using a CTE because postgres optimizer
+        """
+        if self.vector is None:
+            result = cursor.execute('SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %(url)s AND index <= 3 GROUP BY url', dict(url=self.url)).fetchall()
+            self.vector = np.array(result[0]['vec'])
+
+
     def to_sql_expr(self) -> tuple[str, dict]:
         if self.vector is not None:
             return f'SELECT CAST(%(vec)s as vector(768)) as vec, %(url)s as url', dict(vec=str(self.vector.tolist()), url=self.url or '')
         else:
+            raise RuntimeError("Unreachable--should have called NearestNeighboursQuery.get_vector()")
             return 'SELECT avg(vec) as vec, url FROM vecs."Embeddings" WHERE url = %(url)s AND index <= 3 GROUP BY url', dict(url=self.url)
 
 
@@ -196,7 +207,9 @@ def _query_similar(query: NearestNeighboursQuery) -> list[PageResponse]:
 
 
 def _query_similar_embeddings(query: NearestNeighboursQuery) -> list[PageResponse]:
+
     cursor = db.cursor(row_factory=dict_row)
+    query.get_vector(cursor)
 
     want_cte, want_cte_dict = query.to_sql_expr()
     similar = cursor.execute(f"""
@@ -204,8 +217,8 @@ def _query_similar_embeddings(query: NearestNeighboursQuery) -> list[PageRespons
 WITH want AS ({want_cte}),
  matching_vecs AS (
         SELECT e.vec <=> w.vec as dist, e.url as url from vecs."Embeddings" as e, want as w 
-            WHERE e.url != w.url AND e.index <= 4 AND e.url NOT LIKE '%%.superstack-web.vercel.app' 
-            ORDER BY dist LIMIT 170
+            WHERE e.url != w.url AND e.index <= 4 
+            ORDER BY dist LIMIT 120
  ),
  domain_counts AS (SELECT COUNT(url) as num_matching_windows, AVG(dist) as dist, MIN(url) as url FROM matching_vecs GROUP BY url)
  select "Page".*,
