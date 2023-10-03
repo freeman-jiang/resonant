@@ -224,7 +224,7 @@ async def random_feed(limit: int = 60) -> list[PageResponse]:
     current_datetime = datetime.now()
 
     # Format it as "YYYY-MM-DD"
-    seed = current_datetime.strftime("%Y-%m-%d")
+    seed = current_datetime.strftime("%Y-%m-%d") + 'A'
 
     random_pages = db.query("""
     WITH random_ids AS (SELECT id, MD5(CONCAT(%s::text, content_hash)) FROM "Page" ORDER BY md5)
