@@ -30,7 +30,7 @@ origins = [
     "http://localhost:8080",
     "https://app-superstack.vercel.app"
     "https://resonant.vercel.app",
-    "https://www.resonant.live"
+    "https://www.resonant.live",
     "https://resonant.live"
 ]
 
