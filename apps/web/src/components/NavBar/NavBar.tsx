@@ -23,7 +23,7 @@ export async function NavBar({
     <div className="border-b">
       <div className="flex h-16 items-center justify-between px-4">
         <Link href="/" className="text-xl font-bold">
-          Superstack
+          Resonant
         </Link>
         <UserNav user={user} />
       </div>

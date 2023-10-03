@@ -29,6 +29,7 @@ origins = [
     "http://localhost:3000",
     "http://localhost:8080",
     "https://app-superstack.vercel.app"
+    "https://resonant.vercel.app"
 ]
 
 app.add_middleware(

@@ -1,6 +1,6 @@
-# Superstack
+# Resonant
 
-This is the monorepo for the Superstack app built on [Turborepo](https://turbo.build/repo).
+This is the monorepo for the Resonant app built on [Turborepo](https://turbo.build/repo).
 
 Make sure you have `turbo` [installed globally](https://turbo.build/repo/docs/installing#install-globally)
 

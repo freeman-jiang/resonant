@@ -5,7 +5,6 @@ import { Topics } from "@/components/Topics";
 import { Toaster } from "@/components/ui/toaster";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Providers } from "../providers";
 
@@ -30,10 +29,10 @@ export default async function RootLayout({
 
   return (
     <Providers>
-      <div className="mx-auto p-8 lg:max-w-2xl">
-        <Link href="/" className="text-2xl font-bold">
-          Superstack
-        </Link>
+      <div className="mx-auto px-8 py-4 lg:max-w-2xl">
+        {/* <Link href="/" className="text-2xl font-bold">
+          Resonant
+        </Link> */}
         <Topics />
         <Search />
         {children}
