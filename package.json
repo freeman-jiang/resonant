@@ -15,5 +15,5 @@
     "turbo": "latest"
   },
   "packageManager": "pnpm@8.6.10",
-  "name": "superstack-monorepo"
+  "name": "resonant-monorepo"
 }

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "superstack"
+name = "resonant"
 version = "0.1.0"
 description = ""
 authors = ["Henry Nguyen <henry2833@gmail.com>"]
@@ -29,6 +29,7 @@ pytest-asyncio = "^0.21.1"
 fastapi = "^0.103.1"
 uvicorn = "^0.23.2"
 feedparser = "^6.0.10"
+gunicorn = "^21.2.0"
 
 
 [build-system]

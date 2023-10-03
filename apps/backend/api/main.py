@@ -28,7 +28,10 @@ db = PostgresClient(None)
 origins = [
     "http://localhost:3000",
     "http://localhost:8080",
-    "https://app-superstack.vercel.app"
+    "https://app-superstack.vercel.app",
+    "https://resonant.vercel.app",
+    "https://www.resonant.live",
+    "https://resonant.live"
 ]
 
 app.add_middleware(

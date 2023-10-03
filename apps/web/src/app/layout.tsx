@@ -8,7 +8,7 @@ import { Providers } from "./providers";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Superstack",
+  title: "Resonant",
   description: "A digital feed for the intellectually curious",
 };
 const inter = Inter({ subsets: ["latin"] });
