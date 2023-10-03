@@ -38,14 +38,9 @@ def overlapping_windows(s: str, stride: int = 100, size: int = 120) -> Iterator[
 class Embedder:
     model: SentenceTransformer
 
-    def __init__(self, multiprocess = False):
-        self.model = SentenceTransformer('BAAI/bge-base-en-v1.5', device = 'mps')
+    def __init__(self):
+        self.model = SentenceTransformer('BAAI/bge-base-en-v1.5')
         print("Using device", self.model.device)
-
-        if multiprocess:
-            self.pool = self.model.start_multi_process_pool()
-        else:
-            self.pool = None
 
 
     def embed(self, text: str, stride: int = 360, size: int = 380) -> np.ndarray:
@@ -64,13 +59,9 @@ class Embedder:
         return self.encode(windows)
 
     def encode(self, windows):
-        if self.pool is not None:
-            result = self.model.encode_multi_process(windows, pool=self.pool)
+        result = self.model.encode(windows, normalize_embeddings=True)
+        print("Using device", self.model.device)
 
-            # Normalize result ndarray
-            result = result / np.linalg.norm(result, axis=1, keepdims=True)
-        else:
-            result = self.model.encode(windows, normalize_embeddings=True)
         return result
 
     def generate_vecs(self, title: str, content: str, url: str) -> list[tuple[str, int, list]]:
@@ -119,7 +110,7 @@ class NearestNeighboursQuery(BaseModel):
         """
         if self.vector is None:
             result = cursor.execute(
-                'SELECT avg(vec) as vec, url FROM Embeddings WHERE url = %(url)s AND index <= 3 GROUP BY url', dict(url=self.url)).fetchall()
+                'SELECT avg(vec) as vec, url FROM Embeddings WHERE url = %(url)s GROUP BY url', dict(url=self.url)).fetchall()
             self.vector = np.array(result[0]['vec'])
 
     def to_sql_expr(self) -> tuple[str, dict]:
@@ -128,7 +119,7 @@ class NearestNeighboursQuery(BaseModel):
         else:
             raise RuntimeError(
                 "Unreachable--should have called NearestNeighboursQuery.get_vector()")
-            return 'SELECT avg(vec) as vec, url FROM Embeddings WHERE url = %(url)s AND index <= 3 GROUP BY url', dict(url=self.url)
+            return 'SELECT avg(vec) as vec, url FROM Embeddings WHERE url = %(url)s GROUP BY url', dict(url=self.url)
 
 
 def _query_fts(query: str) -> list[PageResponse]:
@@ -235,7 +226,7 @@ def _query_similar_embeddings(query: NearestNeighboursQuery) -> list[PageRespons
 WITH want AS ({want_cte}),
  matching_vecs AS (
         SELECT e.vec <=> w.vec as dist, e.url as url from Embeddings as e, want as w 
-            WHERE e.url != w.url AND e.index <= 4 
+            WHERE e.url != w.url
             ORDER BY dist LIMIT 120
  ),
  domain_counts AS (SELECT COUNT(url) as num_matching_windows, AVG(dist) as dist, MIN(url) as url FROM matching_vecs GROUP BY url)
@@ -276,7 +267,6 @@ async def store_embeddings_for_pages(pages: list[Page]):
 async def generate_embeddings(db: PostgresClient):
     global model
 
-    model = Embedder(multiprocess=True)
     while True:
         pages = db.cursor(Page).execute(
             'SELECT * FROM "Page" WHERE "Page".url NOT IN (SELECT url FROM Embeddings GROUP BY "url") ORDER BY "Page".depth ASC LIMIT 50').fetchall()
