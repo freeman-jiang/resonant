@@ -161,7 +161,7 @@ def get_window_avg(content: str) -> np.ndarray:
     """
     Embed the given content using the sentence-transformers model
     """
-    vectors = model.embed(content)
+    vectors = model.embed(content, for_query=True)
 
     # Potentially long document, so the first few windows are most representative of what the user wants
     avg_two_windows = np.mean(vectors[:4], axis=0)

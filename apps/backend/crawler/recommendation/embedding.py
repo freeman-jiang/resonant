@@ -43,7 +43,7 @@ class Embedder:
         print("Using device", self.model.device)
 
 
-    def embed(self, text: str, stride: int = 360, size: int = 380) -> np.ndarray:
+    def embed(self, text: str, stride: int = 360, size: int = 380, for_query: bool = False) -> np.ndarray:
         """
         Sentence-transformers only supports small inputs, so we split the text into overlapping windows of X tokens each,
         and return the vectors for each window
@@ -51,7 +51,12 @@ class Embedder:
         :param text:
         :return: ndarray of shape (n, 768) where n is the number of windows
         """
+
+
         windows = list(overlapping_windows(text, stride, size))
+
+        if for_query:
+            windows = ["Represent this sentence for searching relevant passages:" + x for x in windows]
         # Trim to first N windows only to save computation
         if len(windows) > 3:
             windows = windows[0:3]
@@ -233,7 +238,7 @@ WITH want AS ({want_cte}),
  select "Page".*,
  -- Scoring algorithm: (similarity * page_rank^0.5 * (amount of matching windows ^ 0.15))
  -- Higher is better
- COALESCE((1 - dist) * ("Page".page_rank ^ 0.40) * (domain_counts.num_matching_windows ^ 0.25), -1) as score
+ COALESCE((1 - dist) * (COALESCE("Page".page_rank, 1) ^ 0.40) * (domain_counts.num_matching_windows ^ 0.25), -1) as score
   
   from "Page" INNER JOIN domain_counts ON domain_counts.url = "Page".url  ORDER BY score DESC
     """, want_cte_dict).fetchall()
