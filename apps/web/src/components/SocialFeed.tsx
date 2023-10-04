@@ -1,4 +1,7 @@
+"use client";
+
 import { FeedResponse, Message } from "@/api";
+import { useFeed } from "@/api/hooks";
 import { extractDomain, formatExercept } from "@/lib/utils";
 import NextLink from "next/link";
 import { Feed } from "./Feed";
@@ -46,7 +49,9 @@ interface Props {
   feed: FeedResponse;
 }
 
-export const SocialFeed = ({ feed }: Props) => {
+export const SocialFeed = () => {
+  const { data: feed } = useFeed();
+
   return (
     <div className="mt-5 space-y-2">
       {feed.messages.map((message) => (

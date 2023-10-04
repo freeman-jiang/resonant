@@ -1,8 +1,10 @@
-import { fetchSocialFeed } from "@/api";
+import { FeedBoundary } from "@/api/hooks";
 import { SocialFeed } from "@/components/SocialFeed";
 
 export default async function Home() {
-  const feed = await fetchSocialFeed();
-
-  return <SocialFeed feed={feed} />;
+  return (
+    <FeedBoundary>
+      <SocialFeed />
+    </FeedBoundary>
+  );
 }
