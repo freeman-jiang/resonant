@@ -110,12 +110,17 @@ async def recommend(userid: int) -> list[PageResponse]:
 @app.get('/saved/{userid}')
 async def get_liked_pages(userid: str) -> list[PageResponse]:
     lps = await client.likedpage.find_many(take=100, where={
-        'user_id': userid
+        'user_id': userid,
     })
 
+    # sort by most recent
+    lps.sort(key=lambda x: x.created_at, reverse=True)
     page_ids = [lp.page_id for lp in lps]
 
     pages = db.get_pages_by_id(page_ids)
+    # sort by most recent
+    pages.sort(key=lambda x: page_ids.index(x.id))
+
     return [PageResponse.from_prisma_page(p) for p in pages]
 
 
