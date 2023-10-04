@@ -360,6 +360,7 @@ class MessageResponse(BaseModel):
     receiver: User
 
     message: Optional[str]
+    sent_on: datetime
 
 
 class UserFeedResponse(BaseModel):
@@ -397,7 +398,8 @@ async def get_user_feed() -> UserFeedResponse:
             page=page_response,
             sender=r.sender,
             receiver=r.receiver,
-            message=r.message
+            message=r.message,
+            sent_on=r.sent_on
         ))
 
     random_articles = await random_feed(limit=30)
@@ -408,8 +410,9 @@ async def get_user_feed() -> UserFeedResponse:
 @pytest.mark.asyncio
 async def test_get_user_feed():
     await startup()
-    result = await get_user_feed('083e93f0-2fd9-4454-ad46-3444378f4b51')
-    print(result)
+    result = await get_user_feed()
+
+    print(result.json())
 
 
 class UserQueryResponse(BaseModel):
