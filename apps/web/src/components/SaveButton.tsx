@@ -3,6 +3,7 @@ import { likePage } from "@/api";
 import { useSupabase } from "@/supabase/client";
 import { Page } from "@/types/api";
 import { Bookmark } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 
 interface Props {
@@ -11,9 +12,14 @@ interface Props {
 
 export const SaveButton = ({ page }: Props) => {
   const { session } = useSupabase();
-  const user = session.user;
+  const user = session?.user;
+  const router = useRouter();
 
   const handleLike = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
     await likePage(user.id, page.id);
   };
 

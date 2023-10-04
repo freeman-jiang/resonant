@@ -9,6 +9,7 @@ import {
 import { useSupabase } from "@/supabase/client";
 import { Page } from "@/types/api";
 import { Bookmark, MoreHorizontal } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useToast } from "./ui/use-toast";
 
 enum Feedback {
@@ -22,12 +23,16 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const FeedbackButton = ({ page, ...props }: Props) => {
-  const {
-    session: { user },
-  } = useSupabase();
+  const { session } = useSupabase();
+  const user = session?.user;
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleSave = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
     await likePage(user.id, page.id);
     toast({
       title: "Saved! 🎉",

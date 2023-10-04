@@ -3,7 +3,7 @@ import { Feed } from "@/components/Feed";
 import { getSupabaseServer } from "@/supabase/server";
 
 export default async function Liked() {
-  const { session } = await getSupabaseServer();
+  const { session } = await getSupabaseServer({ protected: true });
   const { user } = session;
 
   const pages = await getSavedPages(user.id);

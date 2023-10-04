@@ -16,7 +16,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const { session } = await getSupabaseServer();
-  const user = session.user;
+  const user = session?.user;
 
   if (user) {
     // TODO: Maybe call supabase directly instead

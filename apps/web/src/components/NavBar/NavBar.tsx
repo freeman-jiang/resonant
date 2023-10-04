@@ -1,8 +1,7 @@
-import { cn } from "@/lib/utils";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { buttonVariants } from "../ui/button";
+import { RightButton } from "./RightButton";
 import { UserNav } from "./UserNav";
 
 export const dynamic = "force-dynamic";
@@ -29,13 +28,8 @@ export async function NavBar({
         </Link>
 
         <div className="flex items-center gap-2">
-          <Link
-            href="/saved"
-            className={cn(buttonVariants({ variant: "link" }))}
-          >
-            Saved
-          </Link>
           <UserNav user={user} />
+          <RightButton user={user} />
         </div>
       </div>
     </div>
