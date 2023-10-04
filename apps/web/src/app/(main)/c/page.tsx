@@ -36,7 +36,7 @@ export default async function Page(params: RouteParams) {
           </div>
         </NextLink>
 
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex gap-3">
           <ShareButton page={page} />
           <SaveButton page={page} />
         </div>

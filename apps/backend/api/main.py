@@ -10,7 +10,8 @@ from crawler.link import Link
 from crawler.prismac import PostgresClient
 from crawler.recommendation.embedding import (NearestNeighboursQuery,
                                               _query_similar,
-                                              generate_feed_from_page, store_embeddings_for_pages)
+                                              generate_feed_from_page,
+                                              store_embeddings_for_pages)
 from crawler.worker import crawl_interactive, get_window_avg
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -296,6 +297,7 @@ class SendMessageRequest(BaseModel):
             return str(value)
         return value
 
+
 class CreatePageRequest(BaseModel):
     url: str
 
@@ -316,7 +318,8 @@ async def create_page(body: CreatePageRequest) -> PageResponse:
 @pytest.mark.asyncio
 async def test_create_page():
     db.connect()
-    await create_page(CreatePageRequest(url = 'https://student.cs.uwaterloo.ca/~cs241e/current/a3.html'))
+    await create_page(CreatePageRequest(url='https://student.cs.uwaterloo.ca/~cs241e/current/a3.html'))
+
 
 @app.post('/message')
 async def send_message(body: SendMessageRequest) -> None:
@@ -351,18 +354,12 @@ async def test_send_message():
     ))
 
 
-class MessageUser(BaseModel):
-    id: UUID
-    first_name: str
-    last_name: str
-
-
 class MessageResponse(BaseModel):
     page: Union[PageResponse, PageResponseURLOnly]
-    sender: MessageUser
-    receiver: MessageUser
+    sender: User
+    receiver: User
 
-    message: str
+    message: Optional[str]
 
 
 class UserFeedResponse(BaseModel):
@@ -371,14 +368,14 @@ class UserFeedResponse(BaseModel):
 
 
 @app.get('/feed')
-async def get_user_feed(userid: UUID) -> UserFeedResponse:
+async def get_user_feed() -> UserFeedResponse:
     """
     Get the user's feed by combining their incoming messages and stuff from random-feed
     :param userid:
     :return:
     """
 
-    messages = await client.message.find_many(where={'receiver_id': str(userid)}, order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True})
+    messages = await client.message.find_many(order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True})
 
     page_ids_to_fetch = set(
         [m.page_id for m in messages if m.page_id is not None])
@@ -398,10 +395,8 @@ async def get_user_feed(userid: UUID) -> UserFeedResponse:
 
         result.append(MessageResponse(
             page=page_response,
-            sender=MessageUser(
-                id=r.sender_id, first_name=r.sender.first_name, last_name=r.sender.last_name),
-            receiver=MessageUser(
-                id=r.receiver_id, first_name=r.receiver.first_name, last_name=r.receiver.last_name),
+            sender=r.sender,
+            receiver=r.receiver,
             message=r.message
         ))
 
