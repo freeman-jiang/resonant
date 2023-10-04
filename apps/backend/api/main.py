@@ -344,7 +344,7 @@ class MessageResponse(BaseModel):
     sender: MessageUser
     receiver: MessageUser
 
-    message: str
+    message: Optional[str]
 
 
 class UserFeedResponse(BaseModel):
@@ -353,14 +353,14 @@ class UserFeedResponse(BaseModel):
 
 
 @app.get('/feed')
-async def get_user_feed(userid: UUID) -> UserFeedResponse:
+async def get_user_feed() -> UserFeedResponse:
     """
     Get the user's feed by combining their incoming messages and stuff from random-feed
     :param userid:
     :return:
     """
 
-    messages = await client.message.find_many(where={'receiver_id': str(userid)}, order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True})
+    messages = await client.message.find_many(order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True})
 
     page_ids_to_fetch = set(
         [m.page_id for m in messages if m.page_id is not None])
