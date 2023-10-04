@@ -1,6 +1,6 @@
 "use client";
 import NextLink from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { Badge } from "./ui/badge";
 
 const topics = {
@@ -13,13 +13,14 @@ const topics = {
 
 export const Topics = () => {
   const { topic } = useParams();
+  const path = usePathname();
 
   return (
     <div className="mt-3 flex flex-row flex-wrap gap-2 pb-2">
       <NextLink href={"/"}>
         <Badge
           className="cursor-pointer text-sm"
-          variant={!topic ? "default" : "outline"}
+          variant={!topic && path === "/" ? "default" : "outline"}
         >
           All
         </Badge>

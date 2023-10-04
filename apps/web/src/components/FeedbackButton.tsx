@@ -1,14 +1,15 @@
 "use client";
-
+import { likePage } from "@/api";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { NEXT_PUBLIC_BASE_URL } from "@/config";
-import { Link } from "@/types/api";
-import { Ban, Heart, MoreHorizontal, ThumbsUp } from "lucide-react";
+import { useSupabase } from "@/supabase/client";
+import { Page } from "@/types/api";
+import { Bookmark, MoreHorizontal } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useToast } from "./ui/use-toast";
 
 enum Feedback {
@@ -17,55 +18,25 @@ enum Feedback {
   NotInterested,
 }
 
-const getRelatedArticles = async ({ id }: Link) => {
-  const url = `${NEXT_PUBLIC_BASE_URL}/like/${Math.floor(
-    Math.random() * 1000,
-  )}/${id}`;
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch data");
-  }
-
-  return response.json() as Promise<Link[]>;
-};
-
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
-  link: Link;
+  page: Page;
 }
 
-export const FeedbackButton = ({ link, ...props }: Props) => {
+export const FeedbackButton = ({ page, ...props }: Props) => {
+  const { session } = useSupabase();
+  const user = session?.user;
   const { toast } = useToast();
+  const router = useRouter();
 
-  const handleFeedback = async (feedback: Feedback) => {
-    const relatedArticles = await getRelatedArticles(link);
-
-    const renderRelatedArticles = () => {
-      return (
-        <div>
-          {relatedArticles.slice(0, 15).map((article) => (
-            <div
-              key={article.url}
-              className="max-w-[35ch] truncate rounded-md p-1 transition-all hover:bg-sky-100"
-            >
-              <a href={article.url} target="_blank" className="">
-                {article.title}
-              </a>
-            </div>
-          ))}
-        </div>
-      );
-    };
-
-    switch (feedback) {
-      case (Feedback.Liked, Feedback.Loved):
-        toast({
-          title: "Here similar articles you might like",
-          description: renderRelatedArticles(),
-        });
-        break;
+  const handleSave = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
     }
+    await likePage(user.id, page.id);
+    toast({
+      title: "Saved! 🎉",
+    });
   };
 
   return (
@@ -79,6 +50,12 @@ export const FeedbackButton = ({ link, ...props }: Props) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuItem
+            className="cursor-pointer gap-2"
+            onClick={handleSave}
+          >
+            <Bookmark className="h-4 w-4" /> Save this
+          </DropdownMenuItem>
+          {/* <DropdownMenuItem
             className="cursor-pointer gap-2"
             onClick={() => handleFeedback(Feedback.Loved)}
           >
@@ -95,7 +72,7 @@ export const FeedbackButton = ({ link, ...props }: Props) => {
           <DropdownMenuItem className="cursor-pointer gap-2">
             <Ban className="h-4 w-4" />
             Not interested
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

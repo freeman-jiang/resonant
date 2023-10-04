@@ -50,22 +50,13 @@ async def startup():
     db.connect()
 
 
-async def find_or_create_user(userid):
+async def find_user(userid: str):
     # Check if the user exists
     existing_user = await client.user.find_first(where={"id": userid})
 
     if existing_user:
         # User already exists
         return existing_user
-
-    # If the user doesn't exist, create a new user
-    new_user = await client.user.create(
-        data={
-            "id": userid
-        }
-    )
-
-    return new_user
 
 
 class LinkQuery(BaseModel):
@@ -92,7 +83,7 @@ async def recommend(userid: int) -> list[PageResponse]:
     :return:
     """
 
-    user = await find_or_create_user(userid)
+    user = await find_user(userid)
 
     # Get a random sample of pages the user has liked
     liked_pages = await client.likedpage.find_many(take=100, where={
@@ -116,25 +107,58 @@ async def recommend(userid: int) -> list[PageResponse]:
     return similar
 
 
+@app.get('/saved/{userid}')
+async def get_liked_pages(userid: str) -> list[PageResponse]:
+    lps = await client.likedpage.find_many(take=100, where={
+        'user_id': userid,
+    })
+
+    # sort by most recent
+    lps.sort(key=lambda x: x.created_at, reverse=True)
+    page_ids = [lp.page_id for lp in lps]
+
+    pages = db.get_pages_by_id(page_ids)
+    # sort by most recent
+    pages.sort(key=lambda x: page_ids.index(x.id))
+
+    return [PageResponse.from_prisma_page(p) for p in pages]
+
+
 @app.get("/like/{userid}/{pageid}")
-async def like(userid: int, pageid: int) -> list[PageResponse]:
+async def like(userid: str, pageid: int) -> None:
     page = db.get_page(id=pageid)
 
     if page is None:
         raise HTTPException(400, "Page does not exist")
 
-    user = await find_or_create_user(userid)
+    user = await find_user(userid)
+    if not user:
+        raise HTTPException(400, "User does not exist")
 
     await upsert_liked_page(page, user)
-    urls = await generate_feed_from_page(page.url)
+    # urls = await generate_feed_from_page(page.url)
 
-    print("Recommended", urls)
-    return urls
+    # print("Recommended", urls)
+    return None
+
+
+async def upsert_message(user: User, page: Page):
+    message = await client.message.find_first(where={
+        'page_id': page.id,
+        'sender_id': user.id,
+    })
+    if message is None:
+        await client.message.create(data={
+            'page_id': page.id,
+            'sender_id': user.id,
+            # Hardcode superstack.app@gmail.com ID for global shares
+            'receiver_id': '4ee604f3-987d-4295-a2fa-b58d88e5b5e0',
+        })
 
 
 async def upsert_liked_page(page: Page, user: User):
     """
-    Upserts a LikedPage for the given user and page
+    Adds the LikedPage for the given user and page or does nothing if it already exists
     :param page:
     :param user:
     :return:
@@ -142,9 +166,7 @@ async def upsert_liked_page(page: Page, user: User):
     lp = await client.likedpage.find_first(where={
         'user_id': user.id,
         'page_id': page.id,
-    }, include={'page': True, 'user': True, 'suggestions': {
-        'include': {'page': True}
-    }})
+    }, include={})
     if lp is None:
         await client.likedpage.create(data={
             'user': {
@@ -152,12 +174,8 @@ async def upsert_liked_page(page: Page, user: User):
                     'id': user.id
                 }
             },
-            'page': {
-                'connect': {
-                    'id': page.id
-                }
-            }
-        }, include={'page': True, 'user': True})
+            'page_id': page.id
+        })
 
 
 class SearchQuery(BaseModel):
@@ -236,6 +254,21 @@ async def random_feed(limit: int = 60) -> list[PageResponse]:
 
     random_pages = [Page(**p) for p in random_pages]
     return [PageResponse.from_prisma_page(p) for p in random_pages]
+
+
+@app.post('/share/{user_id}/{page_id}')
+async def share_page(user_id: str, page_id: int) -> None:
+    page = db.get_page(id=page_id)
+
+    if page is None:
+        raise HTTPException(400, "Page does not exist")
+
+    user = await find_user(user_id)
+    if not user:
+        raise HTTPException(400, "User does not exist")
+
+    await upsert_message(user, page)
+    return None
 
 
 class SendMessageRequest(BaseModel):

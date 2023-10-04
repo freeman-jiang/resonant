@@ -65,15 +65,18 @@ model User {
   liked_pages         LikedPage[]
   sent_messages       Message[]   @relation("SentMessages")
   received_messages   Message[]   @relation("ReceivedMessages")
+  created_at          DateTime    @default(now()) @db.Timestamptz
+  updated_at          DateTime    @default(now()) @updatedAt @db.Timestamptz
 
   @@schema("public")
 }
 
 model LikedPage {
-  id      Int    @id @default(autoincrement())
-  user_id String @db.Uuid
-  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  page_id Int // Do not link the page because it's not stored in Supabase
+  id         Int      @id @default(autoincrement())
+  user_id    String   @db.Uuid
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  page_id    Int // Do not link the page because it's not stored in Supabase
+  created_at DateTime @default(now()) @db.Timestamptz
 
   @@unique([user_id, page_id], name: "liked_pages_user_id_page_id")
   @@index([user_id], map: "liked_pages_user_id")

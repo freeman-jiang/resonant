@@ -3,8 +3,8 @@ import "@/app/globals.css";
 import { Search } from "@/components/Search";
 import { Topics } from "@/components/Topics";
 import { Toaster } from "@/components/ui/toaster";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { SupabaseProvider } from "@/supabase/client";
+import { getSupabaseServer } from "@/supabase/server";
 import { redirect } from "next/navigation";
 import { Providers } from "../providers";
 
@@ -15,10 +15,9 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createServerComponentClient({ cookies });
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { session } = await getSupabaseServer();
+  const user = session?.user;
+
   if (user) {
     // TODO: Maybe call supabase directly instead
     const u = await getUser(user.id);
@@ -28,16 +27,18 @@ export default async function RootLayout({
   }
 
   return (
-    <Providers>
-      <div className="mx-auto px-8 py-4 lg:max-w-2xl">
-        {/* <Link href="/" className="text-2xl font-bold">
-          Resonant
-        </Link> */}
-        <Topics />
-        <Search />
-        {children}
-      </div>
-      <Toaster />
-    </Providers>
+    <SupabaseProvider session={session}>
+      <Providers>
+        <div className="mx-auto px-8 py-4 lg:max-w-2xl">
+          {/* <Link href="/" className="text-2xl font-bold">
+            Resonant
+          </Link> */}
+          <Topics />
+          <Search />
+          {children}
+        </div>
+        <Toaster />
+      </Providers>
+    </SupabaseProvider>
   );
 }
