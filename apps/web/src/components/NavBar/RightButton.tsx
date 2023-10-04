@@ -10,10 +10,10 @@ interface Props {
 }
 
 export const RightButton = ({ user }: Props) => {
+  const path = usePathname();
   if (!!user) {
     return null;
   }
-  const path = usePathname();
 
   if (path === "/login") {
     return (
