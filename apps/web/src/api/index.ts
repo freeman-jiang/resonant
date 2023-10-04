@@ -57,3 +57,8 @@ export const getSavedPages = async (userId: string) => {
   const { data } = await axios.get(`/saved/${userId}`);
   return data;
 };
+
+export const sharePage = async (userId: string, pageId: number) => {
+  const { data } = await axios.post(`/share/${userId}/${pageId}`);
+  return data;
+};

@@ -7,11 +7,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
 
-interface Props {
+interface Props extends React.HTMLAttributes<HTMLButtonElement> {
   page: Page;
 }
 
-export const SaveButton = ({ page }: Props) => {
+export const SaveButton = ({ page, ...rest }: Props) => {
   const { session } = useSupabase();
   const { toast } = useToast();
   const user = session?.user;
@@ -29,7 +29,7 @@ export const SaveButton = ({ page }: Props) => {
   };
 
   return (
-    <Button variant="default" size="sm" onClick={handleLike}>
+    <Button variant="default" size="sm" onClick={handleLike} {...rest}>
       <Bookmark className="mr-2 h-4 w-4" /> Save
     </Button>
   );

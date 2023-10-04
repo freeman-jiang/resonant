@@ -142,6 +142,20 @@ async def like(userid: str, pageid: int) -> None:
     return None
 
 
+async def upsert_message(user: User, page: Page):
+    message = await client.message.find_first(where={
+        'page_id': page.id,
+        'sender_id': user.id,
+    })
+    if message is None:
+        await client.message.create(data={
+            'page_id': page.id,
+            'sender_id': user.id,
+            # Hardcode superstack.app@gmail.com ID for global shares
+            'receiver_id': '4ee604f3-987d-4295-a2fa-b58d88e5b5e0',
+        })
+
+
 async def upsert_liked_page(page: Page, user: User):
     """
     Adds the LikedPage for the given user and page or does nothing if it already exists
@@ -240,6 +254,21 @@ async def random_feed(limit: int = 60) -> list[PageResponse]:
 
     random_pages = [Page(**p) for p in random_pages]
     return [PageResponse.from_prisma_page(p) for p in random_pages]
+
+
+@app.post('/share/{user_id}/{page_id}')
+async def share_page(user_id: str, page_id: int) -> None:
+    page = db.get_page(id=page_id)
+
+    if page is None:
+        raise HTTPException(400, "Page does not exist")
+
+    user = await find_user(user_id)
+    if not user:
+        raise HTTPException(400, "User does not exist")
+
+    await upsert_message(user, page)
+    return None
 
 
 class SendMessageRequest(BaseModel):
