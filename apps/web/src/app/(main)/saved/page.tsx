@@ -1,5 +1,5 @@
 import { getSavedPages } from "@/api";
-import { Feed } from "@/components/Feed";
+import { SavedFeed } from "@/components/SavedFeed";
 import { getSupabaseServer } from "@/supabase/server";
 
 export default async function Liked() {
@@ -11,7 +11,7 @@ export default async function Liked() {
   return (
     <div className="mt-5">
       <h1 className="text-2xl font-semibold text-slate-900">Saved</h1>
-      <Feed feed={pages} />
+      <SavedFeed feed={pages} />
     </div>
   );
 }

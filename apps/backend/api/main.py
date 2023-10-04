@@ -113,7 +113,7 @@ async def get_liked_pages(userid: str) -> list[PageResponse]:
         'user_id': userid
     })
 
-    page_ids = [lp.id for lp in lps]
+    page_ids = [lp.page_id for lp in lps]
 
     pages = db.get_pages_by_id(page_ids)
     return [PageResponse.from_prisma_page(p) for p in pages]
