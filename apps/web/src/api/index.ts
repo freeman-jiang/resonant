@@ -1,5 +1,5 @@
 import { NEXT_PUBLIC_BASE_URL } from "@/config";
-import { Link } from "@/types/api";
+import { Page } from "@/types/api";
 import baseAxios from "axios";
 
 const axios = baseAxios.create({
@@ -12,7 +12,7 @@ export async function fetchFeed() {
       revalidate: 1800, // Refresh every half hour
     },
   });
-  return response.json() as Promise<Link[]>;
+  return response.json() as Promise<Page[]>;
 }
 
 export const searchFor = async (query: string) => {
@@ -20,12 +20,12 @@ export const searchFor = async (query: string) => {
   const body = linkRegex.test(query) ? { url: query } : { query: query };
 
   const { data } = await axios.post(`/search`, body);
-  return data as Link[];
+  return data as Page[];
 };
 
 export const findPage = async (url: string) => {
   const { data } = await axios.post(`/page`, { url });
-  return data as Link;
+  return data as Page;
 };
 
 export interface CreateUserRequest {
@@ -50,5 +50,10 @@ export const getUser = async (uuid: string): Promise<GetUserResponse> => {
 
 export const likePage = async (userId: string, pageId: number) => {
   const { data } = await axios.get(`/like/${userId}/${pageId}`);
+  return data;
+};
+
+export const getSavedPages = async (userId: string) => {
+  const { data } = await axios.get(`/saved/${userId}`);
   return data;
 };

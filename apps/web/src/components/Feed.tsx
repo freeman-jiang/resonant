@@ -1,11 +1,10 @@
-"use client";
 import { cn } from "@/lib/utils";
-import { Link } from "@/types/api";
+import { Page } from "@/types/api";
 import { Entry } from "./Entry";
 import { Skeleton } from "./ui/skeleton";
 
 interface Props {
-  feed?: Link[];
+  feed?: Page[];
 }
 
 export const Feed = ({ feed }: Props) => {

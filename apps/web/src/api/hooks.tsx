@@ -1,4 +1,4 @@
-import { Link } from "@/types/api";
+import { Page } from "@/types/api";
 import {
   HydrationBoundary,
   QueryClient,
@@ -11,7 +11,7 @@ import { fetchFeed, searchFor } from ".";
 export const FEED_QUERY_KEY = "feed";
 
 interface Options {
-  initialData: Link[];
+  initialData: Page[];
 }
 
 export const useFeed = (options?: Options) => {

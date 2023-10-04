@@ -1,9 +1,9 @@
 import { extractDomain, formatExercept } from "@/lib/utils";
-import { Link } from "@/types/api";
+import { Page } from "@/types/api";
 import NextLink from "next/link";
 import { FeedbackButton } from "./FeedbackButton";
 
-export const Entry = (link: Link) => {
+export const Entry = (link: Page) => {
   return (
     <div>
       <div className="border-b border-slate-400 pb-2">
@@ -16,7 +16,7 @@ export const Entry = (link: Link) => {
               {extractDomain(link.url)}
             </p>
           </NextLink>
-          <FeedbackButton link={link} className="ml-8 lg:ml-20" />
+          <FeedbackButton page={link} className="ml-8 lg:ml-20" />
         </div>
         <p className="mt-2 font-mono text-sm text-slate-500">
           {formatExercept(link.excerpt)}

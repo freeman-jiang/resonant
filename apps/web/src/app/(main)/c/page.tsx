@@ -1,6 +1,6 @@
 import { findPage } from "@/api";
-import { LikeButton } from "@/components/LikeButton";
 import { RelatedFeed } from "@/components/RelatedFeed";
+import { SaveButton } from "@/components/SaveButton";
 import { extractDomain, formatExercept } from "@/lib/utils";
 import { ExternalLink } from "lucide-react";
 import NextLink from "next/link";
@@ -36,7 +36,7 @@ export default async function Page(params: RouteParams) {
         </NextLink>
 
         <div className="mt-4 flex">
-          <LikeButton page={page} />
+          <SaveButton page={page} />
         </div>
         <h2 className="mt-5 text-2xl font-semibold text-slate-900">Related</h2>
 

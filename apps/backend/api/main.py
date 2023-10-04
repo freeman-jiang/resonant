@@ -107,6 +107,18 @@ async def recommend(userid: int) -> list[PageResponse]:
     return similar
 
 
+@app.get('/saved/{userid}')
+async def get_liked_pages(userid: str) -> list[PageResponse]:
+    lps = await client.likedpage.find_many(take=100, where={
+        'user_id': userid
+    })
+
+    page_ids = [lp.id for lp in lps]
+
+    pages = db.get_pages_by_id(page_ids)
+    return [PageResponse.from_prisma_page(p) for p in pages]
+
+
 @app.get("/like/{userid}/{pageid}")
 async def like(userid: str, pageid: int) -> None:
     page = db.get_page(id=pageid)
