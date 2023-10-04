@@ -1,6 +1,10 @@
 import { NEXT_PUBLIC_BASE_URL } from "@/config";
 import { Link } from "@/types/api";
-import axios from "axios";
+import baseAxios from "axios";
+
+const axios = baseAxios.create({
+  baseURL: NEXT_PUBLIC_BASE_URL,
+});
 
 export async function fetchFeed() {
   const response = await fetch(`${NEXT_PUBLIC_BASE_URL}/random-feed`, {
@@ -15,12 +19,12 @@ export const searchFor = async (query: string) => {
   const linkRegex = /https?:\/\/[^\s]+/g;
   const body = linkRegex.test(query) ? { url: query } : { query: query };
 
-  const { data } = await axios.post(`${NEXT_PUBLIC_BASE_URL}/search`, body);
+  const { data } = await axios.post(`/search`, body);
   return data as Link[];
 };
 
 export const findPage = async (url: string) => {
-  const { data } = await axios.post(`${NEXT_PUBLIC_BASE_URL}/page`, { url });
+  const { data } = await axios.post(`/page`, { url });
   return data as Link;
 };
 
@@ -32,10 +36,7 @@ export interface CreateUserRequest {
   profileUrl?: string;
 }
 export const createUser = async (user: CreateUserRequest) => {
-  const { data } = await axios.post(
-    `${NEXT_PUBLIC_BASE_URL}/create_user`,
-    user,
-  );
+  const { data } = await axios.post(`/create_user`, user);
   return data;
 };
 
@@ -43,6 +44,11 @@ export const createUser = async (user: CreateUserRequest) => {
 type GetUserResponse = null | {};
 
 export const getUser = async (uuid: string): Promise<GetUserResponse> => {
-  const { data } = await axios.get(`${NEXT_PUBLIC_BASE_URL}/user/${uuid}`);
+  const { data } = await axios.get(`/user/${uuid}`);
   return data; // replace with User;
+};
+
+export const likePage = async (userId: string, pageId: number) => {
+  const { data } = await axios.get(`/like/${userId}/${pageId}`);
+  return data;
 };

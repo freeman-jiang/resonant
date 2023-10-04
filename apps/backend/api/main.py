@@ -50,22 +50,13 @@ async def startup():
     db.connect()
 
 
-async def find_or_create_user(userid):
+async def find_user(userid: str):
     # Check if the user exists
     existing_user = await client.user.find_first(where={"id": userid})
 
     if existing_user:
         # User already exists
         return existing_user
-
-    # If the user doesn't exist, create a new user
-    new_user = await client.user.create(
-        data={
-            "id": userid
-        }
-    )
-
-    return new_user
 
 
 class LinkQuery(BaseModel):
@@ -92,7 +83,7 @@ async def recommend(userid: int) -> list[PageResponse]:
     :return:
     """
 
-    user = await find_or_create_user(userid)
+    user = await find_user(userid)
 
     # Get a random sample of pages the user has liked
     liked_pages = await client.likedpage.find_many(take=100, where={
@@ -117,24 +108,26 @@ async def recommend(userid: int) -> list[PageResponse]:
 
 
 @app.get("/like/{userid}/{pageid}")
-async def like(userid: int, pageid: int) -> list[PageResponse]:
+async def like(userid: str, pageid: int) -> None:
     page = db.get_page(id=pageid)
 
     if page is None:
         raise HTTPException(400, "Page does not exist")
 
-    user = await find_or_create_user(userid)
+    user = await find_user(userid)
+    if not user:
+        raise HTTPException(400, "User does not exist")
 
     await upsert_liked_page(page, user)
-    urls = await generate_feed_from_page(page.url)
+    # urls = await generate_feed_from_page(page.url)
 
-    print("Recommended", urls)
-    return urls
+    # print("Recommended", urls)
+    return None
 
 
 async def upsert_liked_page(page: Page, user: User):
     """
-    Upserts a LikedPage for the given user and page
+    Adds the LikedPage for the given user and page or does nothing if it already exists
     :param page:
     :param user:
     :return:
@@ -142,9 +135,7 @@ async def upsert_liked_page(page: Page, user: User):
     lp = await client.likedpage.find_first(where={
         'user_id': user.id,
         'page_id': page.id,
-    }, include={'page': True, 'user': True, 'suggestions': {
-        'include': {'page': True}
-    }})
+    }, include={})
     if lp is None:
         await client.likedpage.create(data={
             'user': {
@@ -152,12 +143,8 @@ async def upsert_liked_page(page: Page, user: User):
                     'id': user.id
                 }
             },
-            'page': {
-                'connect': {
-                    'id': page.id
-                }
-            }
-        }, include={'page': True, 'user': True})
+            'page_id': page.id
+        })
 
 
 class SearchQuery(BaseModel):
