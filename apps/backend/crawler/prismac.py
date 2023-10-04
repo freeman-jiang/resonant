@@ -23,7 +23,7 @@ class PostgresClient:
 
     @property
     def _cursor(self) -> Cursor:
-        if self._inner_cursor is None:
+        if not hasattr(self, '_inner_cursor'):
             raise RuntimeError("You must call .connect() first!")
         return self._inner_cursor
 

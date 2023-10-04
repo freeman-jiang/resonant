@@ -136,7 +136,7 @@ class Worker:
             return None, []
 
 
-async def crawl_interactive(link: Link) -> np.ndarray | None:
+async def crawl_interactive(link: Link) -> Tuple[np.ndarray, CrawlResult] | None:
     """
     Used for realtime search when the user gives us an unknown URL. We need to crawl it right away, calculate the
     embeddings, and return.
@@ -154,7 +154,7 @@ async def crawl_interactive(link: Link) -> np.ndarray | None:
 
         if response is None:
             return None
-        return get_window_avg(response.title + " " + response.content)
+        return get_window_avg(response.title + " " + response.content), response
 
 
 def get_window_avg(content: str) -> np.ndarray:

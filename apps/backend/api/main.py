@@ -10,7 +10,7 @@ from crawler.link import Link
 from crawler.prismac import PostgresClient
 from crawler.recommendation.embedding import (NearestNeighboursQuery,
                                               _query_similar,
-                                              generate_feed_from_page)
+                                              generate_feed_from_page, store_embeddings_for_pages)
 from crawler.worker import crawl_interactive, get_window_avg
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -195,7 +195,7 @@ async def search(body: SearchQuery) -> list[PageResponse]:
             query = NearestNeighboursQuery(url=url)
         else:
             print("Crawling this URL")
-            want_vec = await crawl_interactive(Link.from_url(url))
+            want_vec, _ = await crawl_interactive(Link.from_url(url))
             query = NearestNeighboursQuery(vector=want_vec, url=url)
 
         similar = _query_similar(query)
@@ -260,6 +260,22 @@ class SendMessageRequest(BaseModel):
             return str(value)
         return value
 
+class CreatePageRequest(BaseModel):
+    url: str
+
+@app.post('/page')
+async def create_page(body: CreatePageRequest) -> PageResponse:
+    vec, response = await crawl_interactive(Link.from_url(body.url))
+    page_response = db.store_raw_page(3, response)
+
+    await store_embeddings_for_pages([page_response])
+    return PageResponse.from_prisma_page(page_response)
+
+
+@pytest.mark.asyncio
+async def test_create_page():
+    db.connect()
+    await create_page(CreatePageRequest(url = 'https://student.cs.uwaterloo.ca/~cs241e/current/a3.html'))
 
 @app.post('/message')
 async def send_message(body: SendMessageRequest) -> None:
