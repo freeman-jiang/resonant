@@ -69,9 +69,12 @@ class LinkQuery(BaseModel):
 
 
 @app.post("/page")
-async def link(body: LinkQuery) -> PageResponse:
+async def link(body: LinkQuery) -> Optional[PageResponse]:
     url = body.url
     page = db.get_page(url=url)
+
+    if page is None:
+        return None
     return PageResponse.from_prisma_page(page)
 
 
@@ -296,12 +299,17 @@ class SendMessageRequest(BaseModel):
 class CreatePageRequest(BaseModel):
     url: str
 
-@app.post('/page')
-async def create_page(body: CreatePageRequest) -> PageResponse:
+
+async def _create_page(body: CreatePageRequest) -> Page:
     vec, response = await crawl_interactive(Link.from_url(body.url))
     page_response = db.store_raw_page(3, response)
 
     await store_embeddings_for_pages([page_response])
+    return page_response
+
+@app.post('/page')
+async def create_page(body: CreatePageRequest) -> PageResponse:
+    page_response = await _create_page(body)
     return PageResponse.from_prisma_page(page_response)
 
 
@@ -317,7 +325,17 @@ async def send_message(body: SendMessageRequest) -> None:
     :param body:
     :return:
     """
+
+    if body.url is not None:
+        # Check if the URL doesn't exist in our database. If not, then crawl it
+        page = db.get_page(url=body.url)
+        if page is None:
+            page = await _create_page(CreatePageRequest(url=body.url))
+            body.page_id = page.id
+            body.url = None
+
     message = body.dict()
+
     await client.message.create(message)
 
 
@@ -326,8 +344,8 @@ async def test_send_message():
     await startup()
     await send_message(SendMessageRequest(
         sender_id='61b98b24-18ff-43eb-af97-c58cd386e748',
-        page_id=1,
-        url=None,
+        page_id = None,
+        url='https://www.nytimes.com/2023/10/04/us/politics/house-speaker-mccarthy.html',
         message='fdas',
         receiver_id='083e93f0-2fd9-4454-ad46-3444378f4b51'
     ))
