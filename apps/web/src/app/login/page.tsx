@@ -17,10 +17,10 @@ export default async function AuthenticationPage() {
   return (
     <div className="mt-10 flex w-full justify-center px-4">
       <div className="flex flex-col">
-        <div className="text-3xl font-bold">Stop doomscrolling.</div>
+        {/* <div className="text-3xl font-bold">Stop doomscrolling.</div>
         <div className="text-slate-600">
           Join a collaborative digital feed curated by your friends.
-        </div>
+        </div> */}
         <div className="mt-20 self-center">
           <div className="flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
             <div className="flex flex-col text-center">

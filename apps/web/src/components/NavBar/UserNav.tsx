@@ -64,10 +64,21 @@ export function UserNav({ user: serverUser }: Props) {
     const name = user.user_metadata.full_name;
 
     return (
-      <>
-        <Link href="/saved" className={cn(buttonVariants({ variant: "link" }))}>
-          Saved
-        </Link>
+      <div className="flex items-center gap-4">
+        <div className="flex">
+          {/* <Link
+            href="/friends"
+            className={cn(buttonVariants({ variant: "link" }))}
+          >
+            Friends
+          </Link> */}
+          <Link
+            href="/saved"
+            className={cn(buttonVariants({ variant: "link" }))}
+          >
+            Saved
+          </Link>
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -115,7 +126,7 @@ export function UserNav({ user: serverUser }: Props) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </>
+      </div>
     );
   }
 
