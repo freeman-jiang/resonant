@@ -1,8 +1,8 @@
-import { fetchFeed } from "@/api";
-import { Feed } from "@/components/Feed";
+import { fetchSocialFeed } from "@/api";
+import { SocialFeed } from "@/components/SocialFeed";
 
 export default async function Home() {
-  const feed = await fetchFeed();
+  const feed = await fetchSocialFeed();
 
-  return <Feed feed={feed} />;
+  return <SocialFeed feed={feed} />;
 }

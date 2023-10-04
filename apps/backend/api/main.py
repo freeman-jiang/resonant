@@ -10,7 +10,8 @@ from crawler.link import Link
 from crawler.prismac import PostgresClient
 from crawler.recommendation.embedding import (NearestNeighboursQuery,
                                               _query_similar,
-                                              generate_feed_from_page, store_embeddings_for_pages)
+                                              generate_feed_from_page,
+                                              store_embeddings_for_pages)
 from crawler.worker import crawl_interactive, get_window_avg
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -293,8 +294,10 @@ class SendMessageRequest(BaseModel):
             return str(value)
         return value
 
+
 class CreatePageRequest(BaseModel):
     url: str
+
 
 @app.post('/page')
 async def create_page(body: CreatePageRequest) -> PageResponse:
@@ -308,7 +311,8 @@ async def create_page(body: CreatePageRequest) -> PageResponse:
 @pytest.mark.asyncio
 async def test_create_page():
     db.connect()
-    await create_page(CreatePageRequest(url = 'https://student.cs.uwaterloo.ca/~cs241e/current/a3.html'))
+    await create_page(CreatePageRequest(url='https://student.cs.uwaterloo.ca/~cs241e/current/a3.html'))
+
 
 @app.post('/message')
 async def send_message(body: SendMessageRequest) -> None:
@@ -333,16 +337,10 @@ async def test_send_message():
     ))
 
 
-class MessageUser(BaseModel):
-    id: UUID
-    first_name: str
-    last_name: str
-
-
 class MessageResponse(BaseModel):
     page: Union[PageResponse, PageResponseURLOnly]
-    sender: MessageUser
-    receiver: MessageUser
+    sender: User
+    receiver: User
 
     message: Optional[str]
 
@@ -380,10 +378,8 @@ async def get_user_feed() -> UserFeedResponse:
 
         result.append(MessageResponse(
             page=page_response,
-            sender=MessageUser(
-                id=r.sender_id, first_name=r.sender.first_name, last_name=r.sender.last_name),
-            receiver=MessageUser(
-                id=r.receiver_id, first_name=r.receiver.first_name, last_name=r.receiver.last_name),
+            sender=r.sender,
+            receiver=r.receiver,
             message=r.message
         ))
 

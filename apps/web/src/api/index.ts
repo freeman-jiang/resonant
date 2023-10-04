@@ -6,6 +6,27 @@ const axios = baseAxios.create({
   baseURL: NEXT_PUBLIC_BASE_URL,
 });
 
+export interface Message {
+  page: Page;
+  sender: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    profile_picture_url: string;
+  };
+}
+
+export interface FeedResponse {
+  random_feed: Page[];
+  messages: Message[];
+}
+
+export async function fetchSocialFeed() {
+  const response = await axios.get<FeedResponse>(`/feed`);
+  return response.data;
+}
+
 export async function fetchFeed() {
   const response = await fetch(`${NEXT_PUBLIC_BASE_URL}/random-feed`, {
     next: {
