@@ -5,6 +5,7 @@ import { Page } from "@/types/api";
 import { Bookmark } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
+import { useToast } from "./ui/use-toast";
 
 interface Props {
   page: Page;
@@ -12,6 +13,7 @@ interface Props {
 
 export const SaveButton = ({ page }: Props) => {
   const { session } = useSupabase();
+  const { toast } = useToast();
   const user = session?.user;
   const router = useRouter();
 
@@ -21,6 +23,9 @@ export const SaveButton = ({ page }: Props) => {
       return;
     }
     await likePage(user.id, page.id);
+    toast({
+      title: "Saved! 🎉",
+    });
   };
 
   return (
