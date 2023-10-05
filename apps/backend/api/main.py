@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 import random
 from datetime import datetime
 from typing import Optional, Union
@@ -363,9 +364,27 @@ class MessageResponse(BaseModel):
     sent_on: datetime
 
 
+class GroupedMessage(BaseModel):
+    message_ids: list[int]
+    senders: list[User]
+    page: Union[PageResponse, PageResponseURLOnly]
+
+    messages: list[Optional[str]]
+    sent_on: list[datetime]
+
+    @classmethod
+    def from_messages(cls, messages: list[Message], page: Union[PageResponse, PageResponseURLOnly]):
+        return GroupedMessage(
+            message_ids=[m.id for m in messages],
+            senders=[m.sender for m in messages],
+            page=page,
+            messages=[m.message for m in messages],
+            sent_on=[m.sent_on for m in messages]
+        )
+
 class UserFeedResponse(BaseModel):
     random_feed: list[PageResponse]
-    messages: list[MessageResponse]
+    messages: list[GroupedMessage]
 
 
 @app.get('/feed')
@@ -378,6 +397,11 @@ async def get_user_feed() -> UserFeedResponse:
 
     messages = await client.message.find_many(order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True})
 
+    grouped_messages = defaultdict(list)
+    for m in messages:
+        group_key = m.page_id or m.url
+        grouped_messages[group_key].append(m)
+
     page_ids_to_fetch = set(
         [m.page_id for m in messages if m.page_id is not None])
 
@@ -387,20 +411,17 @@ async def get_user_feed() -> UserFeedResponse:
 
     result = []
 
-    for r in messages:
+    for m in grouped_messages:
+        r = grouped_messages[m][0]
         if r.page_id is not None:
             page = pages[r.page_id]
             page_response = PageResponse.from_prisma_page(page)
         else:
             page_response = PageResponseURLOnly(url=r.url)
 
-        result.append(MessageResponse(
-            page=page_response,
-            sender=r.sender,
-            receiver=r.receiver,
-            message=r.message,
-            sent_on=r.sent_on
-        ))
+        grouped = GroupedMessage.from_messages(grouped_messages[m], page_response)
+        result.append(grouped)
+
 
     random_articles = await random_feed(limit=30)
 
