@@ -36,3 +36,36 @@ export const formatExercept = (
   }
   return `${excerpt}...`;
 };
+
+export function getRelativeTime(pythonDatetimeString: string): string {
+  // Parse the Python datetime string into a JavaScript Date object
+  const parsedDate = new Date(pythonDatetimeString);
+
+  // Get the current date
+  const currentDate = new Date();
+
+  // Calculate the time difference in seconds
+  const differenceInSeconds =
+    (currentDate.getTime() - parsedDate.getTime()) / 1000;
+
+  // Define the time intervals
+  const minute = 60;
+  const hour = minute * 60;
+  const day = hour * 24;
+  const month = day * 30;
+  const year = day * 365;
+
+  if (differenceInSeconds < minute) {
+    return `${Math.floor(differenceInSeconds)} seconds ago`;
+  } else if (differenceInSeconds < hour) {
+    return `${Math.floor(differenceInSeconds / minute)} minutes ago`;
+  } else if (differenceInSeconds < day) {
+    return `${Math.floor(differenceInSeconds / hour)} hours ago`;
+  } else if (differenceInSeconds < month) {
+    return `${Math.floor(differenceInSeconds / day)} days ago`;
+  } else if (differenceInSeconds < year) {
+    return `${Math.floor(differenceInSeconds / month)} months ago`;
+  } else {
+    return `${Math.floor(differenceInSeconds / year)} years ago`;
+  }
+}

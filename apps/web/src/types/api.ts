@@ -1,4 +1,4 @@
-import {UserResponse} from "@/api";
+import { Sender } from "@/api";
 
 export interface Page {
   title: string;
@@ -6,5 +6,5 @@ export interface Page {
   id: number;
   date: string;
   excerpt: string;
-  senders: UserResponse[]
+  senders: Sender[];
 }
