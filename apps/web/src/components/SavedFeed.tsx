@@ -5,7 +5,7 @@ import { extractDomain, formatExercept } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
 import { Page } from "@/types/api";
 import { useQueryClient } from "@tanstack/react-query";
-import { MoreHorizontal, X } from "lucide-react";
+import { ExternalLink, MoreHorizontal, X } from "lucide-react";
 import NextLink from "next/link";
 import {
   DropdownMenu,
@@ -41,7 +41,10 @@ export const Entry = (page: Page) => {
               {extractDomain(page.url)}
             </p>
           </NextLink>
-          <div className="ml-8 flex items-center lg:ml-20">
+          <div className="ml-8 flex items-center gap-2 lg:ml-20">
+            <NextLink href={page.url} target="_blank">
+              <ExternalLink className="-mt-1 h-4 w-4" />
+            </NextLink>
             <div>
               <DropdownMenu>
                 <DropdownMenuTrigger>

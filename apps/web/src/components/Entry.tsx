@@ -84,11 +84,9 @@ export const Entry = (page: Page) => {
             </p>
           </NextLink>
           <div className="ml-8 flex items-center lg:ml-20">
-            {/* <Button size="icon"> */}
             <NextLink href={page.url} target="_blank">
               <ExternalLink className="-mt-1 h-4 w-4" />
             </NextLink>
-            {/* </Button> */}
             <FeedbackButton
               page={page}
               canUnsend={canUnsend}
