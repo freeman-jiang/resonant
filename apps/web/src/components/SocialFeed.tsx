@@ -8,6 +8,12 @@ import NextLink from "next/link";
 import { Feed } from "./Feed";
 import { FeedbackButton } from "./FeedbackButton";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 export const Entry = (message: Message) => {
   const page = message.page;
@@ -33,10 +39,19 @@ export const Entry = (message: Message) => {
       const initials = `${sender.first_name[0]}${sender.last_name[0]}`;
 
       return (
-        <Avatar key={sender.id} className="h-6 w-6">
-          <AvatarImage src={sender.profile_picture_url} />
-          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-        </Avatar>
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger className="cursor-default">
+              <Avatar key={sender.id} className="h-6 w-6">
+                <AvatarImage src={sender.profile_picture_url} />
+                <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
+            <TooltipContent>
+              {sender.first_name} {sender.last_name}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       );
     });
 

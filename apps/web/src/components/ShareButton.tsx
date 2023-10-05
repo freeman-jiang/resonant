@@ -5,6 +5,12 @@ import { useSupabase } from "@/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { CircleOff, Send } from "lucide-react";
 import { Button } from "./ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 import { useToast } from "./ui/use-toast";
 
 interface Props extends React.HTMLAttributes<HTMLButtonElement> {
@@ -49,14 +55,23 @@ export const ShareButton = ({ url, ...rest }: Props) => {
   }
 
   return (
-    <Button
-      variant="default"
-      className="bg-emerald-500 hover:bg-emerald-400"
-      size="sm"
-      onClick={handleShare}
-      {...rest}
-    >
-      <Send className="mr-2 h-4 w-4" /> Broadcast
-    </Button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <Button
+            variant="default"
+            className="bg-emerald-600 hover:bg-emerald-500"
+            size="sm"
+            onClick={handleShare}
+            {...rest}
+          >
+            <Send className="mr-2 h-4 w-4" /> Broadcast
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Share this article with all other Resonant users</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
