@@ -10,15 +10,30 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export const Entry = (message: Message) => {
   const page = message.page;
-  const { sender } = message;
-  const name = `${sender.first_name} ${sender.last_name}`;
+  const { senders } = message;
+
+  // TODO: Add multiple profile images shared in a stack with +3... more type
+  const sender = senders[0];
   const initials = `${sender.first_name[0]}${sender.last_name[0]}`;
+
+  const senderNames = senders.map(
+    (sender) => `${sender.first_name} ${sender.last_name}`,
+  );
+
+  // Add commas between names
+  const formatSenderNames = (names: string[]) => {
+    const last = names.pop();
+    if (names.length === 0) {
+      return last;
+    }
+    return `${names.join(", ")} & ${last}`;
+  };
 
   return (
     <div>
       <div className="border-b border-slate-400 pb-2">
         <div className="text-xs text-slate-500">
-          Shared by: <span>{name}</span>
+          Broadcasted by: <span>{formatSenderNames(senderNames)}</span>
         </div>
         <div className="flex flex-row items-center justify-between">
           <NextLink href={`/c?url=${page.url}`} className="cursor-pointer">
@@ -31,10 +46,10 @@ export const Entry = (message: Message) => {
           </NextLink>
           <div className="ml-8 flex items-center gap-3 lg:ml-20">
             <Avatar className="h-6 w-6">
-              <AvatarImage src={message.sender.profile_picture_url} />
-              <AvatarFallback>{initials}</AvatarFallback>
+              <AvatarImage src={sender.profile_picture_url} />
+              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
             </Avatar>
-            <FeedbackButton page={page} />
+            <FeedbackButton page={page} sender={sender} />
           </div>
         </div>
         <p className="mt-2 font-mono text-sm text-slate-500">
@@ -55,7 +70,7 @@ export const SocialFeed = () => {
   return (
     <div className="mt-5 space-y-2">
       {feed.messages.map((message) => (
-        <Entry {...message} key={`${message.page.url}-${message.sender.id}`} />
+        <Entry {...message} key={`${message.page.url}-${message.senders}`} />
       ))}
       <Feed feed={feed.random_feed} />
     </div>

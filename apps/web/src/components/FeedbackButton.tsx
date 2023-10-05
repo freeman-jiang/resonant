@@ -1,5 +1,6 @@
 "use client";
-import { likePage } from "@/api";
+import { Sender, likePage, sharePage, unsharePage } from "@/api";
+import { FEED_QUERY_KEY } from "@/api/hooks";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,8 +9,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSupabase } from "@/supabase/client";
 import { Page } from "@/types/api";
-import { Bookmark, MoreHorizontal } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { Bookmark, CircleOff, MoreHorizontal, Send } from "lucide-react";
 import { useToast } from "./ui/use-toast";
 
 enum Feedback {
@@ -20,23 +21,55 @@ enum Feedback {
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   page: Page;
+  sender?: Sender;
 }
 
-export const FeedbackButton = ({ page, ...props }: Props) => {
+export const FeedbackButton = ({ sender, page, ...props }: Props) => {
   const { session } = useSupabase();
   const user = session?.user;
   const { toast } = useToast();
-  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  if (!user) {
+    return null;
+  }
 
   const handleSave = async () => {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
     await likePage(user.id, page.id);
     toast({
       title: "Saved! 🎉",
     });
+  };
+
+  const handleShare = async () => {
+    await sharePage(user.id, page.id);
+    queryClient.invalidateQueries({ queryKey: [FEED_QUERY_KEY] });
+    toast({ title: "Broadcasted! 🎉" });
+  };
+
+  const handleUnshare = async () => {
+    await unsharePage(user.id, page.id);
+    queryClient.invalidateQueries({ queryKey: [FEED_QUERY_KEY] });
+    toast({ title: "Unbroadcasted! 🎉" });
+  };
+
+  const Share = () => {
+    if (user && sender && user.id === sender.id) {
+      return (
+        <DropdownMenuItem
+          className="cursor-pointer gap-2"
+          onClick={handleUnshare}
+        >
+          <CircleOff className="h-4 w-4" /> Unbroadcast this
+        </DropdownMenuItem>
+      );
+    }
+
+    return (
+      <DropdownMenuItem className="cursor-pointer gap-2" onClick={handleShare}>
+        <Send className="h-4 w-4" /> Broadcast this
+      </DropdownMenuItem>
+    );
   };
 
   return (
@@ -55,6 +88,7 @@ export const FeedbackButton = ({ page, ...props }: Props) => {
           >
             <Bookmark className="h-4 w-4" /> Save this
           </DropdownMenuItem>
+          <Share />
           {/* <DropdownMenuItem
             className="cursor-pointer gap-2"
             onClick={() => handleFeedback(Feedback.Loved)}

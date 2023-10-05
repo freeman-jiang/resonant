@@ -1,10 +1,9 @@
 "use client";
 
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
 import { amplitude } from "@/analytics/amplitude";
 import { NEXT_PUBLIC_AMPLITUDE_API_KEY } from "@/config";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useEffect, useState } from "react";
 
 export function Providers({ children }) {

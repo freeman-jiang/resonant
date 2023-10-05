@@ -1,6 +1,6 @@
 import os
-from collections import defaultdict
 import random
+from collections import defaultdict
 from datetime import datetime
 from typing import Optional, Union
 from uuid import UUID
@@ -49,10 +49,11 @@ class UserResponse(BaseModel):
     id: str
     first_name: str
     last_name: str
+    profile_picture_url: Optional[str]
 
     @classmethod
     def from_user(cls, user: User):
-        return UserResponse(id=user.id, first_name=user.first_name, last_name=user.last_name)
+        return UserResponse(id=user.id, first_name=user.first_name, last_name=user.last_name, profile_picture_url=user.profile_picture_url)
 
 
 @app.on_event("startup")
@@ -71,8 +72,9 @@ async def find_user(userid: str):
         return existing_user
 
 
-class LinkQuery(BaseModel):
+class FindPageRequest(BaseModel):
     url: str
+    userId: Optional[str]
 
     @validator("url")
     def check_url(cls, v: str):
@@ -80,14 +82,34 @@ class LinkQuery(BaseModel):
         return v
 
 
+class FindPageResponse(BaseModel):
+    page: PageResponse
+    message: Optional[Message]
+
+
 @app.post("/page")
-async def link(body: LinkQuery) -> Optional[PageResponse]:
+async def find_page(body: FindPageRequest) -> FindPageResponse:
     url = body.url
+    user_id = body.userId
     page = db.get_page(url=url)
 
     if page is None:
-        return None
-    return PageResponse.from_prisma_page(page)
+        raise HTTPException(400, "Page does not exist")
+
+    pageres = PageResponse.from_prisma_page(page)
+
+    if user_id:
+        message = await client.message.find_first(
+            include={'sender': True},
+            where={
+                'sender_id': user_id,
+                'page_id': page.id
+            })
+
+        if message:
+            return FindPageResponse(page=pageres, message=message)
+
+    return FindPageResponse(page=pageres, message=None)
 
 
 @app.get('/recommend')
@@ -286,6 +308,26 @@ async def share_page(user_id: str, page_id: int) -> None:
     return None
 
 
+@app.post('/unshare/{user_id}/{page_id}')
+async def unshare_page(user_id: str, page_id: int) -> None:
+    user = await find_user(user_id)
+    if not user:
+        raise HTTPException(400, "User does not exist")
+
+    message = await client.message.find_first(where={
+        'page_id': page_id,
+        'sender_id': user.id,
+    })
+
+    if not message:
+        raise HTTPException(400, "Message does not exist")
+
+    await client.message.delete(where={
+        'id': message.id
+    })
+    return None
+
+
 class SendMessageRequest(BaseModel):
     sender_id: UUID
     page_id: Optional[int]
@@ -321,7 +363,7 @@ async def _create_page(body: CreatePageRequest) -> Page:
     return page_response
 
 
-@app.post('/page')
+@app.post('/create_page')
 async def create_page(body: CreatePageRequest) -> PageResponse:
     page_response = await _create_page(body)
     return PageResponse.from_prisma_page(page_response)

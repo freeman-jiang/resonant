@@ -1,11 +1,13 @@
 import { Page } from "@/types/api";
+import { Session } from "@supabase/supabase-js";
 import {
   HydrationBoundary,
   QueryClient,
   dehydrate,
   useQuery,
 } from "@tanstack/react-query";
-import { fetchSocialFeed, searchFor } from ".";
+import { ReactNode } from "react";
+import { fetchSocialFeed, findPage, searchFor } from ".";
 
 // TODO: Consider using SSR by making this a server component
 export const FEED_QUERY_KEY = "feed";
@@ -30,6 +32,39 @@ export const FeedBoundary = async ({
   await queryClient.prefetchQuery({
     queryKey: [FEED_QUERY_KEY],
     queryFn: fetchSocialFeed,
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      {children}
+    </HydrationBoundary>
+  );
+};
+
+export const PAGE_QUERY_KEY = "page";
+
+export const usePage = (url: string, session: Session) => {
+  return useQuery({
+    queryKey: [PAGE_QUERY_KEY, url],
+    queryFn: () => findPage(url, session),
+  });
+};
+
+interface PageBoundaryProps {
+  children: ReactNode;
+  url: string;
+  session: Session;
+}
+
+export const PageBoundary = async ({
+  children,
+  session,
+  url,
+}: PageBoundaryProps) => {
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: [PAGE_QUERY_KEY, url],
+    queryFn: () => findPage(url, session),
   });
 
   return (

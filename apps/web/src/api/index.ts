@@ -1,20 +1,22 @@
 import { NEXT_PUBLIC_BASE_URL } from "@/config";
 import { Page } from "@/types/api";
+import { Session } from "@supabase/supabase-js";
 import baseAxios from "axios";
 
 const axios = baseAxios.create({
   baseURL: NEXT_PUBLIC_BASE_URL,
 });
 
+export interface Sender {
+  id: string;
+  first_name: string;
+  last_name: string;
+  profile_picture_url: string;
+}
+
 export interface Message {
   page: Page;
-  sender: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    profile_picture_url: string;
-  };
+  senders: Sender[];
 }
 
 export interface FeedResponse {
@@ -44,9 +46,17 @@ export const searchFor = async (query: string) => {
   return data as Page[];
 };
 
-export const findPage = async (url: string) => {
-  const { data } = await axios.post(`/page`, { url });
-  return data as Page;
+interface FindPageResponse {
+  page: Page;
+  message?: Message;
+}
+
+export const findPage = async (url: string, session?: Session) => {
+  const { data } = await axios.post<FindPageResponse>(`/page`, {
+    url,
+    userId: session?.user.id,
+  });
+  return data;
 };
 
 export interface CreateUserRequest {
@@ -81,5 +91,10 @@ export const getSavedPages = async (userId: string) => {
 
 export const sharePage = async (userId: string, pageId: number) => {
   const { data } = await axios.post(`/share/${userId}/${pageId}`);
+  return data;
+};
+
+export const unsharePage = async (userId: string, pageId: number) => {
+  const { data } = await axios.post(`/unshare/${userId}/${pageId}`);
   return data;
 };

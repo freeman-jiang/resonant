@@ -1,24 +1,52 @@
 "use client";
-import { sharePage } from "@/api";
+import { sharePage, unsharePage } from "@/api";
+import { PAGE_QUERY_KEY, usePage } from "@/api/hooks";
 import { useSupabase } from "@/supabase/client";
-import { Page } from "@/types/api";
-import { SendHorizonal } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { CircleOff, Send } from "lucide-react";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
 
 interface Props extends React.HTMLAttributes<HTMLButtonElement> {
-  page: Page;
+  url: string;
 }
 
-export const ShareButton = ({ page, ...rest }: Props) => {
+export const ShareButton = ({ url, ...rest }: Props) => {
   const { session } = useSupabase();
+  const {
+    data: { page, message },
+  } = usePage(url, session);
   const user = session?.user;
+  const queryClient = useQueryClient();
 
   const { toast } = useToast();
   const handleShare = async () => {
     await sharePage(user.id, page.id);
-    toast({ title: "Shared!" });
+    toast({ title: "Broadcasted! 🎉" });
+    queryClient.invalidateQueries({ queryKey: [PAGE_QUERY_KEY, url] });
   };
+
+  const handleUnshare = async () => {
+    await unsharePage(user.id, page.id);
+    toast({ title: "Unbroadcasted! 🎉" });
+    queryClient.invalidateQueries({ queryKey: [PAGE_QUERY_KEY, url] });
+  };
+
+  const shouldUnshare = user && message && user.id === message.sender.id;
+
+  if (shouldUnshare) {
+    return (
+      <Button
+        variant="default"
+        className="bg-slate-500 hover:bg-slate-600"
+        size="sm"
+        onClick={handleUnshare}
+        {...rest}
+      >
+        <CircleOff className="mr-2 h-4 w-4" /> Unbroadcast
+      </Button>
+    );
+  }
 
   return (
     <Button
@@ -28,7 +56,7 @@ export const ShareButton = ({ page, ...rest }: Props) => {
       onClick={handleShare}
       {...rest}
     >
-      <SendHorizonal className="mr-2 h-4 w-4" /> Share
+      <Send className="mr-2 h-4 w-4" /> Broadcast
     </Button>
   );
 };
