@@ -7,13 +7,13 @@ from uuid import UUID
 
 import pytest
 from api.page_response import PageResponse, PageResponseURLOnly, Sender
-from crawler.link import Link
+from crawler.link import Link, clean_url
 from crawler.prismac import PostgresClient
 from crawler.recommendation.embedding import (NearestNeighboursQuery,
                                               _query_similar,
                                               generate_feed_from_page,
                                               store_embeddings_for_pages)
-from crawler.worker import crawl_interactive, get_window_avg
+from crawler.worker import crawl_interactive, crawl_only, get_window_avg
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -97,7 +97,7 @@ async def get_senders_for_pages(page_ids: list[int]) -> dict[int, list[Sender]]:
 
 @app.post("/page")
 async def find_page(body: FindPageRequest) -> FindPageResponse:
-    url = body.url
+    url = clean_url(body.url)
     user_id = body.userId
     page = db.get_page(url=url)
 
@@ -399,12 +399,45 @@ class SendMessageRequest(BaseModel):
         return value
 
 
+class AlreadyCrawled(BaseModel):
+    type: str = "already_crawled"
+    url: str
+
+
+class Crawl(BaseModel):
+    type: str = "crawl"
+    title: str
+    excerpt: str
+    url: str
+
+
+class SearchUrlRequest(BaseModel):
+    url: str
+
+
+@app.post('/search_url')
+async def search_url(body: SearchUrlRequest) -> Union[Crawl, AlreadyCrawled]:
+    url = clean_url(body.url)
+    page = db.get_page(url=url)
+
+    if page:
+        return AlreadyCrawled(url=url)
+
+    crawl_result = await crawl_only(Link.from_url(url))
+
+    if crawl_result is None:
+        raise HTTPException(400, "Could not crawl URL")
+
+    return Crawl(title=crawl_result.title, excerpt=crawl_result.content[:800], url=url)
+
+
 class CreatePageRequest(BaseModel):
     url: str
 
 
 async def _create_page(body: CreatePageRequest) -> Page:
-    vec, response = await crawl_interactive(Link.from_url(body.url))
+    link = Link(parent_url="user", url=body.url, text="")
+    vec, response = await crawl_interactive(link)
     page_response = db.store_raw_page(3, response)
 
     await store_embeddings_for_pages([page_response])

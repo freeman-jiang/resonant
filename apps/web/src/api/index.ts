@@ -42,6 +42,27 @@ export const searchFor = async (query: string) => {
   return data as Page[];
 };
 
+interface AlreadyCrawled {
+  type: "already_crawled";
+  url: string;
+}
+
+interface Crawl {
+  type: "crawl";
+  url: string;
+  title: string;
+  excerpt: string;
+}
+
+export type SearchForUrlResponse = AlreadyCrawled | Crawl;
+
+export const searchForUrl = async (url: string) => {
+  const { data } = await axios.post<SearchForUrlResponse>(`/search_url`, {
+    url,
+  });
+  return data;
+};
+
 interface FindPageResponse {
   page: Page;
   has_broadcasted: boolean;
@@ -52,6 +73,7 @@ export const findPage = async (url: string, session?: Session) => {
     url,
     userId: session?.user.id,
   });
+
   return data;
 };
 

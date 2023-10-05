@@ -1,5 +1,6 @@
 "use client";
 import { amplitude } from "@/analytics/amplitude";
+import { searchForUrl } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
@@ -9,9 +10,7 @@ interface Inputs {
   search: string;
 }
 
-// TODO: Replace with react hook form
 export function Search() {
-  // const [search, setSearch] = useState(initialQuery || "");
   const router = useRouter();
   const { register, handleSubmit } = useForm<Inputs>();
 
@@ -20,6 +19,19 @@ export function Search() {
       return;
     }
     amplitude.track("Search", { query: search });
+
+    const linkRegex = /https?:\/\/[^\s]+/g;
+    if (search.match(linkRegex)) {
+      const result = await searchForUrl(search);
+      if (result.type === "already_crawled") {
+        const cleanedUrl = result.url;
+        router.push(`/c?url=${cleanedUrl}`);
+        return;
+      }
+      console.log(result);
+      return;
+    }
+
     router.push(`/search?q=${search}`);
   };
 

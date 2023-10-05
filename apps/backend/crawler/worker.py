@@ -157,6 +157,22 @@ async def crawl_interactive(link: Link) -> Tuple[np.ndarray, CrawlResult] | None
         return get_window_avg(response.title + " " + response.content), response
 
 
+# Same as above, but don't calculate embeddings
+async def crawl_only(link: Link) -> CrawlResult | None:
+    async with ClientSession(timeout=ClientTimeout(connect=4)) as session:
+        spoof_chrome_user_agent(session)
+
+        async with session.get(link.url) as response:
+            if not response.ok:
+                return None
+            response, _ = parse_html(await response.read(), link, False)
+
+        if response is None:
+            return None
+
+        return response
+
+
 def get_window_avg(content: str) -> np.ndarray:
     """
     Embed the given content using the sentence-transformers model
