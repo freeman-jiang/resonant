@@ -46,7 +46,3 @@ def get_readability_metrics(text: str) -> Optional[MetricsResult]:
         hlr=hlr,
         ttr=ttr
     )
-
-
-
-

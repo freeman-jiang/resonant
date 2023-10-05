@@ -310,6 +310,7 @@ async def _create_page(body: CreatePageRequest) -> Page:
     await store_embeddings_for_pages([page_response])
     return page_response
 
+
 @app.post('/page')
 async def create_page(body: CreatePageRequest) -> PageResponse:
     page_response = await _create_page(body)
@@ -348,7 +349,7 @@ async def test_send_message():
     await startup()
     await send_message(SendMessageRequest(
         sender_id='61b98b24-18ff-43eb-af97-c58cd386e748',
-        page_id = None,
+        page_id=None,
         url='https://www.nytimes.com/2023/10/04/us/politics/house-speaker-mccarthy.html',
         message='fdas',
         receiver_id='083e93f0-2fd9-4454-ad46-3444378f4b51'
@@ -381,6 +382,7 @@ class GroupedMessage(BaseModel):
             messages=[m.message for m in messages],
             sent_on=[m.sent_on for m in messages]
         )
+
 
 class UserFeedResponse(BaseModel):
     random_feed: list[PageResponse]
@@ -419,9 +421,9 @@ async def get_user_feed() -> UserFeedResponse:
         else:
             page_response = PageResponseURLOnly(url=r.url)
 
-        grouped = GroupedMessage.from_messages(grouped_messages[m], page_response)
+        grouped = GroupedMessage.from_messages(
+            grouped_messages[m], page_response)
         result.append(grouped)
-
 
     random_articles = await random_feed(limit=30)
 

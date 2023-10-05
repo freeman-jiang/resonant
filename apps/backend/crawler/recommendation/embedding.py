@@ -42,7 +42,6 @@ class Embedder:
         self.model = SentenceTransformer('BAAI/bge-base-en-v1.5')
         print("Using device", self.model.device)
 
-
     def embed(self, text: str, stride: int = 360, size: int = 380, for_query: bool = False) -> np.ndarray:
         """
         Sentence-transformers only supports small inputs, so we split the text into overlapping windows of X tokens each,
@@ -52,11 +51,11 @@ class Embedder:
         :return: ndarray of shape (n, 768) where n is the number of windows
         """
 
-
         windows = list(overlapping_windows(text, stride, size))
 
         if for_query:
-            windows = ["Represent this sentence for searching relevant passages:" + x for x in windows]
+            windows = [
+                "Represent this sentence for searching relevant passages:" + x for x in windows]
         # Trim to first N windows only to save computation
         if len(windows) > 3:
             windows = windows[0:3]
@@ -88,8 +87,6 @@ class Embedder:
                 )
             )
         return to_append
-
-
 
 
 class NearestNeighboursQuery(BaseModel):
