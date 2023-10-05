@@ -56,16 +56,40 @@ export function getRelativeTime(pythonDatetimeString: string): string {
   const year = day * 365;
 
   if (differenceInSeconds < minute) {
-    return `${Math.floor(differenceInSeconds)} seconds ago`;
+    if (Math.floor(differenceInSeconds) < 30) {
+      return `Just now`;
+    } else {
+      return `${Math.floor(differenceInSeconds)} seconds ago`;
+    }
   } else if (differenceInSeconds < hour) {
-    return `${Math.floor(differenceInSeconds / minute)} minutes ago`;
+    if (Math.floor(differenceInSeconds / minute) === 1) {
+      return `1 minute ago`;
+    } else {
+      return `${Math.floor(differenceInSeconds / minute)} minutes ago`;
+    }
   } else if (differenceInSeconds < day) {
-    return `${Math.floor(differenceInSeconds / hour)} hours ago`;
+    if (Math.floor(differenceInSeconds / hour) === 1) {
+      return `1 hour ago`;
+    } else {
+      return `${Math.floor(differenceInSeconds / hour)} hours ago`;
+    }
   } else if (differenceInSeconds < month) {
-    return `${Math.floor(differenceInSeconds / day)} days ago`;
+    if (Math.floor(differenceInSeconds / day) === 1) {
+      return `1 day ago`;
+    } else {
+      return `${Math.floor(differenceInSeconds / day)} days ago`;
+    }
   } else if (differenceInSeconds < year) {
-    return `${Math.floor(differenceInSeconds / month)} months ago`;
+    if (Math.floor(differenceInSeconds / month) === 1) {
+      return `1 month ago`;
+    } else {
+      return `${Math.floor(differenceInSeconds / month)} months ago`;
+    }
   } else {
-    return `${Math.floor(differenceInSeconds / year)} years ago`;
+    if (Math.floor(differenceInSeconds / year) === 1) {
+      return `1 year ago`;
+    } else {
+      return `${Math.floor(differenceInSeconds / year)} years ago`;
+    }
   }
 }

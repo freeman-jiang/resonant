@@ -59,7 +59,7 @@ export const Entry = (page: Page) => {
     return (
       <div className="text-xs text-slate-500">
         <div className="flex items-center ">
-          <span className="mr-2">Broadcasted by:</span>
+          {/* <span className="mr-2">Broadcasted by:</span> */}
           {renderAvatars()}
           <span className="ml-2">
             {getRelativeTime(mostRecentSender.sent_on)}
