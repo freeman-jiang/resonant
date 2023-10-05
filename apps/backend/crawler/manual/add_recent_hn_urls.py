@@ -12,16 +12,16 @@ load_dotenv()
 
 
 # Get stories >= 80 points and 30 comments
-rssfeed = 'https://hnrss.org/newest?points=80&comments=30&count=100'
+rssfeeds = ['https://hnrss.org/newest?points=80&comments=30&count=100', 'https://lobste.rs/rss']
 
 
 async def get_rss_feed():
     pc = PostgresClient()
     pc.connect()
 
-    links = find_feed_urls_cached(Link.from_url_raw(rssfeed))
-
-    pc.add_tasks(links)
+    for rssfeed in rssfeeds:
+        links = find_feed_urls_cached(Link.from_url_raw(rssfeed))
+        pc.add_tasks(links)
 
 
 if __name__ == "__main__":

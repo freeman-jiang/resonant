@@ -512,7 +512,7 @@ async def get_user_feed() -> UserFeedResponse:
 
     random_articles = await random_feed(limit=60)
 
-    # Filter out stuff that already appears in the messages
+    # Filter out stuff that alrdseady appears in the messages
     random_articles = [x for x in random_articles if x.id not in pages]
 
 

@@ -39,7 +39,7 @@ class Embedder:
     model: SentenceTransformer
 
     def __init__(self):
-        self.model = SentenceTransformer('BAAI/bge-base-en-v1.5', device = 'mps')
+        self.model = SentenceTransformer('BAAI/bge-base-en-v1.5')
 
     def embed(self, text: str, stride: int = 360, size: int = 380, for_query: bool = False) -> np.ndarray:
         """
