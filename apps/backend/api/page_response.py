@@ -59,6 +59,7 @@ class PageResponseURLOnly(BaseModel):
     """
     url: str
     url_only: bool = True
+    senders: list[UserResponse] = []
 
     # TODO: crawl the page and get the title
 

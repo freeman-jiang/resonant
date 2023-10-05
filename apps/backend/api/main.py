@@ -88,7 +88,8 @@ async def get_senders_for_pages(page_ids: list[int]) -> dict[int, list[UserRespo
     sender_map = defaultdict(list)
 
     for m in messages:
-        sender_map[m.page_id].append(m.sender)
+        sender = UserResponse.from_user(m.sender)
+        sender_map[m.page_id].append(sender)
 
     return sender_map
 @app.post("/page")
@@ -111,7 +112,11 @@ async def find_page(body: FindPageRequest) -> FindPageResponse:
 
     return FindPageResponse(page=pageres, has_broadcasted=has_broadcasted)
 
+@pytest.mark.asyncio
+async def test_find_page():
+    await startup()
 
+    print(await find_page(FindPageRequest(url = 'https://shuttersparks.net/specious-appeal-to-fairness/')))
 @app.get('/recommend')
 async def recommend(userid: int) -> list[PageResponse]:
     """
@@ -295,6 +300,12 @@ def health_check():
     return {"status": "ok"}
 
 
+async def add_senders(pages: list[PageResponse]):
+    senders = await get_senders_for_pages([p.id for p in pages])
+
+    for p in pages:
+        p.senders = senders[p.id]
+
 async def random_feed(limit: int = 60) -> list[PageResponse]:
     """
     Gets a random set of Pages with depth <= 1, based on the seed.
@@ -318,10 +329,7 @@ async def random_feed(limit: int = 60) -> list[PageResponse]:
     random_pages = [Page(**p) for p in random_pages]
     pages = [PageResponse.from_prisma_page(p) for p in random_pages]
 
-    senders = get_senders_for_pages([p.id for p in random_pages])
-
-    for p in pages:
-        p.senders = senders[p.id]
+    await add_senders(pages)
 
     return pages
 
@@ -462,7 +470,7 @@ class GroupedMessage(BaseModel):
 
 class UserFeedResponse(BaseModel):
     random_feed: list[PageResponse]
-    messages: list[GroupedMessage]
+    messages: list[PageResponse]
 
 # def group_page_responses(messages: list[PageResponse]) -> PageResponse:
 
@@ -477,7 +485,7 @@ async def get_user_feed() -> UserFeedResponse:
 
     messages = await client.message.find_many(order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True})
 
-    grouped_messages = defaultdict(list)
+    grouped_messages: dict[str, list[Message]] = defaultdict(list)
     for m in messages:
         group_key = m.page_id or m.url
         grouped_messages[group_key].append(m)
@@ -499,9 +507,8 @@ async def get_user_feed() -> UserFeedResponse:
         else:
             page_response = PageResponseURLOnly(url=r.url)
 
-        grouped = GroupedMessage.from_messages(
-            grouped_messages[m], page_response)
-        result.append(grouped)
+        page_response.senders = [UserResponse.from_user(x.sender) for x in grouped_messages[m]]
+        result.append(page_response)
 
     random_articles = await random_feed(limit=60)
 
