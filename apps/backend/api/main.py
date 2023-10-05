@@ -96,7 +96,7 @@ async def find_page(body: FindPageRequest) -> FindPageResponse:
     if page is None:
         raise HTTPException(400, "Page does not exist")
 
-    pageres = PageResponse.from_prisma_page(page)
+    pageres = PageResponse.from_prisma_page(page, dont_trim=True)
 
     if user_id:
         message = await client.message.find_first(

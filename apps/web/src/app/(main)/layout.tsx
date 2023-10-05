@@ -29,10 +29,7 @@ export default async function RootLayout({
   return (
     <SupabaseProvider session={session}>
       <Providers>
-        <div className="mx-auto px-8 py-4 lg:max-w-2xl">
-          {/* <Link href="/" className="text-2xl font-bold">
-            Resonant
-          </Link> */}
+        <div className="mx-auto px-8 py-4 md:max-w-2xl">
           <Topics />
           <Search />
           {children}
