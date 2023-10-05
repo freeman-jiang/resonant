@@ -1,5 +1,4 @@
 import { crawlInteractive } from "@/api";
-import { CrawlBoundary } from "@/api/hooks";
 import { AddPage } from "@/components/AddPage";
 
 interface RouteParams {
@@ -14,8 +13,8 @@ export default async function Add(params: RouteParams) {
   console.log(s);
 
   return (
-    <CrawlBoundary url={url}>
-      <AddPage url={url} />
-    </CrawlBoundary>
+    // <CrawlBoundary url={url}>
+    <AddPage url={url} />
+    // </CrawlBoundary>
   );
 }

@@ -3,7 +3,8 @@ import { useCrawl } from "@/api/hooks";
 import { extractDomain, formatExercept } from "@/lib/utils";
 import { ExternalLink } from "lucide-react";
 import NextLink from "next/link";
-import { Feed } from "./Feed";
+import { Feed, LoadingFeed } from "./Feed";
+import { Skeleton } from "./ui/skeleton";
 
 interface Props {
   url: string;
@@ -13,6 +14,19 @@ export const AddPage = ({ url }: Props) => {
   const { data } = useCrawl(url);
 
   const page = data;
+
+  if (!data) {
+    return (
+      <div className="mt-5">
+        <Skeleton className="flex h-64 items-center justify-center">
+          <div className="font-mono text-sm">
+            Searching for similar content...
+          </div>
+        </Skeleton>
+        <LoadingFeed />
+      </div>
+    );
+  }
 
   return (
     <div className="mt-5">
