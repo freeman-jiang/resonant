@@ -43,7 +43,7 @@ export const searchFor = async (query: string) => {
 
 interface FindPageResponse {
   page: Page;
-  sender?: UserResponse;
+  has_broadcasted: boolean;
 }
 
 export const findPage = async (url: string, session?: Session) => {

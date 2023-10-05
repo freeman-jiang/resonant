@@ -24,7 +24,7 @@ export const ShareButton = ({ url, ...rest }: Props) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const {
-    data: { page, sender },
+    data: { page, has_broadcasted },
   } = usePage(url, session);
   const router = useRouter();
 
@@ -45,9 +45,7 @@ export const ShareButton = ({ url, ...rest }: Props) => {
     queryClient.invalidateQueries({ queryKey: [PAGE_QUERY_KEY, url] });
   };
 
-  const shouldUnshare = user && sender && user.id === sender.id;
-
-  if (shouldUnshare) {
+  if (has_broadcasted) {
     return (
       <Button
         variant="default"
