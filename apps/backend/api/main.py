@@ -45,6 +45,16 @@ app.add_middleware(
 )
 
 
+class UserResponse(BaseModel):
+    id: str
+    first_name: str
+    last_name: str
+
+    @classmethod
+    def from_user(cls, user: User):
+        return UserResponse(id=user.id, first_name=user.first_name, last_name=user.last_name)
+
+
 @app.on_event("startup")
 async def startup():
     print("Connecting to database...")
@@ -356,18 +366,9 @@ async def test_send_message():
     ))
 
 
-class MessageResponse(BaseModel):
-    page: Union[PageResponse, PageResponseURLOnly]
-    sender: User
-    receiver: User
-
-    message: Optional[str]
-    sent_on: datetime
-
-
 class GroupedMessage(BaseModel):
     message_ids: list[int]
-    senders: list[User]
+    senders: list[UserResponse]
     page: Union[PageResponse, PageResponseURLOnly]
 
     messages: list[Optional[str]]
@@ -377,7 +378,7 @@ class GroupedMessage(BaseModel):
     def from_messages(cls, messages: list[Message], page: Union[PageResponse, PageResponseURLOnly]):
         return GroupedMessage(
             message_ids=[m.id for m in messages],
-            senders=[m.sender for m in messages],
+            senders=[UserResponse.from_user(m.sender) for m in messages],
             page=page,
             messages=[m.message for m in messages],
             sent_on=[m.sent_on for m in messages]
