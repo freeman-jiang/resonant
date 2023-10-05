@@ -8,6 +8,7 @@ import { Page } from "@/types/api";
 import { Session } from "@supabase/supabase-js";
 import { ExternalLink } from "lucide-react";
 import NextLink from "next/link";
+import { StoreButton } from "./StoreButton";
 import { Button } from "./ui/button";
 
 interface Props {
@@ -56,7 +57,11 @@ export const PageLayout = ({ url, session }: Props) => {
       </NextLink>
 
       <div className="mt-4 flex gap-3">
-        {isStorePage ? <ShareButton url={page.url} /> : null}
+        {isStorePage ? (
+          <ShareButton url={page.url} />
+        ) : (
+          <StoreButton url={data.url} />
+        )}
         {isStorePage && <SaveButton page={page as Page} />}
       </div>
       <h2 className="mt-5 text-2xl font-semibold text-slate-900">Related</h2>
