@@ -24,12 +24,11 @@ export const ShareButton = ({ url, ...rest }: Props) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data } = usePage(url, session);
+  const router = useRouter();
   if (data.type !== "page") {
     return null;
   }
   const { page, has_broadcasted } = data;
-
-  const router = useRouter();
 
   const user = session?.user;
   const handleShare = async () => {
