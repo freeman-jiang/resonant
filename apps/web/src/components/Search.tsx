@@ -23,12 +23,12 @@ export function Search() {
     const linkRegex = /https?:\/\/[^\s]+/g;
     if (search.match(linkRegex)) {
       const result = await searchForUrl(search);
-      if (result.type === "already_crawled") {
+      if (result.type === "already_added") {
         const cleanedUrl = result.url;
         router.push(`/c?url=${cleanedUrl}`);
         return;
       }
-      console.log(result);
+      router.push(`/add?url=${search}`);
       return;
     }
 

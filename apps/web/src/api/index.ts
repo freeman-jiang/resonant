@@ -43,12 +43,12 @@ export const searchFor = async (query: string) => {
 };
 
 interface AlreadyCrawled {
-  type: "already_crawled";
+  type: "already_added";
   url: string;
 }
 
 interface Crawl {
-  type: "crawl";
+  type: "add";
   url: string;
   title: string;
   excerpt: string;
@@ -58,6 +58,20 @@ export type SearchForUrlResponse = AlreadyCrawled | Crawl;
 
 export const searchForUrl = async (url: string) => {
   const { data } = await axios.post<SearchForUrlResponse>(`/search_url`, {
+    url,
+  });
+  return data;
+};
+
+interface CrawlInteractiveResponse {
+  title: string;
+  content: string;
+  url: string;
+  similar: Page[];
+}
+
+export const crawlInteractive = async (url: string) => {
+  const { data } = await axios.post<CrawlInteractiveResponse>(`/crawl`, {
     url,
   });
   return data;

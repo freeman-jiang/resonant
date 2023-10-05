@@ -399,36 +399,67 @@ class SendMessageRequest(BaseModel):
         return value
 
 
-class AlreadyCrawled(BaseModel):
-    type: str = "already_crawled"
+class AlreadyAdded(BaseModel):
+    type: str = "already_added"
     url: str
 
 
-class Crawl(BaseModel):
-    type: str = "crawl"
-    title: str
-    excerpt: str
+class ShouldAdd(BaseModel):
+    type: str = "add"
     url: str
 
 
-class SearchUrlRequest(BaseModel):
+class UrlRequest(BaseModel):
     url: str
+
+    @validator("url")
+    def check_url(cls, v: str):
+        Link.from_url(v)
+        return v
 
 
 @app.post('/search_url')
-async def search_url(body: SearchUrlRequest) -> Union[Crawl, AlreadyCrawled]:
+async def search_url(body: UrlRequest) -> Union[ShouldAdd, AlreadyAdded]:
     url = clean_url(body.url)
     page = db.get_page(url=url)
 
     if page:
-        return AlreadyCrawled(url=url)
+        return AlreadyAdded(url=url)
 
     crawl_result = await crawl_only(Link.from_url(url))
 
     if crawl_result is None:
         raise HTTPException(400, "Could not crawl URL")
 
-    return Crawl(title=crawl_result.title, excerpt=crawl_result.content[:800], url=url)
+    return ShouldAdd(url=url)
+
+
+class CrawlInteractiveResponse(BaseModel):
+    title: str
+    url: str
+    content: str
+    similar: list[PageResponse]
+
+
+@app.post('/crawl')
+async def crawl_user(body: UrlRequest) -> CrawlInteractiveResponse:
+    url = clean_url(body.url)
+
+    want_vec, crawl_result = await crawl_interactive(Link.from_url(url))
+    query = NearestNeighboursQuery(vector=want_vec, url=url)
+
+    similar = _query_similar(query)
+
+    messages = await get_senders_for_pages([x.id for x in similar])
+
+    for s in similar:
+        s.senders = messages[s.id]
+
+    return CrawlInteractiveResponse(
+        content=crawl_result.content[:1000],
+        title=crawl_result.title,
+        url=url,
+        similar=similar)
 
 
 class CreatePageRequest(BaseModel):
