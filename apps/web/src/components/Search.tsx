@@ -1,6 +1,5 @@
 "use client";
 import { amplitude } from "@/analytics/amplitude";
-import { searchForUrl } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
@@ -22,13 +21,7 @@ export function Search() {
 
     const linkRegex = /https?:\/\/[^\s]+/g;
     if (search.match(linkRegex)) {
-      const result = await searchForUrl(search);
-      if (result.type === "already_added") {
-        const cleanedUrl = result.url;
-        router.push(`/c?url=${cleanedUrl}`);
-        return;
-      }
-      router.push(`/add?url=${search}`);
+      router.push(`/c?url=${search}`);
       return;
     }
 

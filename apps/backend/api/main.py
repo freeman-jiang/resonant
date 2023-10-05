@@ -74,6 +74,7 @@ class FindPageRequest(BaseModel):
 class FindPageResponse(BaseModel):
     page: PageResponse
     has_broadcasted: bool
+    type: str = "page"
 
 
 async def get_senders_for_pages(page_ids: list[int]) -> dict[int, list[Sender]]:
@@ -93,27 +94,6 @@ async def get_senders_for_pages(page_ids: list[int]) -> dict[int, list[Sender]]:
         sender_map[m.page_id].append(sender)
 
     return sender_map
-
-
-@app.post("/page")
-async def find_page(body: FindPageRequest) -> FindPageResponse:
-    url = clean_url(body.url)
-    user_id = body.userId
-    page = db.get_page(url=url)
-
-    if page is None:
-        raise HTTPException(400, "Page does not exist")
-
-    pageres = PageResponse.from_prisma_page(page, dont_trim=True)
-
-    pageres.senders = (await get_senders_for_pages([page.id]))[page.id]
-
-    if user_id:
-        has_broadcasted = any(x.id == user_id for x in pageres.senders)
-    else:
-        has_broadcasted = False
-
-    return FindPageResponse(page=pageres, has_broadcasted=has_broadcasted)
 
 
 @pytest.mark.asyncio
@@ -437,8 +417,9 @@ async def search_url(body: UrlRequest) -> Union[ShouldAdd, AlreadyAdded]:
 class CrawlInteractiveResponse(BaseModel):
     title: str
     url: str
-    content: str
+    excerpt: str
     similar: list[PageResponse]
+    type: str = "crawl"
 
 
 @app.post('/crawl')
@@ -675,3 +656,41 @@ async def test_like():
     await startup()
 
     await save(1, 14)
+
+
+@app.post("/page")
+async def find_page(body: FindPageRequest) -> Union[FindPageResponse, CrawlInteractiveResponse]:
+    url = clean_url(body.url)
+    user_id = body.userId
+    page = db.get_page(url=url)
+
+    if page is None:
+        want_vec, crawl_result = await crawl_interactive(Link.from_url(url))
+
+        if crawl_result is None:
+            raise HTTPException(400, "Could not crawl URL")
+
+        query = NearestNeighboursQuery(vector=want_vec, url=url)
+
+        similar = _query_similar(query)
+        messages = await get_senders_for_pages([x.id for x in similar])
+
+        for s in similar:
+            s.senders = messages[s.id]
+
+        return CrawlInteractiveResponse(
+            excerpt=crawl_result.content[:1000],
+            title=crawl_result.title,
+            url=url,
+            similar=similar)
+
+    pageres = PageResponse.from_prisma_page(page, dont_trim=True)
+
+    pageres.senders = (await get_senders_for_pages([page.id]))[page.id]
+
+    if user_id:
+        has_broadcasted = any(x.id == user_id for x in pageres.senders)
+    else:
+        has_broadcasted = False
+
+    return FindPageResponse(page=pageres, has_broadcasted=has_broadcasted)

@@ -23,9 +23,12 @@ export const ShareButton = ({ url, ...rest }: Props) => {
   const { session } = useSupabase();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const {
-    data: { page, has_broadcasted },
-  } = usePage(url, session);
+  const { data } = usePage(url, session);
+  if (data.type !== "page") {
+    return null;
+  }
+  const { page, has_broadcasted } = data;
+
   const router = useRouter();
 
   const user = session?.user;

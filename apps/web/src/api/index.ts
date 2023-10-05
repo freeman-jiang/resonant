@@ -65,22 +65,19 @@ export const searchForUrl = async (url: string) => {
 
 interface CrawlInteractiveResponse {
   title: string;
-  content: string;
+  excerpt: string;
   url: string;
   similar: Page[];
+  type: "crawl";
 }
 
-export const crawlInteractive = async (url: string) => {
-  const { data } = await axios.post<CrawlInteractiveResponse>(`/crawl`, {
-    url,
-  });
-  return data;
-};
-
-interface FindPageResponse {
+interface ExistingPageResponse {
   page: Page;
   has_broadcasted: boolean;
+  type: "page";
 }
+
+type FindPageResponse = CrawlInteractiveResponse | ExistingPageResponse;
 
 export const findPage = async (url: string, session?: Session) => {
   const { data } = await axios.post<FindPageResponse>(`/page`, {
