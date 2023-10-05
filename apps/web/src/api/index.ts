@@ -7,7 +7,7 @@ const axios = baseAxios.create({
   baseURL: NEXT_PUBLIC_BASE_URL,
 });
 
-export interface Sender {
+export interface UserResponse {
   id: string;
   first_name: string;
   last_name: string;
@@ -16,7 +16,7 @@ export interface Sender {
 
 export interface Message {
   page: Page;
-  senders: Sender[];
+  senders: UserResponse[];
 }
 
 export interface FeedResponse {
@@ -48,7 +48,7 @@ export const searchFor = async (query: string) => {
 
 interface FindPageResponse {
   page: Page;
-  message?: Message;
+  sender?: UserResponse;
 }
 
 export const findPage = async (url: string, session?: Session) => {

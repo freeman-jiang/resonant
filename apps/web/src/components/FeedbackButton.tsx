@@ -1,5 +1,5 @@
 "use client";
-import { Sender, likePage, sharePage, unsharePage } from "@/api";
+import { likePage, sharePage, unsharePage } from "@/api";
 import { FEED_QUERY_KEY } from "@/api/hooks";
 import {
   DropdownMenu,
@@ -21,10 +21,10 @@ enum Feedback {
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   page: Page;
-  sender?: Sender;
+  canUnsend?: boolean;
 }
 
-export const FeedbackButton = ({ sender, page, ...props }: Props) => {
+export const FeedbackButton = ({ canUnsend, page, ...props }: Props) => {
   const { session } = useSupabase();
   const user = session?.user;
   const { toast } = useToast();
@@ -54,7 +54,7 @@ export const FeedbackButton = ({ sender, page, ...props }: Props) => {
   };
 
   const Share = () => {
-    if (user && sender && user.id === sender.id) {
+    if (canUnsend) {
       return (
         <DropdownMenuItem
           className="cursor-pointer gap-2"

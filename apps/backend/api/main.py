@@ -84,7 +84,7 @@ class FindPageRequest(BaseModel):
 
 class FindPageResponse(BaseModel):
     page: PageResponse
-    message: Optional[Message]
+    sender: Optional[UserResponse]
 
 
 @app.post("/page")
@@ -106,10 +106,10 @@ async def find_page(body: FindPageRequest) -> FindPageResponse:
                 'page_id': page.id
             })
 
-        if message:
-            return FindPageResponse(page=pageres, message=message)
+        if message and message.sender:
+            return FindPageResponse(page=pageres, sender=UserResponse.from_user(message.sender))
 
-    return FindPageResponse(page=pageres, message=None)
+    return FindPageResponse(page=pageres, sender=None)
 
 
 @app.get('/recommend')

@@ -15,7 +15,7 @@ interface Props {
 
 export const PageLayout = ({ url, session }: Props) => {
   const {
-    data: { page, message },
+    data: { page },
   } = usePage(url, session);
 
   return (

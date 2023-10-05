@@ -14,7 +14,7 @@ interface Props extends React.HTMLAttributes<HTMLButtonElement> {
 export const ShareButton = ({ url, ...rest }: Props) => {
   const { session } = useSupabase();
   const {
-    data: { page, message },
+    data: { page, sender },
   } = usePage(url, session);
   const user = session?.user;
   const queryClient = useQueryClient();
@@ -32,7 +32,7 @@ export const ShareButton = ({ url, ...rest }: Props) => {
     queryClient.invalidateQueries({ queryKey: [PAGE_QUERY_KEY, url] });
   };
 
-  const shouldUnshare = user && message && user.id === message.sender.id;
+  const shouldUnshare = user && sender && user.id === sender.id;
 
   if (shouldUnshare) {
     return (

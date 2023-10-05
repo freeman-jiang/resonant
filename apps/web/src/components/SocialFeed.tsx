@@ -3,6 +3,7 @@
 import { FeedResponse, Message } from "@/api";
 import { useFeed } from "@/api/hooks";
 import { extractDomain, formatExercept } from "@/lib/utils";
+import { useSupabase } from "@/supabase/client";
 import NextLink from "next/link";
 import { Feed } from "./Feed";
 import { FeedbackButton } from "./FeedbackButton";
@@ -13,8 +14,6 @@ export const Entry = (message: Message) => {
   const { senders } = message;
 
   // TODO: Add multiple profile images shared in a stack with +3... more type
-  const sender = senders[0];
-  const initials = `${sender.first_name[0]}${sender.last_name[0]}`;
 
   const senderNames = senders.map(
     (sender) => `${sender.first_name} ${sender.last_name}`,
@@ -29,11 +28,36 @@ export const Entry = (message: Message) => {
     return `${names.join(", ")} & ${last}`;
   };
 
+  const renderAvatars = () => {
+    const avatars = senders.map((sender) => {
+      const initials = `${sender.first_name[0]}${sender.last_name[0]}`;
+
+      return (
+        <Avatar className="h-6 w-6">
+          <AvatarImage src={sender.profile_picture_url} />
+          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+        </Avatar>
+      );
+    });
+
+    return <div className="flex -space-x-1.5">{avatars}</div>;
+  };
+
+  const { session } = useSupabase();
+  const user = session?.user;
+
+  // Look if the current user's id is in the list of senders
+  const canUnsend = user && senders.some((sender) => sender.id === user.id);
+
   return (
     <div>
       <div className="border-b border-slate-400 pb-2">
         <div className="text-xs text-slate-500">
-          Broadcasted by: <span>{formatSenderNames(senderNames)}</span>
+          <div className="flex items-center ">
+            <span className="mr-2">Broadcasted by:</span>
+
+            {renderAvatars()}
+          </div>
         </div>
         <div className="flex flex-row items-center justify-between">
           <NextLink href={`/c?url=${page.url}`} className="cursor-pointer">
@@ -44,12 +68,12 @@ export const Entry = (message: Message) => {
               {extractDomain(page.url)}
             </p>
           </NextLink>
-          <div className="ml-8 flex items-center gap-3 lg:ml-20">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={sender.profile_picture_url} />
-              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-            </Avatar>
-            <FeedbackButton page={page} sender={sender} />
+          <div className="ml-8 flex items-center lg:ml-20">
+            <FeedbackButton
+              page={page}
+              canUnsend={canUnsend}
+              className="ml-2"
+            />
           </div>
         </div>
         <p className="mt-2 font-mono text-sm text-slate-500">
