@@ -6,7 +6,7 @@ from typing import Optional, Union
 from uuid import UUID
 
 import pytest
-from api.page_response import PageResponse, PageResponseURLOnly
+from api.page_response import PageResponse, PageResponseURLOnly, UserResponse
 from crawler.link import Link
 from crawler.prismac import PostgresClient
 from crawler.recommendation.embedding import (NearestNeighboursQuery,
@@ -45,17 +45,6 @@ app.add_middleware(
 )
 
 
-class UserResponse(BaseModel):
-    id: str
-    first_name: str
-    last_name: str
-    profile_picture_url: Optional[str]
-
-    @classmethod
-    def from_user(cls, user: User):
-        return UserResponse(id=user.id, first_name=user.first_name, last_name=user.last_name, profile_picture_url=user.profile_picture_url)
-
-
 @app.on_event("startup")
 async def startup():
     print("Connecting to database...")
@@ -84,9 +73,24 @@ class FindPageRequest(BaseModel):
 
 class FindPageResponse(BaseModel):
     page: PageResponse
-    sender: Optional[UserResponse]
+    has_broadcasted: bool
 
 
+async def get_senders_for_pages(page_ids: list[int]) -> dict[int, list[UserResponse]]:
+    messages = await client.message.find_many(
+        include={'sender': True},
+        where={
+            'page_id': {
+                'in': page_ids
+            }
+        })
+
+    sender_map = defaultdict(list)
+
+    for m in messages:
+        sender_map[m.page_id].append(m.sender)
+
+    return sender_map
 @app.post("/page")
 async def find_page(body: FindPageRequest) -> FindPageResponse:
     url = body.url
@@ -98,18 +102,14 @@ async def find_page(body: FindPageRequest) -> FindPageResponse:
 
     pageres = PageResponse.from_prisma_page(page)
 
+    pageres.senders = (await get_senders_for_pages([page.id]))[page.id]
+
     if user_id:
-        message = await client.message.find_first(
-            include={'sender': True},
-            where={
-                'sender_id': user_id,
-                'page_id': page.id
-            })
+        has_broadcasted = any(x.id == user_id for x in pageres.senders)
+    else:
+        has_broadcasted = False
 
-        if message and message.sender:
-            return FindPageResponse(page=pageres, sender=UserResponse.from_user(message.sender))
-
-    return FindPageResponse(page=pageres, sender=None)
+    return FindPageResponse(page=pageres, has_broadcasted=has_broadcasted)
 
 
 @app.get('/recommend')
@@ -255,12 +255,17 @@ async def search(body: SearchQuery) -> list[PageResponse]:
 
         similar = _query_similar(query)
 
-        return similar
     else:
         want_vec = get_window_avg(body.query)
         query = NearestNeighboursQuery(vector=want_vec, text_query=body.query)
         similar = _query_similar(query)
-        return similar
+
+    messages = await get_senders_for_pages([x.id for x in similar])
+
+    for s in similar:
+        s.senders = messages[s.id]
+
+    return similar
 
 
 @app.get("/")
@@ -268,7 +273,6 @@ def health_check():
     return {"status": "ok"}
 
 
-@app.get("/random-feed")
 async def random_feed(limit: int = 60) -> list[PageResponse]:
     """
     Gets a random set of Pages with depth <= 1, based on the seed.
@@ -290,7 +294,14 @@ async def random_feed(limit: int = 60) -> list[PageResponse]:
     """, [seed, limit])
 
     random_pages = [Page(**p) for p in random_pages]
-    return [PageResponse.from_prisma_page(p) for p in random_pages]
+    pages = [PageResponse.from_prisma_page(p) for p in random_pages]
+
+    senders = get_senders_for_pages([p.id for p in random_pages])
+
+    for p in pages:
+        p.senders = senders[p.id]
+
+    return pages
 
 
 @app.post('/share/{user_id}/{page_id}')
@@ -431,6 +442,8 @@ class UserFeedResponse(BaseModel):
     random_feed: list[PageResponse]
     messages: list[GroupedMessage]
 
+# def group_page_responses(messages: list[PageResponse]) -> PageResponse:
+
 
 @app.get('/feed')
 async def get_user_feed() -> UserFeedResponse:
@@ -468,7 +481,11 @@ async def get_user_feed() -> UserFeedResponse:
             grouped_messages[m], page_response)
         result.append(grouped)
 
-    random_articles = await random_feed(limit=30)
+    random_articles = await random_feed(limit=60)
+
+    # Filter out stuff that already appears in the messages
+    random_articles = [x for x in random_articles if x.id not in pages]
+
 
     return UserFeedResponse(random_feed=random_articles, messages=result)
 
@@ -546,18 +563,12 @@ async def get_search_users(query: str) -> list[UserQueryResponse]:
     return [UserQueryResponse.from_prisma(u) for u in users]
 
 
-@pytest.mark.asyncio
-async def test_random_feed():
-    await startup()
-
-    print(await random_feed())
-
 
 @pytest.mark.asyncio
 async def test_search():
     await startup()
     results = await search(SearchQuery(url='http://www.naughtycomputer.uk/owned_software_servant_software.html'))
-    print([x.url for x in results])
+    print([x for x in results])
 
 
 @pytest.mark.asyncio

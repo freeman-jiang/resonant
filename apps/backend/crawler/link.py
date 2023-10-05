@@ -16,7 +16,22 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
                       'vimeo.com', 'youtube.com', 'pittsburghlive.com', 'linkedin.com', 'soundcloud.com',
                       'albawa.com', 'theage.com', 'prnewswire.com', 'archive.org', 'stackexchange.com', 'doi.org',
                       'jamanetwork',
+                      'versobooks.com',
+
+                      'www.sitepoint.com',
+
+                      'youtu.be',
+
+                      'developer.mozilla.org',
+                      'code.jquery.com',
+                      'css-tricks.com',
+                      'completemusicupdate.com',
+                        'feeds.feedblitz.com',
+                      'https://stop.zona-m.net',
+                      'finance.yahoo.com',
+                      'voanews.com',
                       'rust-lang.org',
+                      'foxnews.com',
                       'www.codevscolor.com',
                       'https://www.cerealously.net',
                       'tv-vcr.com',
@@ -57,12 +72,18 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
                       'tvtropes.org', 'theregister.com', 'theonion.com', 'telegraph.co.uk', 'quoteinvestigator.com',
                       'biomedcentral', 'tumblr.com', '9to5google', 'washingtonmonthly', 'ifstudies', 'awardworld.net',
                       'webpronews.com',
+                      'webmd.com',
+
+                      'sleeplessbeastie.eu',
+                      'thewhitepube.co.uk',
+                      'raymii.org',
+
                       'brill.com',
                       'https://github.com/',
                       'http://github.com/',
                       'ramii.org',
                       'americansongwriter.com',
-
+                        ''
                       'caiso.com',
                       'slideshare.net',
                       'stackoverflow.com',

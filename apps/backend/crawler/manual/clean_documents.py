@@ -18,9 +18,9 @@ async def main(db: PostgresClient):
 
     while True:
         pages = db.cursor(Page).execute(
-            "SELECT * FROM \"Page\" WHERE created_at >= '2023-09-29'::date ORDER BY \"Page\".created_at DESC LIMIT 500 OFFSET %s", (processed,)).fetchall()
+            "SELECT * FROM \"Page\" WHERE created_at >= '2023-09-29'::date ORDER BY \"Page\".created_at DESC LIMIT 2000 OFFSET %s", (processed,)).fetchall()
 
-        if len(pages) == 0:
+        if len(pages) == 0 or processed > 50000:
             break
         print(f"Processing {len(pages)} pages")
         processed += len(pages)
@@ -35,8 +35,14 @@ async def main(db: PostgresClient):
 
     if len(to_delete) > 0:
         print("Deleting {} pages".format(len(to_delete)))
+        print(to_delete)
         db.query(
             "DELETE FROM \"Page\" WHERE \"Page\".id = ANY(%s) RETURNING 1", (to_delete,))
+
+        db.conn.commit()
+
+
+
 
 if __name__ == '__main__':
     import asyncio

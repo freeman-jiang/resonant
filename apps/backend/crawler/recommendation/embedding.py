@@ -39,8 +39,7 @@ class Embedder:
     model: SentenceTransformer
 
     def __init__(self):
-        self.model = SentenceTransformer('BAAI/bge-base-en-v1.5')
-        print("Using device", self.model.device)
+        self.model = SentenceTransformer('BAAI/bge-base-en-v1.5', device = 'mps')
 
     def embed(self, text: str, stride: int = 360, size: int = 380, for_query: bool = False) -> np.ndarray:
         """
@@ -271,7 +270,7 @@ async def generate_embeddings(db: PostgresClient):
 
     while True:
         pages = db.cursor(Page).execute(
-            'SELECT * FROM "Page" WHERE "Page".url NOT IN (SELECT url FROM Embeddings GROUP BY "url") ORDER BY "Page".depth ASC LIMIT 50').fetchall()
+            '''SELECT p.* FROM "Page" AS p LEFT JOIN Embeddings AS e ON p.url = e.url WHERE e.url IS NULL ORDER BY p.depth ASC LIMIT 50''').fetchall()
 
         if len(pages) == 0:
             print("ERR: No pages to process")

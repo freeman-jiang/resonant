@@ -27,6 +27,8 @@ model Page {
   page_rank     Float?
   embeddings    Embeddings[]
 
+
+
   @@schema("public")
 }
 
