@@ -1,8 +1,9 @@
+import datetime
 import functools
 from typing import Any, Optional
 
 from nltk import sent_tokenize
-from prisma.models import Page, User
+from prisma.models import Message, Page, User
 from pydantic import BaseModel
 
 
@@ -10,15 +11,20 @@ from pydantic import BaseModel
 def sent_tokenize_excerpt(text: str) -> str:
     return text[:650]
 
-class UserResponse(BaseModel):
+
+class Sender(BaseModel):
     id: str
     first_name: str
     last_name: str
     profile_picture_url: Optional[str]
+    sent_on: datetime.datetime
 
     @classmethod
-    def from_user(cls, user: User):
-        return UserResponse(id=user.id, first_name=user.first_name, last_name=user.last_name, profile_picture_url=user.profile_picture_url)
+    def from_message(cls, message: Message):
+        sender = message.sender
+        assert (sender is not None)
+        return Sender(id=sender.id, first_name=sender.first_name, last_name=sender.last_name,
+                      profile_picture_url=sender.profile_picture_url, sent_on=message.sent_on)
 
 
 class PageResponse(BaseModel):
@@ -27,7 +33,7 @@ class PageResponse(BaseModel):
     title: str
     excerpt: str
     date: str = ""
-    senders: list[UserResponse] = []
+    senders: list[Sender] = []
     score: Optional[float] = None
     url_only: bool = False
 
@@ -59,8 +65,6 @@ class PageResponseURLOnly(BaseModel):
     """
     url: str
     url_only: bool = True
-    senders: list[UserResponse] = []
+    senders: list[Sender] = []
 
     # TODO: crawl the page and get the title
-
-

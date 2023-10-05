@@ -1,6 +1,6 @@
 "use client";
 
-import { extractDomain, formatExercept } from "@/lib/utils";
+import { extractDomain, formatExercept, getRelativeTime } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
 import { Page } from "@/types/api";
 import NextLink from "next/link";
@@ -12,24 +12,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
-export const Entry = (message: Page) => {
-  const { senders } = message;
+export const Entry = (page: Page) => {
+  const { senders } = page;
 
-  // TODO: Add multiple profile images shared in a stack with +3... more type
+  // Backend sends order descending for dates (most recent first)
+  const mostRecentSender = senders.length > 0 ? senders[0] : null;
 
-  const senderNames = senders.map(
-    (sender) => `${sender.first_name} ${sender.last_name}`,
-  );
-
-  // Add commas between names
-  const formatSenderNames = (names: string[]) => {
-    const last = names.pop();
-    if (names.length === 0) {
-      return last;
-    }
-    return `${names.join(", ")} & ${last}`;
-  };
-
+  // TODO: Limit number of avatars shown to have +X more
   const renderAvatars = () => {
     const avatars = senders.map((sender) => {
       const initials = `${sender.first_name[0]}${sender.last_name[0]}`;
@@ -44,7 +33,10 @@ export const Entry = (message: Page) => {
               </Avatar>
             </TooltipTrigger>
             <TooltipContent>
-              {sender.first_name} {sender.last_name}
+              <div className="text-slate-800">{`${sender.first_name} ${sender.last_name}`}</div>
+              <div className="text-xs text-slate-500">
+                {getRelativeTime(sender.sent_on)}
+              </div>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -69,6 +61,9 @@ export const Entry = (message: Page) => {
         <div className="flex items-center ">
           <span className="mr-2">Broadcasted by:</span>
           {renderAvatars()}
+          <span className="ml-2">
+            {getRelativeTime(mostRecentSender.sent_on)}
+          </span>
         </div>
       </div>
     );
@@ -79,24 +74,24 @@ export const Entry = (message: Page) => {
       <div className="border-b border-slate-400 pb-2">
         <Broadcast />
         <div className="flex flex-row items-center justify-between">
-          <NextLink href={`/c?url=${message.url}`} className="cursor-pointer">
+          <NextLink href={`/c?url=${page.url}`} className="cursor-pointer">
             <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-              {message.title || message.url}
+              {page.title || page.url}
             </h2>
             <p className="text-sm font-light text-slate-700">
-              {extractDomain(message.url)}
+              {extractDomain(page.url)}
             </p>
           </NextLink>
           <div className="ml-8 flex items-center lg:ml-20">
             <FeedbackButton
-              page={message}
+              page={page}
               canUnsend={canUnsend}
               className="ml-2"
             />
           </div>
         </div>
         <p className="mt-2 font-mono text-sm text-slate-500">
-          {formatExercept(message.excerpt)}
+          {formatExercept(page.excerpt)}
         </p>
       </div>
     </div>

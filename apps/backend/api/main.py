@@ -6,7 +6,7 @@ from typing import Optional, Union
 from uuid import UUID
 
 import pytest
-from api.page_response import PageResponse, PageResponseURLOnly, UserResponse
+from api.page_response import PageResponse, PageResponseURLOnly, Sender
 from crawler.link import Link
 from crawler.prismac import PostgresClient
 from crawler.recommendation.embedding import (NearestNeighboursQuery,
@@ -76,8 +76,9 @@ class FindPageResponse(BaseModel):
     has_broadcasted: bool
 
 
-async def get_senders_for_pages(page_ids: list[int]) -> dict[int, list[UserResponse]]:
+async def get_senders_for_pages(page_ids: list[int]) -> dict[int, list[Sender]]:
     messages = await client.message.find_many(
+        order={'sent_on': 'desc'},
         include={'sender': True},
         where={
             'page_id': {
@@ -88,10 +89,12 @@ async def get_senders_for_pages(page_ids: list[int]) -> dict[int, list[UserRespo
     sender_map = defaultdict(list)
 
     for m in messages:
-        sender = UserResponse.from_user(m.sender)
+        sender = Sender.from_message(m)
         sender_map[m.page_id].append(sender)
 
     return sender_map
+
+
 @app.post("/page")
 async def find_page(body: FindPageRequest) -> FindPageResponse:
     url = body.url
@@ -112,11 +115,14 @@ async def find_page(body: FindPageRequest) -> FindPageResponse:
 
     return FindPageResponse(page=pageres, has_broadcasted=has_broadcasted)
 
+
 @pytest.mark.asyncio
 async def test_find_page():
     await startup()
 
-    print(await find_page(FindPageRequest(url = 'https://shuttersparks.net/specious-appeal-to-fairness/')))
+    print(await find_page(FindPageRequest(url='https://shuttersparks.net/specious-appeal-to-fairness/')))
+
+
 @app.get('/recommend')
 async def recommend(userid: int) -> list[PageResponse]:
     """
@@ -306,6 +312,7 @@ async def add_senders(pages: list[PageResponse]):
     for p in pages:
         p.senders = senders[p.id]
 
+
 async def random_feed(limit: int = 60) -> list[PageResponse]:
     """
     Gets a random set of Pages with depth <= 1, based on the seed.
@@ -451,7 +458,7 @@ async def test_send_message():
 
 class GroupedMessage(BaseModel):
     message_ids: list[int]
-    senders: list[UserResponse]
+    senders: list[Sender]
     page: Union[PageResponse, PageResponseURLOnly]
 
     messages: list[Optional[str]]
@@ -461,7 +468,7 @@ class GroupedMessage(BaseModel):
     def from_messages(cls, messages: list[Message], page: Union[PageResponse, PageResponseURLOnly]):
         return GroupedMessage(
             message_ids=[m.id for m in messages],
-            senders=[UserResponse.from_user(m.sender) for m in messages],
+            senders=[Sender.from_message(m) for m in messages],
             page=page,
             messages=[m.message for m in messages],
             sent_on=[m.sent_on for m in messages]
@@ -497,7 +504,7 @@ async def get_user_feed() -> UserFeedResponse:
 
     pages = {p.id: p for p in pages}
 
-    result = []
+    result: list[PageResponse | PageResponseURLOnly] = []
 
     for m in grouped_messages:
         r = grouped_messages[m][0]
@@ -507,14 +514,14 @@ async def get_user_feed() -> UserFeedResponse:
         else:
             page_response = PageResponseURLOnly(url=r.url)
 
-        page_response.senders = [UserResponse.from_user(x.sender) for x in grouped_messages[m]]
+        page_response.senders = [Sender.from_message(
+            m) for m in grouped_messages[m]]
         result.append(page_response)
 
     random_articles = await random_feed(limit=60)
 
     # Filter out stuff that already appears in the messages
     random_articles = [x for x in random_articles if x.id not in pages]
-
 
     return UserFeedResponse(random_feed=random_articles, messages=result)
 
@@ -590,7 +597,6 @@ async def get_search_users(query: str) -> list[UserQueryResponse]:
     users = await client.query_raw(sql_query, f'%{query}%', model=User)
 
     return [UserQueryResponse.from_prisma(u) for u in users]
-
 
 
 @pytest.mark.asyncio

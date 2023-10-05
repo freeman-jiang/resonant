@@ -7,11 +7,12 @@ const axios = baseAxios.create({
   baseURL: NEXT_PUBLIC_BASE_URL,
 });
 
-export interface UserResponse {
+export interface Sender {
   id: string;
   first_name: string;
   last_name: string;
   profile_picture_url: string;
+  sent_on: string; // python datetime.datetime
 }
 
 export interface FeedResponse {
