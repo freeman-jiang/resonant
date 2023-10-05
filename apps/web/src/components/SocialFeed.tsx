@@ -1,6 +1,6 @@
 "use client";
 
-import { Message } from "@/api";
+import { Page as APIPageType } from "@/types/api";
 import { useFeed } from "@/api/hooks";
 import { extractDomain, formatExercept } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
@@ -14,9 +14,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
+import Page from "@/app/(main)/search/page";
 
-export const Entry = (message: Message) => {
-  const page = message.page;
+export const Entry = (message: APIPageType) => {
   const { senders } = message;
 
   // TODO: Add multiple profile images shared in a stack with +3... more type
@@ -74,24 +74,24 @@ export const Entry = (message: Message) => {
           </div>
         </div>
         <div className="flex flex-row items-center justify-between">
-          <NextLink href={`/c?url=${page.url}`} className="cursor-pointer">
+          <NextLink href={`/c?url=${message.url}`} className="cursor-pointer">
             <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-              {page.title || page.url}
+              {message.title || message.url}
             </h2>
             <p className="text-sm font-light text-slate-700">
-              {extractDomain(page.url)}
+              {extractDomain(message.url)}
             </p>
           </NextLink>
           <div className="ml-8 flex items-center lg:ml-20">
             <FeedbackButton
-              page={page}
+              page={message}
               canUnsend={canUnsend}
               className="ml-2"
             />
           </div>
         </div>
         <p className="mt-2 font-mono text-sm text-slate-500">
-          {formatExercept(page.excerpt)}
+          {formatExercept(message.excerpt)}
         </p>
       </div>
     </div>
@@ -105,7 +105,7 @@ export const SocialFeed = () => {
     <div className="mt-5 space-y-2">
       {feed.messages.map((message) => {
         const senderIds = message.senders.map((sender) => sender.id).join(", ");
-        return <Entry {...message} key={`${message.page.url}-${senderIds}`} />;
+        return <Entry {...message} key={`${message.url}-${senderIds}`} />;
       })}
       <Feed feed={feed.random_feed} />
     </div>

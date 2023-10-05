@@ -14,14 +14,9 @@ export interface UserResponse {
   profile_picture_url: string;
 }
 
-export interface Message {
-  page: Page;
-  senders: UserResponse[];
-}
-
 export interface FeedResponse {
   random_feed: Page[];
-  messages: Message[];
+  messages: Page[];
 }
 
 export async function fetchSocialFeed() {

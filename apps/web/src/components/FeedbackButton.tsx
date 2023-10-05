@@ -1,4 +1,5 @@
 "use client";
+import { amplitude } from "@/analytics/amplitude";
 import { savePage, sharePage, unsharePage } from "@/api";
 import { FEED_QUERY_KEY } from "@/api/hooks";
 import {
@@ -49,6 +50,7 @@ export const FeedbackButton = ({ canUnsend, page, ...props }: Props) => {
       return;
     }
     await sharePage(user.id, page.id);
+    amplitude.track("Broadcast", { email: user.email });
     queryClient.invalidateQueries({ queryKey: [FEED_QUERY_KEY] });
     toast({ title: "Broadcasted! 🎉" });
   };
