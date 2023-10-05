@@ -1,10 +1,11 @@
 "use client";
 import { sharePage, unsharePage } from "@/api";
 import { PAGE_QUERY_KEY, usePage } from "@/api/hooks";
+import { cn } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { CircleOff, Send } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -58,15 +59,15 @@ export const ShareButton = ({ url, ...rest }: Props) => {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger>
-          <Button
-            variant="default"
-            className="bg-emerald-600 hover:bg-emerald-500"
-            size="sm"
+          <p
+            className={cn(
+              buttonVariants({ variant: "default", size: "sm" }),
+              "bg-emerald-500 hover:bg-emerald-600",
+            )}
             onClick={handleShare}
-            {...rest}
           >
             <Send className="mr-2 h-4 w-4" /> Broadcast
-          </Button>
+          </p>
         </TooltipTrigger>
         <TooltipContent>
           <p>Share this article with all other Resonant users</p>

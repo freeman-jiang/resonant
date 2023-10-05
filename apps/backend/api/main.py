@@ -161,8 +161,8 @@ async def get_liked_pages(userid: str) -> list[PageResponse]:
     return [PageResponse.from_prisma_page(p) for p in pages]
 
 
-@app.get("/like/{userid}/{pageid}")
-async def like(userid: str, pageid: int) -> None:
+@app.get("/save/{userid}/{pageid}")
+async def save(userid: str, pageid: int) -> None:
     page = db.get_page(id=pageid)
 
     if page is None:
@@ -176,6 +176,28 @@ async def like(userid: str, pageid: int) -> None:
     # urls = await generate_feed_from_page(page.url)
 
     # print("Recommended", urls)
+    return None
+
+
+@app.delete("/unsave/{userid}/{pageid}")
+async def unsave(userid: str, pageid: int) -> None:
+    user = await find_user(userid)
+    if not user:
+        raise HTTPException(400, "User does not exist")
+
+    print("unsave page", pageid, "for user", userid)
+
+    lp = await client.likedpage.find_first(where={
+        'page_id': pageid,
+        'user_id': userid
+    })
+
+    if lp is None:
+        raise HTTPException(400, "Page is not saved")
+
+    await client.likedpage.delete(where={
+        'id': lp.id
+    })
     return None
 
 
@@ -564,4 +586,4 @@ async def test_search():
 async def test_like():
     await startup()
 
-    await like(1, 14)
+    await save(1, 14)

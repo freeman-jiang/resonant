@@ -1,5 +1,5 @@
 "use client";
-import { likePage, sharePage, unsharePage } from "@/api";
+import { savePage, sharePage, unsharePage } from "@/api";
 import { FEED_QUERY_KEY } from "@/api/hooks";
 import {
   DropdownMenu,
@@ -35,7 +35,7 @@ export const FeedbackButton = ({ canUnsend, page, ...props }: Props) => {
   }
 
   const handleSave = async () => {
-    await likePage(user.id, page.id);
+    await savePage(user.id, page.id);
     toast({
       title: "Saved! 🎉",
     });

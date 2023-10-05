@@ -1,5 +1,5 @@
 "use client";
-import { likePage } from "@/api";
+import { savePage } from "@/api";
 import { useSupabase } from "@/supabase/client";
 import { Page } from "@/types/api";
 import { Bookmark } from "lucide-react";
@@ -22,7 +22,7 @@ export const SaveButton = ({ page, ...rest }: Props) => {
       router.push("/login");
       return;
     }
-    await likePage(user.id, page.id);
+    await savePage(user.id, page.id);
     toast({
       title: "Saved! 🎉",
     });
