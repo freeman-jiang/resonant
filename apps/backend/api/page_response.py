@@ -32,9 +32,10 @@ class PageResponse(BaseModel):
     url_only: bool = False
 
     @classmethod
-    def from_prisma_page(cls, p: Page, score=None) -> 'PageResponse':
+    def from_prisma_page(cls, p: Page, score: Optional[int] = None, dont_trim: bool = False) -> 'PageResponse':
         # Get first two sentences from p.content
-        excerpt = sent_tokenize_excerpt(p.content)
+        excerpt = p.content if dont_trim else sent_tokenize_excerpt(
+            p.content)
 
         return PageResponse(
             id=p.id,

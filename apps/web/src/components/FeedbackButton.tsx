@@ -1,5 +1,5 @@
 "use client";
-import { likePage, sharePage, unsharePage } from "@/api";
+import { savePage, sharePage, unsharePage } from "@/api";
 import { FEED_QUERY_KEY } from "@/api/hooks";
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import { useSupabase } from "@/supabase/client";
 import { Page } from "@/types/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bookmark, CircleOff, MoreHorizontal, Send } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useToast } from "./ui/use-toast";
 
 enum Feedback {
@@ -29,19 +30,24 @@ export const FeedbackButton = ({ canUnsend, page, ...props }: Props) => {
   const user = session?.user;
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  if (!user) {
-    return null;
-  }
+  const router = useRouter();
 
   const handleSave = async () => {
-    await likePage(user.id, page.id);
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    await savePage(user.id, page.id);
     toast({
       title: "Saved! 🎉",
     });
   };
 
   const handleShare = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
     await sharePage(user.id, page.id);
     queryClient.invalidateQueries({ queryKey: [FEED_QUERY_KEY] });
     toast({ title: "Broadcasted! 🎉" });

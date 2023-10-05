@@ -79,13 +79,18 @@ export const getUser = async (uuid: string): Promise<GetUserResponse> => {
   return data; // replace with User;
 };
 
-export const likePage = async (userId: string, pageId: number) => {
-  const { data } = await axios.get(`/like/${userId}/${pageId}`);
+export const savePage = async (userId: string, pageId: number) => {
+  const { data } = await axios.get(`/save/${userId}/${pageId}`);
+  return data;
+};
+
+export const unsavePage = async (userId: string, pageId: number) => {
+  const { data } = await axios.delete(`/unsave/${userId}/${pageId}`);
   return data;
 };
 
 export const getSavedPages = async (userId: string) => {
-  const { data } = await axios.get(`/saved/${userId}`);
+  const { data } = await axios.get<Page[]>(`/saved/${userId}`);
   return data;
 };
 

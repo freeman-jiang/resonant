@@ -32,7 +32,7 @@ export const PageLayout = ({ url, session }: Props) => {
             {extractDomain(page.url)}
           </p>
           <p className="mt-2 font-mono text-sm text-slate-500">
-            {formatExercept(page.excerpt)}
+            {formatExercept(page.excerpt, 500)}
           </p>
         </div>
       </NextLink>

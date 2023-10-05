@@ -1,6 +1,6 @@
 "use client";
 
-import { FeedResponse, Message } from "@/api";
+import { Message } from "@/api";
 import { useFeed } from "@/api/hooks";
 import { extractDomain, formatExercept } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
@@ -39,10 +39,10 @@ export const Entry = (message: Message) => {
       const initials = `${sender.first_name[0]}${sender.last_name[0]}`;
 
       return (
-        <TooltipProvider delayDuration={0}>
+        <TooltipProvider delayDuration={0} key={sender.id}>
           <Tooltip>
             <TooltipTrigger className="cursor-default">
-              <Avatar key={sender.id} className="h-6 w-6">
+              <Avatar className="h-6 w-6">
                 <AvatarImage src={sender.profile_picture_url} />
                 <AvatarFallback className="text-xs">{initials}</AvatarFallback>
               </Avatar>
@@ -98,18 +98,15 @@ export const Entry = (message: Message) => {
   );
 };
 
-interface Props {
-  feed: FeedResponse;
-}
-
 export const SocialFeed = () => {
   const { data: feed } = useFeed();
 
   return (
     <div className="mt-5 space-y-2">
-      {feed.messages.map((message) => (
-        <Entry {...message} key={`${message.page.url}-${message.senders}`} />
-      ))}
+      {feed.messages.map((message) => {
+        const senderIds = message.senders.map((sender) => sender.id).join(", ");
+        return <Entry {...message} key={`${message.page.url}-${senderIds}`} />;
+      })}
       <Feed feed={feed.random_feed} />
     </div>
   );

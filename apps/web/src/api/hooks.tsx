@@ -7,7 +7,7 @@ import {
   useQuery,
 } from "@tanstack/react-query";
 import { ReactNode } from "react";
-import { fetchSocialFeed, findPage, searchFor } from ".";
+import { fetchSocialFeed, findPage, getSavedPages, searchFor } from ".";
 
 // TODO: Consider using SSR by making this a server component
 export const FEED_QUERY_KEY = "feed";
@@ -96,6 +96,37 @@ export const SearchBoundary = async ({
   await queryClient.prefetchQuery({
     queryKey: [SEARCH_QUERY_KEY, query],
     queryFn: () => searchFor(query),
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      {children}
+    </HydrationBoundary>
+  );
+};
+
+export const SAVED_FEED_QUERY_KEY = "saved-feed";
+
+export const useSavedFeed = (session: Session) => {
+  return useQuery({
+    queryKey: [SAVED_FEED_QUERY_KEY],
+    queryFn: () => getSavedPages(session.user.id),
+  });
+};
+
+interface SavedFeedBoundaryProps {
+  children: React.ReactNode;
+  session: Session;
+}
+
+export const SavedFeedBoundary = async ({
+  children,
+  session,
+}: SavedFeedBoundaryProps) => {
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: [SAVED_FEED_QUERY_KEY],
+    queryFn: () => getSavedPages(session.user.id),
   });
 
   return (

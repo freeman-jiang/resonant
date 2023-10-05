@@ -14,7 +14,7 @@ const Page = (params: RouteParams) => {
 
   return (
     <div className="mt-5">
-      <div className="font-mono text-lg">{q}</div>
+      <div className="break-all font-mono">{q}</div>
       <Feed feed={data} />
     </div>
   );
