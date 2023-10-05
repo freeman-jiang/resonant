@@ -50,7 +50,7 @@ export function UserNav({ user: serverUser }: Props) {
       };
     };
     setUp();
-  }, []);
+  }, [supabase]);
 
   const router = useRouter();
 

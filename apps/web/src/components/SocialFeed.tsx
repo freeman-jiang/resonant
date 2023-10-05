@@ -33,7 +33,7 @@ export const Entry = (message: Message) => {
       const initials = `${sender.first_name[0]}${sender.last_name[0]}`;
 
       return (
-        <Avatar className="h-6 w-6">
+        <Avatar key={sender.id} className="h-6 w-6">
           <AvatarImage src={sender.profile_picture_url} />
           <AvatarFallback className="text-xs">{initials}</AvatarFallback>
         </Avatar>
@@ -55,7 +55,6 @@ export const Entry = (message: Message) => {
         <div className="text-xs text-slate-500">
           <div className="flex items-center ">
             <span className="mr-2">Broadcasted by:</span>
-
             {renderAvatars()}
           </div>
         </div>

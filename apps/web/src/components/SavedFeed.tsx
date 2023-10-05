@@ -21,7 +21,7 @@ export const SavedFeed = ({ feed: serverFeed }: Props) => {
       setFeed(pages);
     };
     fetchFeed();
-  }, []);
+  }, [user.id]);
 
   return <Feed feed={feed} />;
 };
