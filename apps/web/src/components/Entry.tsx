@@ -3,7 +3,7 @@
 import { extractDomain, formatExcerpt, getRelativeTime } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
 import { Page } from "@/types/api";
-import { ExternalLink } from "lucide-react";
+import { Rabbit } from "lucide-react";
 import Link from "next/link";
 import { FeedbackButton } from "./FeedbackButton";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -75,7 +75,7 @@ export const Entry = (page: Page) => {
       <div className="border-b border-slate-400 pb-2">
         <Broadcast />
         <div className="flex flex-row items-center justify-between">
-          <Link href={`/c?url=${page.url}`} className="cursor-pointer">
+          <Link href={page.url} target="_blank" className="cursor-pointer">
             <h2 className="text-xl font-semibold tracking-tight text-slate-900">
               {page.title || page.url}
             </h2>
@@ -84,8 +84,8 @@ export const Entry = (page: Page) => {
             </p>
           </Link>
           <div className="ml-8 flex items-center lg:ml-20">
-            <Link href={page.url} target="_blank">
-              <ExternalLink className="-mt-1 h-4 w-4" />
+            <Link href={`/c?url=${page.url}`}>
+              <Rabbit className="-mt-1 h-5 w-5" />
             </Link>
             <FeedbackButton
               page={page}
@@ -94,7 +94,7 @@ export const Entry = (page: Page) => {
             />
           </div>
         </div>
-        <Link href={`c?url=${page.url}`}>
+        <Link href={page.url} target="_blank" passHref>
           <p className="mt-2 font-mono text-sm text-slate-500">
             {formatExcerpt(page.excerpt)}
           </p>
