@@ -75,7 +75,7 @@ export const Entry = (page: Page) => {
       <div className="border-b border-slate-400 pb-2">
         <Broadcast />
         <div className="flex flex-row items-center justify-between">
-          <Link href={page.url} target="_blank" className="cursor-pointer">
+          <Link href={page.url} className="cursor-pointer">
             <h2 className="text-xl font-semibold tracking-tight text-slate-900">
               {page.title || page.url}
             </h2>
@@ -94,7 +94,7 @@ export const Entry = (page: Page) => {
             />
           </div>
         </div>
-        <Link href={page.url} target="_blank" passHref>
+        <Link href={page.url} passHref>
           <p className="mt-2 font-mono text-sm text-slate-500">
             {formatExcerpt(page.excerpt)}
           </p>
