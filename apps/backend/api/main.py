@@ -445,6 +445,7 @@ async def crawl_user(body: UrlRequest) -> CrawlInteractiveResponse:
 
 class CreatePageRequest(BaseModel):
     url: str
+    userid: str
 
 
 async def _create_page(body: CreatePageRequest) -> Page:
@@ -460,6 +461,9 @@ async def _create_page(body: CreatePageRequest) -> Page:
 @app.post('/create_page')
 async def create_page(body: CreatePageRequest) -> PageResponse:
     page_response = await _create_page(body)
+
+    # Override the parent_url to be the person who added it lol
+    page_response.parent_url = f"Manually added: {body.userid}"
     return PageResponse.from_prisma_page(page_response)
 
 

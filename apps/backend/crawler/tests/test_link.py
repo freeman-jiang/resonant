@@ -1,7 +1,32 @@
 from pydantic import ValidationError
 import pytest
 from crawler.link import *
+from crawler.prismac import PostgresClient
+from crawler.worker import fix
 
+
+def fix_weird_chars():
+    db = PostgresClient(None)
+    db.connect()
+
+    query = "SELECT id, title FROM \"Page\" ORDER BY id LIMIT %s OFFSET %s"
+
+    update_query = "UPDATE \"Page\" SET title=%s WHERE id=%s"
+
+    processed = 0
+    while True:
+        results = db.query(query, (500, processed))
+        print(processed)
+        processed += len(results)
+
+        for p in results:
+            p['title'] = fix(p['title'])
+
+        db.cursor().executemany(update_query, [(x['title'], x['id']) for x in results])
+        db.conn.commit()
+
+if __name__ == "__main__":
+    fix_weird_chars()
 
 def test_pydantic_validators():
     with pytest.raises(ValidationError):

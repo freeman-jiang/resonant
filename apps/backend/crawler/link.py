@@ -19,6 +19,8 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
                       'versobooks.com',
                     'sabe.io/',
                       'www.sitepoint.com',
+                      'preparednessmama.com',
+
 
                       'youtu.be',
 

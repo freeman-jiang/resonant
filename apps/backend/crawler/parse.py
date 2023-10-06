@@ -17,6 +17,8 @@ from crawler.constants.whitelist import WHITELIST_DOMAINS
 from crawler.link import Link
 from bs4 import BeautifulSoup
 
+from crawler.worker import fix
+
 
 class CrawlResult(BaseModel):
     link: Link
@@ -170,6 +172,8 @@ def parse_html(html: bytes, link: Link, should_rss: bool) -> Tuple[Optional[Craw
     if a is None:
         a = parse_html_newspaper(html, link)
 
+    if a is not None:
+        a.title = fix(a.title)
     base_domain = link.copy()
     base_domain.url = link.domain()
 
