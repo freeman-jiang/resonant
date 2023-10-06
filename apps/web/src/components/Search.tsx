@@ -37,6 +37,7 @@ export function Search() {
         {...register("search")}
         type="text"
         placeholder="Search by content or URL"
+        className="md:text-base"
       />
       <Button
         className="flex min-w-[5rem] items-center justify-center"
