@@ -17,7 +17,7 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
                       'albawa.com', 'theage.com', 'prnewswire.com', 'archive.org', 'stackexchange.com', 'doi.org',
                       'jamanetwork',
                       'versobooks.com',
-
+                    'sabe.io/',
                       'www.sitepoint.com',
 
                       'youtu.be',

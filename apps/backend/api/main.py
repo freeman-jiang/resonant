@@ -452,7 +452,8 @@ async def _create_page(body: CreatePageRequest) -> Page:
     vec, response = await crawl_interactive(link)
     page_response = db.store_raw_page(3, response)
 
-    await store_embeddings_for_pages([page_response])
+    if page_response is not None:
+        await store_embeddings_for_pages([page_response])
     return page_response
 
 
