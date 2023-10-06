@@ -42,33 +42,18 @@ export const searchFor = async (query: string) => {
   return data as Page[];
 };
 
-interface AlreadyCrawled {
-  type: "aleady_added";
-  url: string;
-}
-
-interface Crawl {
-  type: "add";
-  url: string;
-  title: string;
-  excerpt: string;
-}
-
-export type SearchForUrlResponse = AlreadyCrawled | Crawl;
-
-export const searchForUrl = async (url: string) => {
-  const { data } = await axios.post<SearchForUrlResponse>(`/search_url`, {
-    url,
-  });
-  return data;
-};
-
-export interface CrawlInteractiveResponse {
+export interface Crawl {
   title: string;
   excerpt: string;
   url: string;
   type: "crawl";
 }
+interface AlreadyAdded {
+  type: "already_added";
+  url: string;
+}
+
+export type CrawlInteractiveResponse = Crawl | AlreadyAdded;
 
 export const crawlUrl = async (url: string) => {
   const { data } = await axios.post<CrawlInteractiveResponse>(`/crawl`, {

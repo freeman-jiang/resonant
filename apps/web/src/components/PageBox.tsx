@@ -1,11 +1,11 @@
-import { CrawlInteractiveResponse } from "@/api";
+import { Crawl } from "@/api";
 import { extractDomain, formatExcerpt } from "@/lib/utils";
 import { Page } from "@/types/api";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
-  data: Page | CrawlInteractiveResponse;
+  data: Page | Crawl;
 }
 
 export const PageBox = ({ data }: Props) => {

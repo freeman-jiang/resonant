@@ -39,13 +39,13 @@ export const StoreButton = ({ url }: Props) => {
   const router = useRouter();
   const { toast } = useToast();
 
-  const { mutate, isPending } = useMutation({
+  const { mutateAsync, mutate, isPending } = useMutation({
     mutationFn: storePage,
-    onSuccess: () => {
-      router.push(`/c?url=${url}`);
-    },
     onError: (error) => {
       toast({ title: "Error storing page" });
+    },
+    onSuccess: (data) => {
+      router.replace(`/c?url=${url}`);
     },
   });
 
@@ -54,7 +54,9 @@ export const StoreButton = ({ url }: Props) => {
       variant="default"
       className="bg-slate-500 hover:bg-slate-600"
       size="sm"
-      onClick={() => mutate(url)}
+      onClick={async () => {
+        await mutateAsync(url);
+      }}
     >
       {isPending ? (
         <>

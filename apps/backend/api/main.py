@@ -422,17 +422,24 @@ class CrawlInteractiveResponse(BaseModel):
 
 
 @app.post('/crawl')
-async def crawl_user(body: UrlRequest) -> CrawlInteractiveResponse:
+async def crawl_user(body: UrlRequest) -> CrawlInteractiveResponse | AlreadyAdded:
     url = clean_url(body.url)
 
-    _, crawl_result = await crawl_interactive(Link.from_url(url))
-    if crawl_result is None:
-        raise HTTPException(400, "Could not crawl URL")
+    if db.get_page(url=url) is not None:
+        return AlreadyAdded(url=url)
 
-    return CrawlInteractiveResponse(
-        excerpt=crawl_result.content[:1000],
-        title=crawl_result.title,
-        url=url)
+    try:
+        _, crawl_result = await crawl_interactive(Link.from_url(url))
+        if crawl_result is None:
+            raise HTTPException(400, "Could not crawl URL")
+
+        return CrawlInteractiveResponse(
+            excerpt=crawl_result.content[:1000],
+            title=crawl_result.title,
+            url=url)
+    except Exception as e:
+        print(e)
+        raise HTTPException(400, "Could not crawl URL")
 
 
 class CreatePageRequest(BaseModel):
