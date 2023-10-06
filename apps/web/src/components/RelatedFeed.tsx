@@ -9,5 +9,10 @@ interface Props {
 export const RelatedFeed = ({ url }: Props) => {
   const { data } = useSearch(url);
 
-  return <Feed feed={data} />;
+  return (
+    <div className="mt-5">
+      <h2 className="text-2xl font-semibold text-slate-900">Related</h2>
+      <Feed feed={data} />;
+    </div>
+  );
 };

@@ -129,7 +129,7 @@ export const unsharePage = async (userId: string, pageId: number) => {
   return data;
 };
 
-export const storePage = async (url: string) => {
-  const { data } = await axios.post(`/create_page`, { url });
+export const addPage = async (userid: string, url: string) => {
+  const { data } = await axios.post<Page>(`/add_page`, { userid, url });
   return data;
 };

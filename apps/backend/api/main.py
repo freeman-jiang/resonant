@@ -414,7 +414,7 @@ async def search_url(body: UrlRequest) -> Union[ShouldAdd, AlreadyAdded]:
     return ShouldAdd(url=url)
 
 
-class CrawlInteractiveResponse(BaseModel):
+class Crawl(BaseModel):
     title: str
     url: str
     excerpt: str
@@ -422,7 +422,7 @@ class CrawlInteractiveResponse(BaseModel):
 
 
 @app.post('/crawl')
-async def crawl_user(body: UrlRequest) -> CrawlInteractiveResponse | AlreadyAdded:
+async def crawl_user(body: UrlRequest) -> Crawl | AlreadyAdded:
     url = clean_url(body.url)
 
     if db.get_page(url=url) is not None:
@@ -433,7 +433,7 @@ async def crawl_user(body: UrlRequest) -> CrawlInteractiveResponse | AlreadyAdde
         if crawl_result is None:
             raise HTTPException(400, "Could not crawl URL")
 
-        return CrawlInteractiveResponse(
+        return Crawl(
             excerpt=crawl_result.content[:1000],
             title=crawl_result.title,
             url=url)
@@ -448,7 +448,7 @@ class CreatePageRequest(BaseModel):
 
 
 async def _create_page(body: CreatePageRequest) -> Page:
-    link = Link(parent_url="user", url=body.url, text="")
+    link = Link(parent_url=f"user: {body.userid}", url=body.url, text="")
     vec, response = await crawl_interactive(link)
     page_response = db.store_raw_page(3, response)
 
@@ -457,7 +457,7 @@ async def _create_page(body: CreatePageRequest) -> Page:
     return page_response
 
 
-@app.post('/create_page')
+@app.post('/add_page')
 async def create_page(body: CreatePageRequest) -> PageResponse:
     existing_page = db.get_page(url=body.url)
     if existing_page:
@@ -465,8 +465,9 @@ async def create_page(body: CreatePageRequest) -> PageResponse:
 
     page_response = await _create_page(body)
 
-    # Override the parent_url to be the person who added it lol
-    page_response.parent_url = f"Manually added: {body.userid}"
+    if page_response is None:
+        raise HTTPException(400, "Could not add page")
+
     return PageResponse.from_prisma_page(page_response)
 
 

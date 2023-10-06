@@ -4,6 +4,7 @@ import { RelatedFeed } from "@/components/RelatedFeed";
 import { ShareButton } from "@/components/ShareButton";
 import { Session } from "@supabase/supabase-js";
 import NextLink from "next/link";
+import { AddPage } from "./AddPage";
 import { PageBox } from "./PageBox";
 import { SaveButton } from "./SaveButton";
 import { Button } from "./ui/button";
@@ -16,7 +17,7 @@ interface Props {
 export const PageLayout = ({ url, session }: Props) => {
   const { data, error } = usePage(url, session);
 
-  if (!data || error || data.type !== "page") {
+  if (!data || error) {
     return (
       <div className="mt-5">
         Could not crawl <span className="font-mono">{url}</span>
@@ -31,6 +32,10 @@ export const PageLayout = ({ url, session }: Props) => {
     );
   }
 
+  if (data.type == "should_add") {
+    return <AddPage url={url} />;
+  }
+
   const { page } = data;
 
   return (
@@ -40,7 +45,6 @@ export const PageLayout = ({ url, session }: Props) => {
         <ShareButton url={page.url} />
         <SaveButton page={page} />
       </div>
-      <h2 className="mt-5 text-2xl font-semibold text-slate-900">Related</h2>
 
       {/* <SearchBoundary query={url}> */}
       <RelatedFeed url={url} />

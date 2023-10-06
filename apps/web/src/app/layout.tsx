@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Providers } from "./providers";
 
 export const dynamic = "force-dynamic";
 
@@ -21,10 +20,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={cn(inter.className, "selection:bg-emerald-200")}>
-        <Providers>
-          <NavBar />
-          {children}
-        </Providers>
+        <NavBar />
+        {children}
       </body>
     </html>
   );

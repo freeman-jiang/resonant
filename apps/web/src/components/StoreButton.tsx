@@ -1,8 +1,9 @@
 "use client";
-import { storePage } from "@/api";
-import { useMutation } from "@tanstack/react-query";
+import { addPage } from "@/api";
+import { PAGE_QUERY_KEY } from "@/api/hooks";
+import { useSupabase } from "@/supabase/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
 
@@ -36,16 +37,22 @@ const Spinner = () => {
 };
 
 export const StoreButton = ({ url }: Props) => {
-  const router = useRouter();
   const { toast } = useToast();
+  const { session } = useSupabase();
+  const queryClient = useQueryClient();
 
-  const { mutateAsync, mutate, isPending } = useMutation({
-    mutationFn: storePage,
+  const { mutate, isPending } = useMutation({
+    mutationFn: (url: string) => {
+      return addPage(session.user.id, url);
+    },
     onError: (error) => {
       toast({ title: "Error storing page" });
     },
-    onSuccess: (data) => {
-      router.replace(`/c?url=${url}`);
+    onSuccess: async (page) => {
+      toast({ title: "Page saved!" });
+      queryClient.invalidateQueries({
+        queryKey: [PAGE_QUERY_KEY, url],
+      });
     },
   });
 
@@ -54,9 +61,10 @@ export const StoreButton = ({ url }: Props) => {
       variant="default"
       className="bg-slate-500 hover:bg-slate-600"
       size="sm"
-      onClick={async () => {
-        await mutateAsync(url);
+      onClick={() => {
+        mutate(url);
       }}
+      disabled={!session}
     >
       {isPending ? (
         <>

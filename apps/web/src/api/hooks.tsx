@@ -6,7 +6,6 @@ import {
   dehydrate,
   useQuery,
 } from "@tanstack/react-query";
-import { redirect } from "next/navigation";
 import { ReactNode } from "react";
 import {
   crawlUrl,
@@ -70,16 +69,11 @@ export const PageBoundary = async ({
 }: PageBoundaryProps) => {
   const queryClient = new QueryClient();
 
-  const res = await queryClient.fetchQuery({
+  await queryClient.prefetchQuery({
     queryKey: [PAGE_QUERY_KEY, url],
     queryFn: () => findPage(url, session),
   });
 
-  console.log("got res", res);
-
-  if (res.type === "should_add") {
-    redirect(`/add?url=${url}`);
-  }
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       {children}
@@ -156,5 +150,6 @@ export const useCrawl = (url: string) => {
     queryKey: [CRAWL_QUERY_KEY, url],
     queryFn: () => crawlUrl(url),
     retry: false,
+    staleTime: 0,
   });
 };

@@ -1,7 +1,6 @@
 "use client";
 import { useCrawl } from "@/api/hooks";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { LoadingFeed } from "./Feed";
 import { PageBox } from "./PageBox";
 import { RelatedFeed } from "./RelatedFeed";
@@ -15,14 +14,14 @@ interface Props {
 
 export const AddPage = ({ url }: Props) => {
   const { data, error } = useCrawl(url);
-  const router = useRouter();
 
   if (error) {
     return (
       <div className="mt-5">
-        Could not crawl <span className="font-mono">{url}</span>
+        <div className="font-semibold">Could not crawl </div>
+        <div className="break-all font-mono">{url}</div>
         <div>
-          <Link href="/">
+          <Link href="/" className="mt-2">
             <Button variant="link" className="p-0">
               Back home
             </Button>
@@ -42,14 +41,13 @@ export const AddPage = ({ url }: Props) => {
   }
 
   if (data.type == "already_added") {
-    router.replace(`/c?url=${url}`);
-    return;
+    return <div>already added</div>;
   }
 
   return (
     <div className="mt-5">
       <PageBox data={data} />
-      <div className="mt-3">
+      <div className="mt-4">
         <StoreButton url={data.url} />
       </div>
       <RelatedFeed url={data.url} />
