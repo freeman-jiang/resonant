@@ -43,7 +43,7 @@ export const searchFor = async (query: string) => {
 };
 
 interface AlreadyCrawled {
-  type: "already_added";
+  type: "aleady_added";
   url: string;
 }
 
@@ -63,13 +63,19 @@ export const searchForUrl = async (url: string) => {
   return data;
 };
 
-interface CrawlInteractiveResponse {
+export interface CrawlInteractiveResponse {
   title: string;
   excerpt: string;
   url: string;
-  similar: Page[];
   type: "crawl";
 }
+
+export const crawlUrl = async (url: string) => {
+  const { data } = await axios.post<CrawlInteractiveResponse>(`/crawl`, {
+    url,
+  });
+  return data;
+};
 
 interface ExistingPageResponse {
   page: Page;
@@ -77,7 +83,12 @@ interface ExistingPageResponse {
   type: "page";
 }
 
-type FindPageResponse = CrawlInteractiveResponse | ExistingPageResponse;
+interface ShouldAdd {
+  type: "should_add";
+  url: string;
+}
+
+type FindPageResponse = ShouldAdd | ExistingPageResponse;
 
 export const findPage = async (url: string, session?: Session) => {
   const { data } = await axios.post<FindPageResponse>(`/page`, {

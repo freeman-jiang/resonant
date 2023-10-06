@@ -1,6 +1,6 @@
 "use client";
 
-import { extractDomain, formatExercept, getRelativeTime } from "@/lib/utils";
+import { extractDomain, formatExcerpt, getRelativeTime } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
 import { Page } from "@/types/api";
 import { ExternalLink } from "lucide-react";
@@ -96,7 +96,7 @@ export const Entry = (page: Page) => {
         </div>
         <Link href={`c?url=${page.url}`}>
           <p className="mt-2 font-mono text-sm text-slate-500">
-            {formatExercept(page.excerpt)}
+            {formatExcerpt(page.excerpt)}
           </p>
         </Link>
       </div>

@@ -385,7 +385,7 @@ class AlreadyAdded(BaseModel):
 
 
 class ShouldAdd(BaseModel):
-    type: str = "add"
+    type: str = "should_add"
     url: str
 
 
@@ -418,7 +418,6 @@ class CrawlInteractiveResponse(BaseModel):
     title: str
     url: str
     excerpt: str
-    similar: list[PageResponse]
     type: str = "crawl"
 
 
@@ -426,21 +425,14 @@ class CrawlInteractiveResponse(BaseModel):
 async def crawl_user(body: UrlRequest) -> CrawlInteractiveResponse:
     url = clean_url(body.url)
 
-    want_vec, crawl_result = await crawl_interactive(Link.from_url(url))
-    query = NearestNeighboursQuery(vector=want_vec, url=url)
-
-    similar = _query_similar(query)
-
-    messages = await get_senders_for_pages([x.id for x in similar])
-
-    for s in similar:
-        s.senders = messages[s.id]
+    _, crawl_result = await crawl_interactive(Link.from_url(url))
+    if crawl_result is None:
+        raise HTTPException(400, "Could not crawl URL")
 
     return CrawlInteractiveResponse(
-        content=crawl_result.content[:1000],
+        excerpt=crawl_result.content[:1000],
         title=crawl_result.title,
-        url=url,
-        similar=similar)
+        url=url)
 
 
 class CreatePageRequest(BaseModel):
@@ -460,6 +452,10 @@ async def _create_page(body: CreatePageRequest) -> Page:
 
 @app.post('/create_page')
 async def create_page(body: CreatePageRequest) -> PageResponse:
+    existing_page = db.get_page(url=body.url)
+    if existing_page:
+        return PageResponse.from_prisma_page(existing_page)
+
     page_response = await _create_page(body)
 
     # Override the parent_url to be the person who added it lol
@@ -664,30 +660,13 @@ async def test_like():
 
 
 @app.post("/page")
-async def find_page(body: FindPageRequest) -> Union[FindPageResponse, CrawlInteractiveResponse]:
+async def find_page(body: FindPageRequest) -> Union[FindPageResponse, ShouldAdd]:
     url = clean_url(body.url)
     user_id = body.userId
     page = db.get_page(url=url)
 
     if page is None:
-        want_vec, crawl_result = await crawl_interactive(Link.from_url(url))
-
-        if crawl_result is None:
-            raise HTTPException(400, "Could not crawl URL")
-
-        query = NearestNeighboursQuery(vector=want_vec, url=url)
-
-        similar = _query_similar(query)
-        messages = await get_senders_for_pages([x.id for x in similar])
-
-        for s in similar:
-            s.senders = messages[s.id]
-
-        return CrawlInteractiveResponse(
-            excerpt=crawl_result.content[:1000],
-            title=crawl_result.title,
-            url=url,
-            similar=similar)
+        return ShouldAdd(url=url)
 
     pageres = PageResponse.from_prisma_page(page, dont_trim=True)
 
