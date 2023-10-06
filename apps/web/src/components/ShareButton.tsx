@@ -25,6 +25,7 @@ export const ShareButton = ({ url, ...rest }: Props) => {
   const { toast } = useToast();
   const { data } = usePage(url, session);
   const router = useRouter();
+
   if (data.type !== "page") {
     return null;
   }

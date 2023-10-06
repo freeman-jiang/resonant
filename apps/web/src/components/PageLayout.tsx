@@ -42,7 +42,7 @@ export const PageLayout = ({ url, session }: Props) => {
     <div className="mt-5">
       <PageBox data={page} />
       <div className="mt-4 flex gap-3">
-        <ShareButton url={page.url} />
+        <ShareButton url={url} />
         <SaveButton page={page} />
       </div>
 
