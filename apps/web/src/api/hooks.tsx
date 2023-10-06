@@ -75,6 +75,8 @@ export const PageBoundary = async ({
     queryFn: () => findPage(url, session),
   });
 
+  console.log("got res", res);
+
   if (res.type === "should_add") {
     redirect(`/add?url=${url}`);
   }
@@ -153,5 +155,6 @@ export const useCrawl = (url: string) => {
   return useQuery({
     queryKey: [CRAWL_QUERY_KEY, url],
     queryFn: () => crawlUrl(url),
+    retry: false,
   });
 };
