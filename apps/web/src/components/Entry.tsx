@@ -84,7 +84,7 @@ export const Entry = (page: Page) => {
             </p>
           </Link>
           <div className="ml-8 flex items-center lg:ml-20">
-            <Link href={`/c?url=${page.url}`} target="_blank">
+            <Link href={`/c?url=${page.url}`}>
               <Rabbit className="-mt-1 h-5 w-5" />
             </Link>
             <FeedbackButton
@@ -94,7 +94,7 @@ export const Entry = (page: Page) => {
             />
           </div>
         </div>
-        <Link href={page.url} passHref>
+        <Link href={page.url} passHref target="_blank">
           <p className="mt-2 font-mono text-sm text-slate-500">
             {formatExcerpt(page.excerpt)}
           </p>
