@@ -4,7 +4,7 @@ import { extractDomain, formatExercept, getRelativeTime } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
 import { Page } from "@/types/api";
 import { ExternalLink } from "lucide-react";
-import NextLink from "next/link";
+import Link from "next/link";
 import { FeedbackButton } from "./FeedbackButton";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
@@ -75,18 +75,18 @@ export const Entry = (page: Page) => {
       <div className="border-b border-slate-400 pb-2">
         <Broadcast />
         <div className="flex flex-row items-center justify-between">
-          <NextLink href={`/c?url=${page.url}`} className="cursor-pointer">
+          <Link href={`/c?url=${page.url}`} className="cursor-pointer">
             <h2 className="text-xl font-semibold tracking-tight text-slate-900">
               {page.title || page.url}
             </h2>
             <p className="text-sm font-light text-slate-700">
               {extractDomain(page.url)}
             </p>
-          </NextLink>
+          </Link>
           <div className="ml-8 flex items-center lg:ml-20">
-            <NextLink href={page.url} target="_blank">
+            <Link href={page.url} target="_blank">
               <ExternalLink className="-mt-1 h-4 w-4" />
-            </NextLink>
+            </Link>
             <FeedbackButton
               page={page}
               canUnsend={canUnsend}
@@ -94,9 +94,11 @@ export const Entry = (page: Page) => {
             />
           </div>
         </div>
-        <p className="mt-2 font-mono text-sm text-slate-500">
-          {formatExercept(page.excerpt)}
-        </p>
+        <Link href={`c?url=${page.url}`}>
+          <p className="mt-2 font-mono text-sm text-slate-500">
+            {formatExercept(page.excerpt)}
+          </p>
+        </Link>
       </div>
     </div>
   );
