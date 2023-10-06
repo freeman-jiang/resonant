@@ -2,7 +2,7 @@ from pydantic import ValidationError
 import pytest
 from crawler.link import *
 from crawler.prismac import PostgresClient
-from crawler.worker import fix
+from crawler.parse import fix
 
 
 def fix_weird_chars():

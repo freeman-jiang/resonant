@@ -17,8 +17,6 @@ from crawler.constants.whitelist import WHITELIST_DOMAINS
 from crawler.link import Link
 from bs4 import BeautifulSoup
 
-from crawler.worker import fix
-
 
 class CrawlResult(BaseModel):
     link: Link
@@ -212,3 +210,7 @@ def extract_meta_title(html: str) -> Optional[str]:
 
 def test_1():
     print(find_feed_urls('https://danluu.com'))
+
+
+def fix(s: str) -> str:
+    return s.encode('ascii', 'ignore').decode('utf-8')

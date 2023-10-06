@@ -190,5 +190,3 @@ def spoof_chrome_user_agent(session: ClientSession):
         'User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'
 
 
-def fix(s: str) -> str:
-    return s.encode('ascii', 'ignore').decode('utf-8')
