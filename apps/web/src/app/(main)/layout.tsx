@@ -22,7 +22,7 @@ export default async function RootLayout({
     // TODO: Maybe call supabase directly instead
     const u = await getUser(user.id);
     if (!u) {
-      redirect("/new");
+      redirect("/onboarding");
     }
   }
 

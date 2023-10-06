@@ -13,7 +13,7 @@ export const extractDomain = (url: string) => {
 // TODO: Consider moving this to backend
 const punctuationSet = new Set([".", ",", "!", "?", ";", ":", "-"]);
 const DEFAULT_MAX_EXCERPT_LENGTH = 200;
-export const formatExercept = (
+export const formatExcerpt = (
   excerpt: string,
   maxLength = DEFAULT_MAX_EXCERPT_LENGTH,
 ) => {

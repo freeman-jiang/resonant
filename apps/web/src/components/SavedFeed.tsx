@@ -1,7 +1,7 @@
 "use client";
 import { unsavePage } from "@/api";
 import { SAVED_FEED_QUERY_KEY, useSavedFeed } from "@/api/hooks";
-import { extractDomain, formatExercept } from "@/lib/utils";
+import { extractDomain, formatExcerpt } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
 import { Page } from "@/types/api";
 import { useQueryClient } from "@tanstack/react-query";
@@ -68,7 +68,7 @@ export const Entry = (page: Page) => {
           </div>
         </div>
         <p className="mt-2 font-mono text-sm text-slate-500">
-          {formatExercept(page.excerpt)}
+          {formatExcerpt(page.excerpt)}
         </p>
       </div>
     </div>

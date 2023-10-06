@@ -1,9 +1,10 @@
 "use client";
 import { storePage } from "@/api";
-import { PAGE_QUERY_KEY } from "@/api/hooks";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowDownToLine } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
+import { useToast } from "./ui/use-toast";
 
 interface Props {
   url: string;
@@ -23,7 +24,7 @@ const Spinner = () => {
         cy="12"
         r="10"
         stroke="currentColor"
-        stroke-width="4"
+        strokeWidth="4"
       ></circle>
       <path
         className="opacity-75"
@@ -35,12 +36,16 @@ const Spinner = () => {
 };
 
 export const StoreButton = ({ url }: Props) => {
-  const queryClient = useQueryClient();
+  const router = useRouter();
+  const { toast } = useToast();
 
   const { mutate, isPending } = useMutation({
     mutationFn: storePage,
-    onSettled: (data) => {
-      queryClient.invalidateQueries({ queryKey: [PAGE_QUERY_KEY, url] });
+    onSuccess: () => {
+      router.push(`/c?url=${url}`);
+    },
+    onError: (error) => {
+      toast({ title: "Error storing page" });
     },
   });
 
@@ -57,7 +62,7 @@ export const StoreButton = ({ url }: Props) => {
         </>
       ) : (
         <>
-          <ArrowDownToLine className="mr-2 h-4 w-4" /> Store
+          <Plus className="mr-2 h-4 w-4" /> Add to Resonant
         </>
       )}
     </Button>
