@@ -75,7 +75,7 @@ export const Entry = (page: Page) => {
       <div className="border-b border-slate-400 pb-2">
         <Broadcast />
         <div className="flex flex-row items-center justify-between">
-          <Link href={page.url} className="cursor-pointer">
+          <Link href={page.url} className="cursor-pointer" target="_blank">
             <h2 className="text-xl font-semibold tracking-tight text-slate-900">
               {page.title || page.url}
             </h2>
@@ -84,7 +84,7 @@ export const Entry = (page: Page) => {
             </p>
           </Link>
           <div className="ml-8 flex items-center lg:ml-20">
-            <Link href={`/c?url=${page.url}`}>
+            <Link href={`/c?url=${page.url}`} target="_blank">
               <Rabbit className="-mt-1 h-5 w-5" />
             </Link>
             <FeedbackButton
