@@ -5,7 +5,7 @@ from urllib.parse import urlparse, urlunparse
 import validators
 from pydantic import BaseModel, validator
 
-SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com", "facebook.com", "reddit.com",
+SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.", "youtube.com", "twitter.com", "facebook.com", "reddit.com",
                       "instagram.com", 'google.com/patent', 'wikimedia.org', 'https://t.co', 'amzn.to',
                       'codeforces.com', 'tandfonline.com', 'wiley.com', 'oup.com', 'sagepub.com', 'sexbuzz.com',
                       'arxiv.org', 'detnews.com', 'cbsnews.com', 'cnn.com', 'scholar.google.com', 'play.google.com',
@@ -17,6 +17,16 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
                       'albawa.com', 'theage.com', 'prnewswire.com', 'archive.org', 'stackexchange.com', 'doi.org',
                       'jamanetwork',
                       'versobooks.com',
+                      'git.sr.ht',
+                    'https://www.python.org/',
+                    'https://vuejs.org/',
+                    'https://kotlinlang.org/',
+                    'https://openjdk.java.net/',
+                    'https://developer.chrome.com/',
+                    'https://leanpub.com/fljs',
+                    'https://help.github.com',
+                    'http://guides.rubyonrails.org/',
+                    'https://www.howtogeek.com/',
                       'codepen.io',
                       'docs.google.com',
 
@@ -45,6 +55,8 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
                     'www.imdb.com',
                     'cloud.google.com',
                     'sabe.io/',
+                      'kubernetes.io',
+
                       'www.sitepoint.com',
                       'preparednessmama.com',
                       'youtu.be',
@@ -98,6 +110,18 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
                       'tvtropes.org', 'theregister.com', 'theonion.com', 'telegraph.co.uk', 'quoteinvestigator.com',
                       'biomedcentral', 'tumblr.com', '9to5google', 'washingtonmonthly', 'ifstudies', 'awardworld.net',
                       'webpronews.com',
+                      'apple.com',
+                      'npmjs.com',
+                      'cppreference.com',
+                      'pypi.org',
+                      'meetup.com',
+                      'audible.com',
+                      'academia.edu',
+                      'usatoday.com',
+                      'msnbc.com',
+                      'docs.rs',
+                      'chrome.google.com',
+                      'pkg.go.dev',
                       'webmd.com',
 
                       'sleeplessbeastie.eu',
@@ -109,7 +133,6 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.com", "youtube.com", "twitter.com
                       'http://github.com/',
                       'ramii.org',
                       'americansongwriter.com',
-                        ''
                       'caiso.com',
                       'slideshare.net',
                       'stackoverflow.com',

@@ -563,7 +563,12 @@ async def get_user_feed() -> UserFeedResponse:
     for m in grouped_messages:
         r = grouped_messages[m][0]
         if r.page_id is not None:
-            page = pages[r.page_id]
+            page = pages.get(r.page_id)
+
+            # The page has been deleted from server.henryn.ca DB
+            if page is None:
+                continue
+
             page_response = PageResponse.from_prisma_page(page)
         else:
             page_response = PageResponseURLOnly(url=r.url)
