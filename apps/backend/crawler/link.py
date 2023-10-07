@@ -17,8 +17,12 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.", "youtube.com", "twitter.com", 
                       'albawa.com', 'theage.com', 'prnewswire.com', 'archive.org', 'stackexchange.com', 'doi.org',
                       'jamanetwork',
                       'versobooks.com',
+                      ''
                       'git.sr.ht',
                     'https://www.python.org/',
+                      'support.microsoft.com',
+                      'learn.microsoft.com',
+                      'me'
                     'https://vuejs.org/',
                     'https://kotlinlang.org/',
                     'https://openjdk.java.net/',

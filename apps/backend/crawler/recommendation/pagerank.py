@@ -27,9 +27,9 @@ def add_rank(d, url, value, msg=""):
 
 def trustrank(graph: dict[str, Node], damping_factor=0.80, max_iterations=100, tolerance=1.0):
     trusted_nodes = [(url, node.individual_pages)
-                     for url, node in graph.items() if node.best_depth <= 2]
+                     for url, node in graph.items() if node.best_depth <= 1]
     trusted_nodes_len = sum(
-        x.individual_pages for x in graph.values() if x.best_depth <= 2)
+        x.individual_pages for x in graph.values() if x.best_depth <= 1)
 
     # Initialize TrustRank values
     trustrank_values = {url: node.score for url, node in graph.items()}

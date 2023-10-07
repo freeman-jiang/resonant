@@ -309,8 +309,8 @@ async def random_feed(limit: int = 60) -> list[PageResponse]:
     seed = current_datetime.strftime("%Y-%m-%d") + 'A'
 
     random_pages = db.query("""
-    WITH random_ids AS (SELECT id, MD5(CONCAT(%s::text, content_hash)) FROM "Page" ORDER BY md5)
-    SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1 LIMIT %s
+    WITH random_ids AS (SELECT id, MD5(CONCAT(%s::text, content_hash)) FROM "Page" ORDER BY md5 LIMIT 300)
+    SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1 ORDER BY page_rank DESC LIMIT %s
     """, [seed, limit])
 
     random_pages = [Page(**p) for p in random_pages]
