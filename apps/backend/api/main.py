@@ -6,7 +6,7 @@ from typing import Optional, Union
 from uuid import UUID
 
 import pytest
-from api.page_response import PageResponse, PageResponseURLOnly, Sender
+from api.page_response import PageResponse, Sender
 from crawler.link import Link, clean_url
 from crawler.prismac import PostgresClient
 from crawler.recommendation.embedding import (NearestNeighboursQuery,
@@ -496,13 +496,13 @@ async def send_message(body: SendMessageRequest) -> None:
 class GroupedMessage(BaseModel):
     message_ids: list[int]
     senders: list[Sender]
-    page: Union[PageResponse, PageResponseURLOnly]
+    page: PageResponse
 
     messages: list[Optional[str]]
     sent_on: list[datetime]
 
     @classmethod
-    def from_messages(cls, messages: list[Message], page: Union[PageResponse, PageResponseURLOnly]):
+    def from_messages(cls, messages: list[Message], page: PageResponse):
         return GroupedMessage(
             message_ids=[m.id for m in messages],
             senders=[Sender.from_message(m) for m in messages],
@@ -520,9 +520,23 @@ class UserFeedResponse(BaseModel):
 
 
 @app.get('/global_feed')
-async def get_user_feed() -> UserFeedResponse:
-    messages = await client.message.find_many(order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True})
+async def get_global_feed() -> UserFeedResponse:
+    messages = await client.message.find_many(order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True}, where={
+        'receiver_id': '4ee604f3-987d-4295-a2fa-b58d88e5b5e0'
+    })
 
+    result, pages = await _process_messages(messages)
+
+    random_articles = await random_feed(limit=60)
+
+    # Filter out stuff that alrdseady appears in the messages
+    random_articles = [x for x in random_articles if x.id not in pages]
+
+    return UserFeedResponse(random_feed=random_articles, messages=result)
+
+
+# TODO: clean up and rename
+async def _process_messages(messages: list[Message]):
     grouped_messages: dict[str, list[Message]] = defaultdict(list)
     for m in messages:
         group_key = m.page_id or m.url
@@ -535,7 +549,7 @@ async def get_user_feed() -> UserFeedResponse:
 
     pages = {p.id: p for p in pages}
 
-    result: list[PageResponse | PageResponseURLOnly] = []
+    result: list[PageResponse] = []
 
     for m in grouped_messages:
         r = grouped_messages[m][0]
@@ -548,18 +562,14 @@ async def get_user_feed() -> UserFeedResponse:
 
             page_response = PageResponse.from_prisma_page(page)
         else:
-            page_response = PageResponseURLOnly(url=r.url)
+            # should not happen currently | we really should not reach here...
+            raise ValueError("URLs not supported yet")
 
         page_response.senders = [Sender.from_message(
             m) for m in grouped_messages[m]]
         result.append(page_response)
 
-    random_articles = await random_feed(limit=60)
-
-    # Filter out stuff that alrdseady appears in the messages
-    random_articles = [x for x in random_articles if x.id not in pages]
-
-    return UserFeedResponse(random_feed=random_articles, messages=result)
+    return result, pages
 
 
 @pytest.mark.asyncio
@@ -749,3 +759,14 @@ async def update_user(body: UpdateUserRequest) -> None:
             'twitter': body.twitter,
         }
     )
+
+
+@app.get('/feed/{userId}')
+async def get_user_feed(userId: str) -> list[PageResponse]:
+    messages = await client.message.find_many(order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True}, where={
+        'receiver_id': userId
+    })
+
+    result, _ = await _process_messages(messages)
+
+    return result

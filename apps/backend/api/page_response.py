@@ -57,14 +57,3 @@ class PageResponse(BaseModel):
         page = Page(**d)
         score = d['score']
         return PageResponse.from_prisma_page(page, score)
-
-
-class PageResponseURLOnly(BaseModel):
-    """
-    When a user sends a URL that is not in our database, we don't know the title, url, text...
-    """
-    url: str
-    url_only: bool = True
-    senders: list[Sender] = []
-
-    # TODO: crawl the page and get the title

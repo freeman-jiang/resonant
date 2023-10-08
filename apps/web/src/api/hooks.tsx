@@ -13,6 +13,7 @@ import {
   findPage,
   getSavedPages,
   getUser,
+  getUserFeed,
   searchFor,
   searchUsers,
 } from ".";
@@ -202,4 +203,36 @@ export const useUserSearch = (query: string) => {
     queryFn: () => searchUsers(query),
     staleTime: Infinity,
   });
+};
+
+export const USER_FEED_QUERY_KEY = "user-feed";
+
+export const useUserFeed = (userId: string) => {
+  return useQuery({
+    queryKey: [USER_FEED_QUERY_KEY, userId],
+    queryFn: () => getUserFeed(userId),
+  });
+};
+
+interface UserFeedBoundaryProps {
+  userId: string;
+  children: React.ReactNode;
+}
+
+export const UserFeedBoundary = async ({
+  children,
+  userId,
+}: UserFeedBoundaryProps) => {
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: [USER_FEED_QUERY_KEY, userId],
+    queryFn: () => getUserFeed(userId),
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      {children}
+    </HydrationBoundary>
+  );
 };

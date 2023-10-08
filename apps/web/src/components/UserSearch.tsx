@@ -44,7 +44,8 @@ export function UserSearch() {
     return (
       <>
         {users
-          .filter((user) => user.id !== session.user.id)
+          // You can send a link to yourself
+          // .filter((user) => user.id !== session.user.id)
           .map((user) => {
             const name = `${user.firstName} ${user.lastName}`;
             const initials = `${user.firstName[0]}${user.lastName[0]}`;
