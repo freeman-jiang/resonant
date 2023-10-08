@@ -1,3 +1,4 @@
+import json
 from collections import defaultdict
 
 from psycopg import Connection
@@ -25,7 +26,7 @@ def add_rank(d, url, value, msg=""):
     d[url] += value
 
 
-def trustrank(graph: dict[str, Node], damping_factor=0.80, max_iterations=100, tolerance=1.0):
+def trustrank(graph: dict[str, Node], damping_factor=0.80, max_iterations=100, tolerance=1.0) -> dict[str, float]:
     trusted_nodes = [(url, node.individual_pages)
                      for url, node in graph.items() if node.best_depth <= 1]
     trusted_nodes_len = sum(
@@ -102,7 +103,7 @@ def combine_domain_and_page_scores(domains: dict[str, float], pages: dict[str, f
         domain = url_to_domain(url)
         domain_score = domains[domain]
 
-        pages_combined[url] = ((domain_score ** 0.6) * (page_score + 1)) + 1
+        pages_combined[url] = ((domain_score ** 2.0) * (page_score + 1)) + 1
 
     return pages_combined
 
@@ -111,7 +112,7 @@ def main():
     cursor = db.cursor(row_factory=kwargs_row(PageAsNode))
     pages = cursor.execute(
         "SELECT id, url,outbound_urls,depth  FROM \"Page\"").fetchall()
-    # json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
+    json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
     # pages = json.load(open("/tmp/file.json", "r"))
     # pages = [PageAsNode(**p) for p in pages]
     print("Got pages", len(pages))
@@ -125,7 +126,9 @@ def main():
         topdomains[domain] = topdomains[domain] / \
             (domains[domain].individual_pages)
 
-    topurls = trustrank(nodes, max_iterations=15)
+    topurls = trustrank(nodes, max_iterations=10)
+
+
     page_score = combine_domain_and_page_scores(topdomains, topurls)
 
     insert_pagerank(db, pages, page_score)

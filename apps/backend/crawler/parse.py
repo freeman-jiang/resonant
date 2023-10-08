@@ -1,4 +1,6 @@
 import functools
+import html
+
 import json
 
 import feedparser
@@ -213,4 +215,5 @@ def test_1():
 
 
 def fix(s: str) -> str:
+    s = html.unescape(s)
     return s.encode('ascii', 'ignore').decode('utf-8')

@@ -234,8 +234,7 @@ WITH want AS ({want_cte}),
  select "Page".*,
  -- Scoring algorithm: (similarity * page_rank^0.5 * (amount of matching windows ^ 0.15))
  -- Higher is better
- COALESCE((1 - dist) * (COALESCE("Page".page_rank, 1) ^ 0.40) * (domain_counts.num_matching_windows ^ 0.25), -1) as score
-  
+ COALESCE((1 - dist) * (COALESCE("Page".page_rank, 1) ^ 1.0) * (domain_counts.num_matching_windows ^ 0.20), -1) as score
   from "Page" INNER JOIN domain_counts ON domain_counts.url = "Page".url  ORDER BY score DESC
     """, want_cte_dict).fetchall()
 
