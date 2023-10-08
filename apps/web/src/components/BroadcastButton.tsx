@@ -4,17 +4,9 @@ import { PAGE_QUERY_KEY, usePage } from "@/api/hooks";
 import { cn } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleOff, Send } from "lucide-react";
+import { CircleOff, Rss } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { UserSearch } from "./UserSearch";
 import { Button, buttonVariants } from "./ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "./ui/dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -27,7 +19,7 @@ interface Props extends React.HTMLAttributes<HTMLButtonElement> {
   url: string;
 }
 
-export const ShareButton = ({ url, ...rest }: Props) => {
+export const BroadcastButton = ({ url, ...rest }: Props) => {
   const { session } = useSupabase();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -56,40 +48,6 @@ export const ShareButton = ({ url, ...rest }: Props) => {
     queryClient.invalidateQueries({ queryKey: [PAGE_QUERY_KEY, url] });
   };
 
-  return (
-    <Dialog>
-      <TooltipProvider>
-        <Tooltip>
-          <DialogTrigger asChild>
-            <TooltipTrigger>
-              <p
-                className={cn(
-                  buttonVariants({ variant: "default", size: "sm" }),
-                  "bg-emerald-500 hover:bg-emerald-600",
-                )}
-                // onClick={handleShare}
-              >
-                <Send className="mr-2 h-4 w-4" /> Send
-              </p>
-            </TooltipTrigger>
-          </DialogTrigger>
-          <TooltipContent>
-            <p>Send this link to another Resonant user's feed</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Send link to user</DialogTitle>
-          <div className="text-sm text-slate-500">
-            It will arrive directly in their feed.
-          </div>
-          <UserSearch />
-        </DialogHeader>
-      </DialogContent>
-    </Dialog>
-  );
-
   if (has_broadcasted) {
     return (
       <Button
@@ -115,7 +73,7 @@ export const ShareButton = ({ url, ...rest }: Props) => {
             )}
             onClick={handleShare}
           >
-            <Send className="mr-2 h-4 w-4" /> Broadcast
+            <Rss className="mr-2 h-4 w-4" /> Broadcast
           </p>
         </TooltipTrigger>
         <TooltipContent>

@@ -1,10 +1,11 @@
 "use client";
 import { usePage } from "@/api/hooks";
 import { RelatedFeed } from "@/components/RelatedFeed";
-import { ShareButton } from "@/components/ShareButton";
+import { SendButton } from "@/components/SendButton";
 import { Session } from "@supabase/supabase-js";
 import NextLink from "next/link";
 import { AddPage } from "./AddPage";
+import { BroadcastButton } from "./BroadcastButton";
 import { PageBox } from "./PageBox";
 import { SaveButton } from "./SaveButton";
 import { Button } from "./ui/button";
@@ -42,7 +43,8 @@ export const PageLayout = ({ url, session }: Props) => {
     <div>
       <PageBox data={page} />
       <div className="mt-4 flex gap-3">
-        <ShareButton url={url} />
+        <SendButton url={url} />
+        <BroadcastButton url={page.url} />
         <SaveButton page={page} />
       </div>
 
