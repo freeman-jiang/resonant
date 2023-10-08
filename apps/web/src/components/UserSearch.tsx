@@ -39,6 +39,8 @@ export function UserSearch() {
   };
 
   const Items = () => {
+    if (!users) return null;
+
     return (
       <>
         {users

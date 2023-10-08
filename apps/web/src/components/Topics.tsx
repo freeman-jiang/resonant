@@ -22,6 +22,14 @@ export const Topics = () => {
           className="cursor-pointer text-sm"
           variant={!topic && path === "/" ? "default" : "outline"}
         >
+          For You
+        </Badge>
+      </NextLink>
+      <NextLink href={"/all"}>
+        <Badge
+          className="cursor-pointer text-sm"
+          variant={!topic && path === "/all" ? "default" : "outline"}
+        >
           All
         </Badge>
       </NextLink>

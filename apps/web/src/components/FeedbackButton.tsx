@@ -1,7 +1,7 @@
 "use client";
 import { amplitude } from "@/analytics/amplitude";
 import { savePage, sharePage, unsharePage } from "@/api";
-import { FEED_QUERY_KEY } from "@/api/hooks";
+import { GLOBAL_FEED_QUERY_KEY } from "@/api/hooks";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,13 +51,13 @@ export const FeedbackButton = ({ canUnsend, page, ...props }: Props) => {
     }
     await sharePage(user.id, page.id);
     amplitude.track("Broadcast", { email: user.email });
-    queryClient.invalidateQueries({ queryKey: [FEED_QUERY_KEY] });
+    queryClient.invalidateQueries({ queryKey: [GLOBAL_FEED_QUERY_KEY] });
     toast({ title: "Broadcasted! 🎉" });
   };
 
   const handleUnshare = async () => {
     await unsharePage(user.id, page.id);
-    queryClient.invalidateQueries({ queryKey: [FEED_QUERY_KEY] });
+    queryClient.invalidateQueries({ queryKey: [GLOBAL_FEED_QUERY_KEY] });
     toast({ title: "Unbroadcasted! 🎉" });
   };
 

@@ -20,8 +20,8 @@ export interface FeedResponse {
   messages: Page[];
 }
 
-export async function fetchSocialFeed() {
-  const response = await axios.get<FeedResponse>(`/feed`);
+export async function fetchGlobalFeed() {
+  const response = await axios.get<FeedResponse>(`/global_feed`);
   return response.data;
 }
 

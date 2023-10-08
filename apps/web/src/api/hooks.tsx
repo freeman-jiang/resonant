@@ -9,7 +9,7 @@ import {
 import { ReactNode } from "react";
 import {
   crawlUrl,
-  fetchSocialFeed,
+  fetchGlobalFeed,
   findPage,
   getSavedPages,
   getUser,
@@ -18,28 +18,28 @@ import {
 } from ".";
 
 // TODO: Consider using SSR by making this a server component
-export const FEED_QUERY_KEY = "feed";
+export const GLOBAL_FEED_QUERY_KEY = "global-feed";
 
 interface Options {
   initialData: Page[];
 }
 
-export const useFeed = (options?: Options) => {
+export const useGlobalFeed = (options?: Options) => {
   return useQuery({
-    queryKey: [FEED_QUERY_KEY],
-    queryFn: fetchSocialFeed,
+    queryKey: [GLOBAL_FEED_QUERY_KEY],
+    queryFn: fetchGlobalFeed,
   });
 };
 
-export const FeedBoundary = async ({
+export const GlobalFeedBoundary = async ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
   const queryClient = new QueryClient();
   await queryClient.prefetchQuery({
-    queryKey: [FEED_QUERY_KEY],
-    queryFn: fetchSocialFeed,
+    queryKey: [GLOBAL_FEED_QUERY_KEY],
+    queryFn: fetchGlobalFeed,
   });
 
   return (

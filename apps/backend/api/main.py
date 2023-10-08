@@ -519,14 +519,8 @@ class UserFeedResponse(BaseModel):
 # def group_page_responses(messages: list[PageResponse]) -> PageResponse:
 
 
-@app.get('/feed')
+@app.get('/global_feed')
 async def get_user_feed() -> UserFeedResponse:
-    """
-    Get the user's feed by combining their incoming messages and stuff from random-feed
-    :param userid:
-    :return:
-    """
-
     messages = await client.message.find_many(order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True})
 
     grouped_messages: dict[str, list[Message]] = defaultdict(list)

@@ -1,11 +1,11 @@
 "use client";
 
-import { useFeed } from "@/api/hooks";
+import { useGlobalFeed } from "@/api/hooks";
 import { Entry } from "./Entry";
 import { Feed } from "./Feed";
 
-export const SocialFeed = () => {
-  const { data: feed } = useFeed();
+export const GlobalFeed = () => {
+  const { data: feed } = useGlobalFeed();
 
   return (
     <div className="space-y-2">
