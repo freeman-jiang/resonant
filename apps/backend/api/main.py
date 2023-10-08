@@ -661,7 +661,7 @@ async def get_search_users(query: str) -> list[UserQueryResponse]:
 @pytest.mark.asyncio
 async def test_search():
     await startup()
-    results = await search(SearchQuery(query = 'climate'))
+    results = await search(SearchQuery(query='climate'))
     print([x for x in results])
 
 
@@ -691,3 +691,34 @@ async def find_page(body: FindPageRequest) -> Union[FindPageResponse, ShouldAdd]
         has_broadcasted = False
 
     return FindPageResponse(page=pageres, has_broadcasted=has_broadcasted)
+
+
+class FollowUserRequest(BaseModel):
+    followerId: str
+    followeeId: str
+
+
+@app.post("/follow_user")
+async def follow_user(body: FollowUserRequest) -> None:
+    await client.user.update(
+        where={
+            'id': body.followerId
+        },
+        data={
+            'following': {
+                'connect': [{'id': body.followeeId}]
+            }
+        })
+
+
+@app.post("/unfollow_user")
+async def unfollow_user(body: FollowUserRequest) -> None:
+    await client.user.update(
+        where={
+            'id': body.followerId
+        },
+        data={
+            'following': {
+                'disconnect': [{'id': body.followeeId}]
+            }
+        })

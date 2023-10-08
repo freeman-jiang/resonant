@@ -27,8 +27,6 @@ model Page {
   page_rank     Float?
   embeddings    Embeddings[]
 
-
-
   @@schema("public")
 }
 
@@ -67,6 +65,8 @@ model User {
   liked_pages         LikedPage[]
   sent_messages       Message[]   @relation("SentMessages")
   received_messages   Message[]   @relation("ReceivedMessages")
+  followedBy          User[]      @relation("UserFollows")
+  following           User[]      @relation("UserFollows")
   created_at          DateTime    @default(now()) @db.Timestamptz
   updated_at          DateTime    @default(now()) @updatedAt @db.Timestamptz
 
