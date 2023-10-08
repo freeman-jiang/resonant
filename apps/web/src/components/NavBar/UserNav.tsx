@@ -38,12 +38,12 @@ export function UserNav() {
   return (
     <div className="flex items-center gap-4">
       <div className="flex">
-        <Link
+        {/* <Link
           href="/friends"
           className={cn(buttonVariants({ variant: "link" }))}
         >
           Friends
-        </Link>
+        </Link> */}
         <Link href="/saved" className={cn(buttonVariants({ variant: "link" }))}>
           Saved
         </Link>
