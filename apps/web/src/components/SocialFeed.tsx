@@ -8,7 +8,7 @@ export const SocialFeed = () => {
   const { data: feed } = useFeed();
 
   return (
-    <div className="mt-5 space-y-2">
+    <div className="space-y-2">
       {feed.messages.map((message) => {
         const senderIds = message.senders.map((sender) => sender.id).join(", ");
         return <Entry {...message} key={`${message.url}-${senderIds}`} />;

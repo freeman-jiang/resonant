@@ -13,7 +13,7 @@ const Page = (params: RouteParams) => {
   const { data } = useSearch(q);
 
   return (
-    <div className="mt-5">
+    <div>
       <div className="break-all font-mono">{q}</div>
       <Feed feed={data} />
     </div>

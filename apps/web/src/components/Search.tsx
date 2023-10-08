@@ -30,7 +30,7 @@ export function Search() {
 
   return (
     <form
-      className="mt-3 flex w-full items-center space-x-2"
+      className="mb-5 mt-3 flex w-full items-center space-x-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <Input

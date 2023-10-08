@@ -17,7 +17,7 @@ export const AddPage = ({ url }: Props) => {
 
   if (error) {
     return (
-      <div className="mt-5">
+      <div>
         <div className="font-semibold">Could not crawl </div>
         <div className="break-all font-mono">{url}</div>
         <div>
@@ -33,7 +33,7 @@ export const AddPage = ({ url }: Props) => {
 
   if (!data) {
     return (
-      <div className="mt-5">
+      <div>
         <Skeleton className="h-48 w-full" />
         <LoadingFeed />
       </div>
@@ -45,7 +45,7 @@ export const AddPage = ({ url }: Props) => {
   }
 
   return (
-    <div className="mt-5">
+    <div>
       <PageBox data={data} />
       <div className="mt-4">
         <StoreButton url={data.url} />

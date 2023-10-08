@@ -19,7 +19,7 @@ export const PageLayout = ({ url, session }: Props) => {
 
   if (!data || error) {
     return (
-      <div className="mt-5">
+      <div>
         Could not crawl <span className="font-mono">{url}</span>
         <div>
           <NextLink href="/">
@@ -39,7 +39,7 @@ export const PageLayout = ({ url, session }: Props) => {
   const { page } = data;
 
   return (
-    <div className="mt-5">
+    <div>
       <PageBox data={page} />
       <div className="mt-4 flex gap-3">
         <ShareButton url={url} />
