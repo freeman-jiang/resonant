@@ -192,10 +192,11 @@ async def unsave(userid: str, pageid: int) -> None:
     return None
 
 
-async def upsert_message(user: User, page: Page):
+async def _broadcast(user: User, page: Page):
     message = await client.message.find_first(where={
         'page_id': page.id,
         'sender_id': user.id,
+        'receiver_id': '4ee604f3-987d-4295-a2fa-b58d88e5b5e0',
     })
     if message is None:
         await client.message.create(data={
@@ -332,7 +333,7 @@ async def share_page(user_id: str, page_id: int) -> None:
     if not user:
         raise HTTPException(400, "User does not exist")
 
-    await upsert_message(user, page)
+    await _broadcast(user, page)
     return None
 
 
@@ -345,6 +346,7 @@ async def unshare_page(user_id: str, page_id: int) -> None:
     message = await client.message.find_first(where={
         'page_id': page_id,
         'sender_id': user.id,
+        'receiver_id': '4ee604f3-987d-4295-a2fa-b58d88e5b5e0',
     })
 
     if not message:
@@ -696,9 +698,14 @@ async def find_page(body: FindPageRequest) -> Union[FindPageResponse, ShouldAdd]
     pageres = PageResponse.from_prisma_page(page, dont_trim=True)
 
     pageres.senders = (await get_senders_for_pages([page.id]))[page.id]
+    print(pageres.senders)
 
     if user_id:
-        has_broadcasted = any(x.id == user_id for x in pageres.senders)
+        # a user has broadcasted if they are a sender and SPECIFICALLY they sent to the global broadcast special user
+        has_broadcasted = any(
+            [s.id == user_id and s.receiver_id == '4ee604f3-987d-4295-a2fa-b58d88e5b5e0' for s in pageres.senders])
+        print(has_broadcasted)
+
     else:
         has_broadcasted = False
 

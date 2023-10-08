@@ -32,7 +32,11 @@ export function UserNav() {
     return null;
   }
 
-  const initials = user.email[0].toUpperCase();
+  if (!user) {
+    return null;
+  }
+
+  const initials = `${user.first_name[0]}${user.last_name[0]}`;
   const name = `${user.first_name} ${user.last_name}`;
 
   return (

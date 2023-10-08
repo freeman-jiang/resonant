@@ -18,13 +18,14 @@ class Sender(BaseModel):
     last_name: str
     profile_picture_url: Optional[str]
     sent_on: datetime.datetime
+    receiver_id: str  # id of the user
 
     @classmethod
     def from_message(cls, message: Message):
         sender = message.sender
         assert (sender is not None)
         return Sender(id=sender.id, first_name=sender.first_name, last_name=sender.last_name,
-                      profile_picture_url=sender.profile_picture_url, sent_on=message.sent_on)
+                      profile_picture_url=sender.profile_picture_url, sent_on=message.sent_on, receiver_id=message.receiver_id)
 
 
 class PageResponse(BaseModel):
