@@ -4,6 +4,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -103,20 +104,19 @@ export function UserNav({ user: serverUser }: Props) {
               </div>
             </DropdownMenuLabel>
             {/* <DropdownMenuSeparator /> */}
-            {/* <DropdownMenuGroup>
-              <DropdownMenuItem>
-                Profile
-                <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
+            <DropdownMenuGroup>
+              <Link href={"/profile"}>
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+              </Link>
+              {/* <DropdownMenuItem>
                 Settings
                 <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 Friends
                 <DropdownMenuShortcut>⌘G</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            </DropdownMenuGroup> */}
+              </DropdownMenuItem> */}
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               Log out

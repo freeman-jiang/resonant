@@ -62,6 +62,8 @@ model User {
   first_name          String
   last_name           String
   profile_picture_url String?
+  website             String?
+  twitter             String?
   liked_pages         LikedPage[]
   sent_messages       Message[]   @relation("SentMessages")
   received_messages   Message[]   @relation("ReceivedMessages")

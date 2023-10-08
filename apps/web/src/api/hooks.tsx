@@ -12,6 +12,7 @@ import {
   fetchSocialFeed,
   findPage,
   getSavedPages,
+  getUser,
   searchFor,
 } from ".";
 
@@ -152,4 +153,32 @@ export const useCrawl = (url: string) => {
     retry: false,
     staleTime: 0,
   });
+};
+
+export const USER_QUERY_KEY = "user";
+
+export const useUser = (userId?: string) => {
+  return useQuery({
+    queryKey: [USER_QUERY_KEY],
+    queryFn: () => getUser(userId),
+  });
+};
+
+interface UserBoundaryProps {
+  userId: string;
+  children: React.ReactNode;
+}
+
+export const UserBoundary = async ({ children, userId }: UserBoundaryProps) => {
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: [USER_QUERY_KEY],
+    queryFn: () => getUser(userId),
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      {children}
+    </HydrationBoundary>
+  );
 };

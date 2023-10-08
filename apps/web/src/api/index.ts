@@ -97,7 +97,26 @@ export const createUser = async (user: CreateUserRequest) => {
 };
 
 // TODO: fill in object with user type
-type GetUserResponse = null | {};
+type GetUserResponse = CustomUser | null;
+
+export interface CustomUser {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  profile_picture_url: string | null;
+  website: string | null;
+  twitter: string | null;
+
+  // Won't include relations
+  liked_pages: null;
+  sent_messages: null;
+  received_messages: null;
+  followedBy: null;
+  following: null;
+  created_at: string;
+  updated_at: string;
+}
 
 export const getUser = async (uuid: string): Promise<GetUserResponse> => {
   const { data } = await axios.get(`/user/${uuid}`);
@@ -131,5 +150,19 @@ export const unsharePage = async (userId: string, pageId: number) => {
 
 export const addPage = async (userid: string, url: string) => {
   const { data } = await axios.post<Page>(`/add_page`, { userid, url });
+  return data;
+};
+
+export interface UpdateUserRequest {
+  id: string;
+  firstName: string;
+  lastName: string;
+  profileUrl?: string;
+  website?: string;
+  twitter?: string;
+}
+
+export const updateUser = async (user: UpdateUserRequest) => {
+  const { data } = await axios.post(`/update_user`, user);
   return data;
 };

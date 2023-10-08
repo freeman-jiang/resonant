@@ -722,3 +722,28 @@ async def unfollow_user(body: FollowUserRequest) -> None:
                 'disconnect': [{'id': body.followeeId}]
             }
         })
+
+
+class UpdateUserRequest(BaseModel):
+    id: str
+    firstName: str
+    lastName: str
+    profileUrl: Optional[str]
+    website: Optional[str]
+    twitter: Optional[str]
+
+
+@app.post('/update_user')
+async def update_user(body: UpdateUserRequest) -> None:
+    await client.user.update(
+        where={
+            'id': body.id
+        },
+        data={
+            'first_name': body.firstName,
+            'last_name': body.lastName,
+            'profile_picture_url': body.profileUrl,
+            'website': body.website,
+            'twitter': body.twitter,
+        }
+    )
