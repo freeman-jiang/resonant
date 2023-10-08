@@ -80,9 +80,9 @@ export const ShareButton = ({ url, ...rest }: Props) => {
       </TooltipProvider>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Send to feed</DialogTitle>
+          <DialogTitle>Send to user</DialogTitle>
           <div className="text-sm text-slate-500">
-            Send this article to another user's feed.
+            This article will arrive directly in their feed.
           </div>
           <UserSearch />
         </DialogHeader>

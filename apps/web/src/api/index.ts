@@ -167,3 +167,17 @@ export const updateUser = async (user: UpdateUserRequest) => {
   const { data } = await axios.post(`/update_user`, user);
   return data;
 };
+
+export interface UserQueryResponse {
+  id: string;
+  firstName: string;
+  lastName: string;
+  profilePictureUrl?: string;
+}
+
+export const searchUsers = async (query: string) => {
+  const { data } = await axios.get<UserQueryResponse[]>(
+    `/users?query=${query}`,
+  );
+  return data;
+};

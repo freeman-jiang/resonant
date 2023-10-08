@@ -594,13 +594,14 @@ async def test_get_user_feed():
 
 
 class UserQueryResponse(BaseModel):
-    user_id: UUID
-    fname: str
-    lname: str
+    id: str
+    firstName: str
+    lastName: str
+    profilePictureUrl: Optional[str]
 
     @classmethod
     def from_prisma(cls, pmodel: User):
-        return UserQueryResponse(user_id=pmodel.id, fname=pmodel.first_name, lname=pmodel.last_name)
+        return UserQueryResponse(id=pmodel.id, firstName=pmodel.first_name, lastName=pmodel.last_name, profilePictureUrl=pmodel.profile_picture_url)
 
 
 class CreateUserRequest(BaseModel):
@@ -655,13 +656,27 @@ async def get_search_users(query: str) -> list[UserQueryResponse]:
     :return:
     """
 
+    # LIMIT search results to <= 5
+
+    if not query:
+        users = await client.query_raw("""
+        WITH users_full_name AS (SELECT CONCAT(first_name, ' ', last_name) AS full_name, "User".* FROM "User")
+                                       
+        SELECT * from users_full_name AS uf ORDER BY created_at DESC LIMIT 5;""", model=User)
+        # Sort based on prefix match
+
+        return [UserQueryResponse.from_prisma(u) for u in users]
+
     sql_query = """
     WITH users_full_name AS (SELECT CONCAT(first_name, ' ', last_name) AS full_name, "User".* FROM "User")
 
-    SELECT * from users_full_name AS uf where uf.full_name ILIKE $1;"""
+    SELECT * from users_full_name AS uf where uf.full_name ILIKE $1 LIMIT 5;"""
     users = await client.query_raw(sql_query, f'%{query}%', model=User)
 
-    return [UserQueryResponse.from_prisma(u) for u in users]
+    # TODO: Search by matching prefix first
+    results = [UserQueryResponse.from_prisma(u) for u in users]
+
+    return results
 
 
 @pytest.mark.asyncio

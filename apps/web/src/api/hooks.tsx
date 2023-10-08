@@ -14,6 +14,7 @@ import {
   getSavedPages,
   getUser,
   searchFor,
+  searchUsers,
 } from ".";
 
 // TODO: Consider using SSR by making this a server component
@@ -191,4 +192,14 @@ export const UserBoundary = async ({
       {children}
     </HydrationBoundary>
   );
+};
+
+export const USER_SEARCH_QUERY_KEY = "user-search";
+
+export const useUserSearch = (query: string) => {
+  return useQuery({
+    queryKey: [USER_SEARCH_QUERY_KEY, query],
+    queryFn: () => searchUsers(query),
+    staleTime: Infinity,
+  });
 };
