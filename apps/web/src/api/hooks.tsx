@@ -132,6 +132,7 @@ export const SavedFeedBoundary = async ({
   session,
 }: SavedFeedBoundaryProps) => {
   const queryClient = new QueryClient();
+
   await queryClient.prefetchQuery({
     queryKey: [SAVED_FEED_QUERY_KEY],
     queryFn: () => getSavedPages(session.user.id),
@@ -157,24 +158,33 @@ export const useCrawl = (url: string) => {
 
 export const USER_QUERY_KEY = "user";
 
-export const useUser = (userId?: string) => {
+export const useUser = (userId: string) => {
   return useQuery({
     queryKey: [USER_QUERY_KEY],
-    queryFn: () => getUser(userId),
+    queryFn: () => {
+      return getUser(userId);
+    },
+    enabled: !!userId,
+    staleTime: 3600,
   });
 };
 
 interface UserBoundaryProps {
-  userId: string;
+  session: Session;
   children: React.ReactNode;
 }
 
-export const UserBoundary = async ({ children, userId }: UserBoundaryProps) => {
+export const UserBoundary = async ({
+  children,
+  session,
+}: UserBoundaryProps) => {
   const queryClient = new QueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: [USER_QUERY_KEY],
-    queryFn: () => getUser(userId),
-  });
+  if (session) {
+    await queryClient.prefetchQuery({
+      queryKey: [USER_QUERY_KEY],
+      queryFn: () => getUser(session.user.id),
+    });
+  }
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

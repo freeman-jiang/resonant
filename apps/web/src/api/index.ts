@@ -119,8 +119,9 @@ export interface CustomUser {
 }
 
 export const getUser = async (uuid: string): Promise<GetUserResponse> => {
-  const { data } = await axios.get(`/user/${uuid}`);
-  return data; // replace with User;
+  const response = await fetch(`${NEXT_PUBLIC_BASE_URL}/user/${uuid}`);
+  // const { data } = await axios.get(`/user/${uuid}`);
+  return response.json() as Promise<GetUserResponse>;
 };
 
 export const savePage = async (userId: string, pageId: number) => {

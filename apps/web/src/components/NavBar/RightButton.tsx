@@ -1,17 +1,15 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { User } from "@supabase/auth-helpers-nextjs";
+import { useSupabase } from "@/supabase/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { buttonVariants } from "../ui/button";
 
-interface Props {
-  user: User;
-}
+export const RightButton = () => {
+  const { session } = useSupabase();
 
-export const RightButton = ({ user }: Props) => {
   const path = usePathname();
-  if (!!user) {
+  if (!!session) {
     return null;
   }
 

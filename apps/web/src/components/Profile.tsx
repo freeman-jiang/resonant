@@ -4,6 +4,8 @@ import { USER_QUERY_KEY, useUser } from "@/api/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useSupabase } from "@/supabase/client";
+import { User } from "@supabase/supabase-js";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { Spinner } from "./Spinner";
@@ -15,11 +17,12 @@ type Inputs = {
 };
 
 interface Props {
-  userId: string;
+  user: User;
 }
 
-export const Profile = ({ userId }: Props) => {
-  const { data: user } = useUser(userId);
+export const Profile = () => {
+  const { session } = useSupabase();
+  const { data: user } = useUser(session?.user.id);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -33,13 +36,14 @@ export const Profile = ({ userId }: Props) => {
 
   const onSubmit: SubmitHandler<Inputs> = async ({ firstName, lastName }) => {
     mutate({
-      id: userId,
+      id: user.id,
       firstName,
       lastName,
       profileUrl: user.profile_picture_url,
       twitter: user.twitter,
       website: user.website,
     });
+    await queryClient.invalidateQueries({ queryKey: [USER_QUERY_KEY] });
   };
 
   const { mutate, isPending } = useMutation({
@@ -48,7 +52,6 @@ export const Profile = ({ userId }: Props) => {
       queryClient.invalidateQueries({ queryKey: [USER_QUERY_KEY] });
     },
     onSuccess: () => {
-      console.log("success");
       toast({ title: "Profile updated!" });
     },
     onError: () => {
@@ -85,7 +88,7 @@ export const Profile = ({ userId }: Props) => {
         />
       </div>
       <Button type="submit" className="mt-4 w-full">
-        {isPending ? <Spinner /> : "Update"}
+        {isPending ? <Spinner /> : "Save"}
       </Button>
     </form>
   );
