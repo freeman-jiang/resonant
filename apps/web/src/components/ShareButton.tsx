@@ -74,15 +74,15 @@ export const ShareButton = ({ url, ...rest }: Props) => {
             </TooltipTrigger>
           </DialogTrigger>
           <TooltipContent>
-            <p>Send this article to another Resonant user's feed</p>
+            <p>Send this link to another Resonant user's feed</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Send to user</DialogTitle>
+          <DialogTitle>Send link to user</DialogTitle>
           <div className="text-sm text-slate-500">
-            This article will arrive directly in their feed.
+            It will arrive directly in their feed.
           </div>
           <UserSearch />
         </DialogHeader>

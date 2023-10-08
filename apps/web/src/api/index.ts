@@ -181,3 +181,23 @@ export const searchUsers = async (query: string) => {
   );
   return data;
 };
+
+export interface SendMessagesRequest {
+  // Convert
+  //     sender_id: UUID
+  // page_id: Optional[int]
+  // url: Optional[str]
+  // message: str
+  // receiver_id: UUID
+
+  senderId: string;
+  pageId: number;
+  url?: string;
+  message?: string;
+  receiverId: string;
+}
+
+export const sendMessage = async (message: SendMessagesRequest) => {
+  const { data } = await axios.post(`/message`, message);
+  return data;
+};

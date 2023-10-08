@@ -357,26 +357,13 @@ async def unshare_page(user_id: str, page_id: int) -> None:
 
 
 class SendMessageRequest(BaseModel):
-    sender_id: UUID
-    page_id: Optional[int]
+    senderId: str
+    pageId: int
+    receiverId: str
     url: Optional[str]
-    message: str
-    receiver_id: UUID
+    message: Optional[str]
 
-    def __init__(self, **data):
-        assert 'url' in data or 'page_id' in data, "URL or page_id must be provided"
-        super().__init__(**data)
-
-    @validator("sender_id", "receiver_id", pre=False)
-    def validate_uuids(cls, value):
-        """
-        Converts the UUIDs to a string when we call the .dict() method
-        :param value:
-        :return:
-        """
-        if value:
-            return str(value)
-        return value
+    # TODO: add back validations for uuid and stuff
 
 
 class AlreadyAdded(BaseModel):
@@ -485,29 +472,25 @@ async def send_message(body: SendMessageRequest) -> None:
     :return:
     """
 
-    if body.url is not None:
-        # Check if the URL doesn't exist in our database. If not, then crawl it
-        page = db.get_page(url=body.url)
-        if page is None:
-            page = await _create_page(CreatePageRequest(url=body.url))
-            body.page_id = page.id
-            body.url = None
+    # check if the message was already sent
+    existing_message = await client.message.find_first(where={
+        'sender_id': body.senderId,
+        'receiver_id': body.receiverId,
+        'page_id': body.pageId,
+    })
 
-    message = body.dict()
+    if existing_message:
+        return
 
-    await client.message.create(message)
-
-
-@pytest.mark.asyncio
-async def test_send_message():
-    await startup()
-    await send_message(SendMessageRequest(
-        sender_id='61b98b24-18ff-43eb-af97-c58cd386e748',
-        page_id=None,
-        url='https://www.nytimes.com/2023/10/04/us/politics/house-speaker-mccarthy.html',
-        message='fdas',
-        receiver_id='083e93f0-2fd9-4454-ad46-3444378f4b51'
-    ))
+    await client.message.create(
+        data={
+            'message': body.message,
+            'page_id': body.pageId,
+            'receiver_id': str(body.receiverId),
+            'sender_id': str(body.senderId),
+            'url': body.url,
+        }
+    )
 
 
 class GroupedMessage(BaseModel):
@@ -657,12 +640,15 @@ async def get_search_users(query: str) -> list[UserQueryResponse]:
     """
 
     # LIMIT search results to <= 5
+    # TODO: fix hardcoding of superstack gmail lol-  we don't use it bc it's for global broadcasts
 
     if not query:
         users = await client.query_raw("""
         WITH users_full_name AS (SELECT CONCAT(first_name, ' ', last_name) AS full_name, "User".* FROM "User")
                                        
-        SELECT * from users_full_name AS uf ORDER BY created_at DESC LIMIT 5;""", model=User)
+        SELECT * from users_full_name AS uf 
+        WHERE id != '4ee604f3-987d-4295-a2fa-b58d88e5b5e0' 
+        ORDER BY created_at DESC LIMIT 5;""", model=User)
         # Sort based on prefix match
 
         return [UserQueryResponse.from_prisma(u) for u in users]
@@ -670,7 +656,8 @@ async def get_search_users(query: str) -> list[UserQueryResponse]:
     sql_query = """
     WITH users_full_name AS (SELECT CONCAT(first_name, ' ', last_name) AS full_name, "User".* FROM "User")
 
-    SELECT * from users_full_name AS uf where uf.full_name ILIKE $1 LIMIT 5;"""
+    SELECT * from users_full_name AS uf WHERE uf.full_name ILIKE $1 
+    AND id != '4ee604f3-987d-4295-a2fa-b58d88e5b5e0' LIMIT 5;"""
     users = await client.query_raw(sql_query, f'%{query}%', model=User)
 
     # TODO: Search by matching prefix first
