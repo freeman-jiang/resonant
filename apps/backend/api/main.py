@@ -636,6 +636,10 @@ async def get_user(user_uuid: str):
     :param user_uuid:
     :return:
     """
+
+    if not user_uuid:
+        raise HTTPException(400, "User ID must be provided")
+
     user = await client.user.find_first(where={'id': user_uuid})
 
     if user is None:
@@ -651,8 +655,10 @@ async def get_search_users(query: str) -> list[UserQueryResponse]:
     :return:
     """
 
-    sql_query = """WITH users_full_name AS (SELECT CONCAT(first_name, ' ', last_name) AS full_name, "User".* FROM "User")
-        select * from users_full_name uf where uf.full_name ILIKE $1;"""
+    sql_query = """
+    WITH users_full_name AS (SELECT CONCAT(first_name, ' ', last_name) AS full_name, "User".* FROM "User")
+
+    SELECT * from users_full_name AS uf where uf.full_name ILIKE $1;"""
     users = await client.query_raw(sql_query, f'%{query}%', model=User)
 
     return [UserQueryResponse.from_prisma(u) for u in users]

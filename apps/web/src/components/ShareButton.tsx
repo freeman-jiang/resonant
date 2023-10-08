@@ -6,7 +6,15 @@ import { useSupabase } from "@/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { CircleOff, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { UserSearch } from "./UserSearch";
 import { Button, buttonVariants } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -47,6 +55,40 @@ export const ShareButton = ({ url, ...rest }: Props) => {
     toast({ title: "Unbroadcasted! 🎉" });
     queryClient.invalidateQueries({ queryKey: [PAGE_QUERY_KEY, url] });
   };
+
+  return (
+    <Dialog>
+      <TooltipProvider>
+        <Tooltip>
+          <DialogTrigger asChild>
+            <TooltipTrigger>
+              <p
+                className={cn(
+                  buttonVariants({ variant: "default", size: "sm" }),
+                  "bg-emerald-500 hover:bg-emerald-600",
+                )}
+                // onClick={handleShare}
+              >
+                <Send className="mr-2 h-4 w-4" /> Send
+              </p>
+            </TooltipTrigger>
+          </DialogTrigger>
+          <TooltipContent>
+            <p>Send this article to another Resonant user's feed</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Send to feed</DialogTitle>
+          <div className="text-sm text-slate-500">
+            Send this article to another user's feed.
+          </div>
+          <UserSearch />
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
+  );
 
   if (has_broadcasted) {
     return (
