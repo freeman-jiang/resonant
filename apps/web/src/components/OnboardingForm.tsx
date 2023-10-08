@@ -45,7 +45,7 @@ export const OnboardingForm = ({ user }: Props) => {
     };
     await createUser(body);
     amplitude.track("Onboarded", body);
-    router.replace("/");
+    router.refresh();
   };
 
   return (

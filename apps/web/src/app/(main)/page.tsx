@@ -1,11 +1,14 @@
 import { UserFeedBoundary } from "@/api/hooks";
 import { UserFeed } from "@/components/UserFeed";
 import { getSupabaseServer } from "@/supabase/server";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
-  const {
-    session: { user },
-  } = await getSupabaseServer({ protected: true });
+  const { session } = await getSupabaseServer();
+  if (!session) {
+    redirect("/all");
+  }
+  const user = session.user;
 
   return (
     <UserFeedBoundary userId={user.id}>

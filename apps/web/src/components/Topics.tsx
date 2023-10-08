@@ -1,4 +1,5 @@
 "use client";
+import { useSupabase } from "@/supabase/client";
 import NextLink from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { Badge } from "./ui/badge";
@@ -14,17 +15,20 @@ const topics = {
 export const Topics = () => {
   const { topic } = useParams();
   const path = usePathname();
+  const { session } = useSupabase();
 
   return (
     <div className="mt-3 flex flex-row flex-wrap gap-2 pb-2">
-      <NextLink href={"/"}>
-        <Badge
-          className="cursor-pointer text-sm"
-          variant={!topic && path === "/" ? "default" : "outline"}
-        >
-          For You
-        </Badge>
-      </NextLink>
+      {session && (
+        <NextLink href={"/"}>
+          <Badge
+            className="cursor-pointer text-sm"
+            variant={!topic && path === "/" ? "default" : "outline"}
+          >
+            For You
+          </Badge>
+        </NextLink>
+      )}
       <NextLink href={"/all"}>
         <Badge
           className="cursor-pointer text-sm"
