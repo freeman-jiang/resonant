@@ -7,7 +7,6 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -103,7 +102,7 @@ export function UserNav({ user: serverUser }: Props) {
                 </p>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+            {/* <DropdownMenuSeparator /> */}
             {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 Profile
@@ -121,7 +120,7 @@ export function UserNav({ user: serverUser }: Props) {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               Log out
-              <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+              {/* <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut> */}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
