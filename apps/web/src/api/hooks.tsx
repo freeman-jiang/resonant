@@ -1,4 +1,3 @@
-import { Page } from "@/types/api";
 import { Session } from "@supabase/supabase-js";
 import {
   HydrationBoundary,
@@ -8,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { ReactNode } from "react";
 import {
+  Page,
   crawlUrl,
   fetchGlobalFeed,
   findPage,

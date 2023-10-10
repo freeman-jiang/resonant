@@ -1,8 +1,8 @@
 "use client";
 
+import { Page } from "@/api";
 import { extractDomain, formatExcerpt, getRelativeTime } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
-import { Page } from "@/types/api";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { FeedbackButton } from "./FeedbackButton";

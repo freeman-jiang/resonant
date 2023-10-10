@@ -1,6 +1,5 @@
-import { Crawl } from "@/api";
+import { Crawl, Page } from "@/api";
 import { extractDomain, formatExcerpt } from "@/lib/utils";
-import { Page } from "@/types/api";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 

@@ -1,5 +1,5 @@
+import { Page } from "@/api";
 import { cn } from "@/lib/utils";
-import { Page } from "@/types/api";
 import { Entry } from "./Entry";
 import { Skeleton } from "./ui/skeleton";
 

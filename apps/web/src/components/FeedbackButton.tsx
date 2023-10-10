@@ -1,6 +1,6 @@
 "use client";
 import { amplitude } from "@/analytics/amplitude";
-import { savePage, sharePage, unsharePage } from "@/api";
+import { Page, savePage, sharePage, unsharePage } from "@/api";
 import { GLOBAL_FEED_QUERY_KEY } from "@/api/hooks";
 import {
   DropdownMenu,
@@ -9,7 +9,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSupabase } from "@/supabase/client";
-import { Page } from "@/types/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bookmark, CircleOff, MoreHorizontal, Send } from "lucide-react";
 import { useRouter } from "next/navigation";

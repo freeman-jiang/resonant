@@ -1,11 +1,19 @@
 import { NEXT_PUBLIC_BASE_URL } from "@/config";
-import { Page } from "@/types/api";
 import { Session } from "@supabase/supabase-js";
 import baseAxios from "axios";
 
 const axios = baseAxios.create({
   baseURL: NEXT_PUBLIC_BASE_URL,
 });
+
+export interface Page {
+  title: string;
+  url: string;
+  id: number;
+  date: string;
+  excerpt: string;
+  senders: Sender[];
+}
 
 export interface Sender {
   id: string;

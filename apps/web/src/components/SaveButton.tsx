@@ -1,7 +1,6 @@
 "use client";
-import { savePage } from "@/api";
+import { Page, savePage } from "@/api";
 import { useSupabase } from "@/supabase/client";
-import { Page } from "@/types/api";
 import { Bookmark } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";

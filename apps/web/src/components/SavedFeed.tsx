@@ -1,9 +1,8 @@
 "use client";
-import { unsavePage } from "@/api";
+import { Page, unsavePage } from "@/api";
 import { SAVED_FEED_QUERY_KEY, useSavedFeed } from "@/api/hooks";
 import { extractDomain, formatExcerpt } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
-import { Page } from "@/types/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, MoreHorizontal, X } from "lucide-react";
 import NextLink from "next/link";
