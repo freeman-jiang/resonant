@@ -1,3 +1,4 @@
+import { trackClickLink } from "@/analytics/amplitude";
 import { Crawl, Page } from "@/api";
 import { extractDomain, formatExcerpt } from "@/lib/utils";
 import { ExternalLink } from "lucide-react";
@@ -9,7 +10,12 @@ interface Props {
 
 export const PageBox = ({ data }: Props) => {
   return (
-    <Link href={data.url} target="_blank" className="cursor-pointer">
+    <Link
+      onClick={() => trackClickLink(data.url)}
+      href={data.url}
+      target="_blank"
+      className="cursor-pointer"
+    >
       <div className="border border-slate-200 px-3 py-3">
         <div className="flex flex-row justify-between space-x-4">
           <h2 className="text-2xl font-semibold tracking-tight text-slate-900">

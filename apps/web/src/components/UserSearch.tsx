@@ -1,3 +1,4 @@
+import { trackSend } from "@/analytics/amplitude";
 import { sendMessage } from "@/api";
 import { usePage, useUserSearch } from "@/api/hooks";
 import { useSupabase } from "@/supabase/client";
@@ -46,6 +47,7 @@ export function UserSearch({ url }: Props) {
       className:
         "fixed top-4 left-[50%] max-h-screen translate-x-[-50%] md:w-fit max-w-[80vw]",
     });
+    trackSend();
   };
 
   const Items = () => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { trackClickLink } from "@/analytics/amplitude";
 import { Page } from "@/api";
 import { extractDomain, formatExcerpt, getRelativeTime } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
@@ -119,7 +120,11 @@ export const Entry = (page: Page) => {
             </p>
           </Link>
           <div className="ml-8 flex items-center lg:ml-20">
-            <Link href={page.url} target="_blank">
+            <Link
+              href={page.url}
+              target="_blank"
+              onClick={() => trackClickLink(page.url)}
+            >
               <ExternalLink className="-mt-1 h-5 w-5" />
             </Link>
             <FeedbackButton

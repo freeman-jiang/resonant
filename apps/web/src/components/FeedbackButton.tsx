@@ -1,5 +1,5 @@
 "use client";
-import { amplitude } from "@/analytics/amplitude";
+import { amplitude, trackSave } from "@/analytics/amplitude";
 import { Page, savePage, sharePage, unsharePage } from "@/api";
 import { GLOBAL_FEED_QUERY_KEY } from "@/api/hooks";
 import {
@@ -38,6 +38,7 @@ export const FeedbackButton = ({ canUnsend, page, ...props }: Props) => {
       return;
     }
     await savePage(user.id, page.id);
+    trackSave();
     toast({
       title: "Saved! 🎉",
     });
