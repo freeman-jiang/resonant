@@ -1,5 +1,5 @@
 "use client";
-import { amplitude } from "@/analytics/amplitude";
+import { trackOnboard } from "@/analytics/mixpanel";
 import { CreateUserRequest, createUser } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ export const OnboardingForm = ({ user }: Props) => {
       profileUrl: user.user_metadata?.avatar_url,
     };
     await createUser(body);
-    amplitude.track("Onboarded", body);
+    trackOnboard(body);
     router.refresh();
   };
 

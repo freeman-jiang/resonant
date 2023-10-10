@@ -1,5 +1,5 @@
 "use client";
-import { trackSave } from "@/analytics/amplitude";
+import { trackSave } from "@/analytics/mixpanel";
 import { Page, savePage } from "@/api";
 import { useSupabase } from "@/supabase/client";
 import { Bookmark } from "lucide-react";

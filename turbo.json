@@ -1,6 +1,11 @@
 {
   "globalDotEnv": [".env"],
-  "globalEnv": ["NEXT_PUBLIC_BASE_URL", "NEXT_PUBLIC_AMPLITUDE_API_KEY"],
+  "globalEnv": [
+    "NEXT_PUBLIC_BASE_URL",
+    "NEXT_PUBLIC_AMPLITUDE_API_KEY",
+    "NEXT_PUBLIC_MIXPANEL_PROJECT_TOKEN",
+    "NODE_ENV"
+  ],
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
   "pipeline": {
@@ -19,9 +24,9 @@
       "persistent": true
     },
     "prod": {
-        "dependsOn": ["^build"],
-        "cache": false,
-        "persistent": true
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
     }
   }
 }

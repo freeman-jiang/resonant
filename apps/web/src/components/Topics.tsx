@@ -1,4 +1,5 @@
 "use client";
+import { trackClickTopic } from "@/analytics/mixpanel";
 import { useSupabase } from "@/supabase/client";
 import NextLink from "next/link";
 import { useParams, usePathname } from "next/navigation";
@@ -20,7 +21,7 @@ export const Topics = () => {
   return (
     <div className="mt-3 flex flex-row flex-wrap gap-2 pb-2">
       {session && (
-        <NextLink href={"/"}>
+        <NextLink href={"/"} onClick={() => trackClickTopic("For You")}>
           <Badge
             className="cursor-pointer text-sm"
             variant={!topic && path === "/" ? "default" : "outline"}
@@ -29,7 +30,7 @@ export const Topics = () => {
           </Badge>
         </NextLink>
       )}
-      <NextLink href={"/all"}>
+      <NextLink href={"/all"} onClick={() => trackClickTopic("All")}>
         <Badge
           className="cursor-pointer text-sm"
           variant={!topic && path === "/all" ? "default" : "outline"}
@@ -38,7 +39,11 @@ export const Topics = () => {
         </Badge>
       </NextLink>
       {Object.entries(topics).map(([badgeTopic, prompt]) => (
-        <NextLink key={badgeTopic} href={`/topic/${badgeTopic.toLowerCase()}`}>
+        <NextLink
+          key={badgeTopic}
+          href={`/topic/${badgeTopic.toLowerCase()}`}
+          onClick={() => trackClickTopic(badgeTopic)}
+        >
           <Badge
             className="cursor-pointer text-sm"
             variant={topic === badgeTopic.toLowerCase() ? "default" : "outline"}

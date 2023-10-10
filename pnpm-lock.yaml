@@ -91,6 +91,9 @@ importers:
       lucide-react:
         specifier: ^0.268.0
         version: 0.268.0(react@18.2.0)
+      mixpanel-browser:
+        specifier: ^2.47.0
+        version: 2.47.0
       next:
         specifier: 13.5.3
         version: 13.5.3(react-dom@18.2.0)(react@18.2.0)
@@ -116,6 +119,9 @@ importers:
         specifier: ^1.0.6
         version: 1.0.6(tailwindcss@3.3.3)
     devDependencies:
+      '@types/mixpanel-browser':
+        specifier: ^2.47.3
+        version: 2.47.3
       '@types/node':
         specifier: 20.5.1
         version: 20.5.1
@@ -1652,6 +1658,10 @@ packages:
 
   /@types/minimatch@5.1.2:
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
+    dev: true
+
+  /@types/mixpanel-browser@2.47.3:
+    resolution: {integrity: sha512-lum9ZdfLihJ89XoCrBjB8le/Vg6ohYSR2/3AdfLWGZdhUBEgftncDO9+0uW08FSN6SLqy2s9zCf55YV5sNLNYA==}
     dev: true
 
   /@types/node@20.5.1:
@@ -3968,6 +3978,10 @@ packages:
 
   /minimist@1.2.8:
     resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
+
+  /mixpanel-browser@2.47.0:
+    resolution: {integrity: sha512-Ldrva0fRBEIFWmEibBQO1PulfpJVF3pf28Guk09lDirDaSQqqU/xs9zQLwN2rL5VwVtsP1aD3JaCgaa98EjojQ==}
+    dev: false
 
   /mkdirp@0.5.6:
     resolution: {integrity: sha512-FP+p8RB8OWpF3YZBCrP5gtADmtXApB5AMLn+vdyA+PyxCjrCs00mjyUozssO33cwDeT3wNGdLxJ5M//YqtHAJw==}

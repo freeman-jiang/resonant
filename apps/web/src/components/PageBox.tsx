@@ -1,4 +1,4 @@
-import { trackClickLink } from "@/analytics/amplitude";
+import { trackClickOutboundLink } from "@/analytics/mixpanel";
 import { Crawl, Page } from "@/api";
 import { extractDomain, formatExcerpt } from "@/lib/utils";
 import { ExternalLink } from "lucide-react";
@@ -11,7 +11,7 @@ interface Props {
 export const PageBox = ({ data }: Props) => {
   return (
     <Link
-      onClick={() => trackClickLink(data.url)}
+      onClick={() => trackClickOutboundLink(data.url)}
       href={data.url}
       target="_blank"
       className="cursor-pointer"

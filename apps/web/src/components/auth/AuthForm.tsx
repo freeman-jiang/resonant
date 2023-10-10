@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { amplitude } from "@/analytics/amplitude";
+import { trackSignIn } from "@/analytics/mixpanel";
 import { cn } from "@/lib/utils";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -29,7 +29,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
-    amplitude.track("Sign In", { email });
+    trackSignIn();
   };
 
   const handleSignInWithGoogle = async () => {
@@ -43,7 +43,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
-    amplitude.track("Sign In", { email: "google" });
+    trackSignIn();
   };
 
   const onSubmit: SubmitHandler<Inputs> = async (data) => {

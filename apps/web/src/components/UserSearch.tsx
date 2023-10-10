@@ -1,4 +1,4 @@
-import { trackSend } from "@/analytics/amplitude";
+import { trackSend } from "@/analytics/mixpanel";
 import { sendMessage } from "@/api";
 import { usePage, useUserSearch } from "@/api/hooks";
 import { useSupabase } from "@/supabase/client";

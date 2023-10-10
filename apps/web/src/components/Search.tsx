@@ -1,5 +1,5 @@
 "use client";
-import { amplitude } from "@/analytics/amplitude";
+import { trackSearch } from "@/analytics/mixpanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
@@ -17,7 +17,7 @@ export function Search() {
     if (search.length === 0) {
       return;
     }
-    amplitude.track("Search", { query: search });
+    trackSearch(search);
 
     const linkRegex = /https?:\/\/[^\s]+/g;
     if (search.match(linkRegex)) {

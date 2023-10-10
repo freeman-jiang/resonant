@@ -1,6 +1,10 @@
 "use client";
 
-import { trackClickLink } from "@/analytics/amplitude";
+import {
+  trackClickLinkedBy,
+  trackClickOutboundLink,
+  trackClickPage,
+} from "@/analytics/mixpanel";
 import { Page } from "@/api";
 import { extractDomain, formatExcerpt, getRelativeTime } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
@@ -93,10 +97,15 @@ export const Entry = (page: Page) => {
     return (
       <div className="mt-2 text-xs text-slate-500">
         <span className="">Linked by: </span>
-        {page.linked_by.map((url, index) => (
-          <Fragment key={url}>
-            <Link href={url} target="_blank" className="text-emerald-600">
-              {extractDomain(url)}
+        {page.linked_by.map((parentUrl, index) => (
+          <Fragment key={parentUrl}>
+            <Link
+              href={parentUrl}
+              target="_blank"
+              className="text-emerald-600"
+              onClick={() => trackClickLinkedBy(page.url, parentUrl)}
+            >
+              {extractDomain(parentUrl)}
             </Link>
             {index !== page.linked_by.length - 1 && ", "}
           </Fragment>
@@ -111,7 +120,11 @@ export const Entry = (page: Page) => {
     <div>
       <div className="border-b border-slate-400 pb-2">
         <div className="flex flex-row items-center justify-between">
-          <Link href={linkToRelated} className="cursor-pointer">
+          <Link
+            href={linkToRelated}
+            className="cursor-pointer"
+            onClick={() => trackClickPage(page.url)}
+          >
             <h2 className="text-xl font-semibold tracking-tight text-slate-900">
               {page.title || page.url}
             </h2>
@@ -123,7 +136,7 @@ export const Entry = (page: Page) => {
             <Link
               href={page.url}
               target="_blank"
-              onClick={() => trackClickLink(page.url)}
+              onClick={() => trackClickOutboundLink(page.url)}
             >
               <ExternalLink className="-mt-1 h-5 w-5" />
             </Link>
@@ -134,7 +147,10 @@ export const Entry = (page: Page) => {
             />
           </div>
         </div>
-        <Link href={linkToRelated}>
+        <Link
+          href={linkToRelated}
+          onClick={() => trackClickOutboundLink(page.url)}
+        >
           <p className="mt-2 font-mono text-sm text-slate-500">
             {formatExcerpt(page.excerpt)}
           </p>

@@ -1,24 +1,27 @@
 "use client";
 
-import { amplitude } from "@/analytics/amplitude";
-import { NEXT_PUBLIC_AMPLITUDE_API_KEY } from "@/config";
+import { NEXT_PUBLIC_MIXPANEL_PROJECT_TOKEN } from "@/config";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import mixpanel from "mixpanel-browser";
 import { useEffect, useState } from "react";
 
 export function Providers({ children }) {
   useEffect(() => {
-    if (!NEXT_PUBLIC_AMPLITUDE_API_KEY) {
-      console.log("NEXT_PUBLIC_AMPLITUDE_API_KEY is not set");
+    if (!NEXT_PUBLIC_MIXPANEL_PROJECT_TOKEN) {
+      console.log("NEXT_PUBLIC_MIXPANEL_PROJECT_TOKEN is not set");
       return;
     }
-    amplitude.init(NEXT_PUBLIC_AMPLITUDE_API_KEY || "", {
-      defaultTracking: {
-        formInteractions: false,
-        pageViews: true,
-        sessions: true,
-      },
-    });
+
+    if (process.env.NODE_ENV === "production") {
+      mixpanel.init(NEXT_PUBLIC_MIXPANEL_PROJECT_TOKEN, {
+        track_pageview: true,
+        persistence: "localStorage",
+      });
+    } else {
+      mixpanel.init("NONE");
+      mixpanel.disable();
+    }
   }, []);
 
   const [queryClient] = useState(

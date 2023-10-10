@@ -1,5 +1,5 @@
 "use client";
-import { amplitude, trackSave } from "@/analytics/amplitude";
+import { trackBroadcast, trackSave } from "@/analytics/mixpanel";
 import { Page, savePage, sharePage, unsharePage } from "@/api";
 import { GLOBAL_FEED_QUERY_KEY } from "@/api/hooks";
 import {
@@ -50,7 +50,7 @@ export const FeedbackButton = ({ canUnsend, page, ...props }: Props) => {
       return;
     }
     await sharePage(user.id, page.id);
-    amplitude.track("Broadcast", { email: user.email });
+    trackBroadcast();
     queryClient.invalidateQueries({ queryKey: [GLOBAL_FEED_QUERY_KEY] });
     toast({ title: "Broadcasted! 🎉" });
   };

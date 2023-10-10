@@ -3,3 +3,6 @@ export const NEXT_PUBLIC_BASE_URL =
 
 export const NEXT_PUBLIC_AMPLITUDE_API_KEY =
   process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY || null;
+
+export const NEXT_PUBLIC_MIXPANEL_PROJECT_TOKEN =
+  process.env.NEXT_PUBLIC_MIXPANEL_PROJECT_TOKEN || null;
