@@ -35,7 +35,11 @@ export function UserSearch() {
       receiverId: id,
       senderId: session.user.id,
     });
-    toast({ title: `Sent link to ${name}` });
+    toast({
+      title: `Sent link to ${name}`,
+      className:
+        "fixed top-4 left-[50%] max-h-screen translate-x-[-50%] md:w-fit max-w-[80vw]",
+    });
   };
 
   const Items = () => {
