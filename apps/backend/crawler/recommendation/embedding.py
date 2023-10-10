@@ -217,25 +217,29 @@ def _query_similar(query: NearestNeighboursQuery) -> list[PageResponse]:
 
 
 def _query_similar_embeddings(query: NearestNeighboursQuery) -> list[PageResponse]:
-
     cursor = db.cursor(row_factory=dict_row)
     query.get_vector(cursor)
 
     want_cte, want_cte_dict = query.to_sql_expr()
+
+    # if it's a text query, then vector search is more useless
+    embedding_weight = 0.25 if query.text_query is not None else 1.0
+
+    want_cte_dict['embedding_weight'] = embedding_weight
     similar = cursor.execute(f"""
     -- Get average of the first X vectors for the article we WANT
 WITH want AS ({want_cte}),
  matching_vecs AS (
         SELECT e.vec <=> w.vec as dist, e.url as url from Embeddings as e, want as w 
             WHERE e.url != w.url
-            ORDER BY dist LIMIT 120
+            ORDER BY dist LIMIT 250
  ),
  domain_counts AS (SELECT COUNT(url) as num_matching_windows, AVG(dist) as dist, MIN(url) as url FROM matching_vecs GROUP BY url)
  select "Page".*,
  -- Scoring algorithm: (similarity * page_rank^0.5 * (amount of matching windows ^ 0.15))
  -- Higher is better
- COALESCE((1 - dist) * (COALESCE("Page".page_rank, 1) ^ 1.0) * (domain_counts.num_matching_windows ^ 0.20), -1) as score
-  from "Page" INNER JOIN domain_counts ON domain_counts.url = "Page".url  ORDER BY score DESC
+ COALESCE((1 - dist) ^ %(embedding_weight)s * (COALESCE("Page".page_rank, 1) ^ 1.0) * (domain_counts.num_matching_windows ^ (0.20 * %(embedding_weight)s)), -1) as score
+  from "Page" INNER JOIN domain_counts ON domain_counts.url = "Page".url  ORDER BY score DESC LIMIT 50
     """, want_cte_dict).fetchall()
 
     similar_urls = [

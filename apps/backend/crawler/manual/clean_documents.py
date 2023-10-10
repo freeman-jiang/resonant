@@ -20,7 +20,7 @@ async def main(db: PostgresClient):
 
     while True:
         pages = db.cursor().execute(
-            "SELECT id, parent_url, url FROM \"Page\" ORDER BY \"Page\".created_at DESC LIMIT 5000 OFFSET %s", (processed,)).fetchall()
+            "SELECT id, parent_url, url FROM \"Page\" ORDER BY \"Page\".created_at WHERE parent_url NOT ILIKE 'user: %' DESC LIMIT 5000 OFFSET %s", (processed,)).fetchall()
 
         if len(pages) == 0:
             break

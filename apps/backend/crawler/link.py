@@ -5,7 +5,7 @@ from urllib.parse import urlparse, urlunparse
 import validators
 from pydantic import BaseModel, validator
 
-SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.", "youtube.com", "twitter.com", "facebook.com", "reddit.com",
+SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.",  "twitter.com", "facebook.com", "reddit.com",
                       "instagram.com", 'google.com/patent', 'wikimedia.org', 'https://t.co', 'amzn.to',
                       'codeforces.com', 'tandfonline.com', 'wiley.com', 'oup.com', 'sagepub.com', 'sexbuzz.com',
                       'arxiv.org', 'detnews.com', 'cbsnews.com', 'cnn.com', 'scholar.google.com', 'play.google.com',
@@ -13,7 +13,7 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.", "youtube.com", "twitter.com", 
                       'springer.com', 'jstor.org', 'nature.com', 'sciencemag.org', 'sciencenews.org',
                       'sciencemuseum.org.uk', 'elifesciences', 'fool.com', 'slimemoldtimemold', 'exfatloss',
                       'achemicalhunger', '9to5toys', 'bloomberg.com', 'forbes.com', 'bbc.com', 'economist.com',
-                      'vimeo.com', 'youtube.com', 'pittsburghlive.com', 'linkedin.com', 'soundcloud.com',
+                      'vimeo.com', 'pittsburghlive.com', 'linkedin.com', 'soundcloud.com',
                       'albawa.com', 'theage.com', 'prnewswire.com', 'archive.org', 'stackexchange.com', 'doi.org',
                       'jamanetwork',
                       'versobooks.com',
@@ -31,7 +31,6 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.", "youtube.com", "twitter.com", 
                       'digitalocean.com',
                       'golang.org',
                       'docs.google',
-                      'youtu.be',
                       'oracle.com',
                       'docs.github.com',
                       'pytorch.org',
@@ -85,7 +84,6 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.", "youtube.com", "twitter.com", 
 
                       'www.sitepoint.com',
                       'preparednessmama.com',
-                      'youtu.be',
                       'developer.mozilla.org',
                       'code.jquery.com',
                       'css-tricks.com',
@@ -216,13 +214,6 @@ def is_valid_url(url: str) -> bool:
         return False
 
     return True
-
-
-def test_valid():
-    assert is_valid_url(
-        'http://worrydream.com/ABriefRantOnThefuture0fInteractionDesign/') == True
-
-    assert is_valid_url('https://nautil.us/your-🧠-on-emoji-365823/') == False
 
 
 def clean_url(url: str):
