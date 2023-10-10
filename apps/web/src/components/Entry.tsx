@@ -5,6 +5,7 @@ import { extractDomain, formatExcerpt, getRelativeTime } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { Fragment } from "react";
 import { FeedbackButton } from "./FeedbackButton";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
@@ -74,12 +75,31 @@ export const Entry = (page: Page) => {
     return (
       <div className="mt-2 text-xs text-slate-500">
         <div className="flex items-center ">
-          <span className="mr-2">Shared by:</span>
           {renderAvatars()}
           <span className="ml-2">
-            {getRelativeTime(mostRecentSender.sent_on)}
+            Shared {getRelativeTime(mostRecentSender.sent_on)}
           </span>
         </div>
+      </div>
+    );
+  };
+
+  const LinkedBy = () => {
+    if (page.linked_by.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="mt-2 text-xs text-slate-500">
+        <span className="">Linked by: </span>
+        {page.linked_by.map((url, index) => (
+          <Fragment key={url}>
+            <Link href={url} target="_blank" className="text-emerald-600">
+              {extractDomain(url)}
+            </Link>
+            {index !== page.linked_by.length - 1 && ", "}
+          </Fragment>
+        ))}
       </div>
     );
   };
@@ -114,6 +134,7 @@ export const Entry = (page: Page) => {
             {formatExcerpt(page.excerpt)}
           </p>
         </Link>
+        <LinkedBy />
         <SharedUsers />
       </div>
     </div>

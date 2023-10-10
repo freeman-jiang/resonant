@@ -13,6 +13,7 @@ export interface Page {
   date: string;
   excerpt: string;
   senders: Sender[];
+  linked_by: string[];
 }
 
 export interface Sender {
