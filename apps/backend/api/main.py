@@ -645,7 +645,7 @@ async def get_search_users(query: str) -> list[UserQueryResponse]:
     :return:
     """
 
-    # LIMIT search results to <= 5
+    # LIMIT search results to <= 15
     # TODO: fix hardcoding of superstack gmail lol-  we don't use it bc it's for global broadcasts
 
     if not query:
@@ -654,7 +654,7 @@ async def get_search_users(query: str) -> list[UserQueryResponse]:
                                        
         SELECT * from users_full_name AS uf 
         WHERE id != '4ee604f3-987d-4295-a2fa-b58d88e5b5e0' 
-        ORDER BY created_at DESC LIMIT 5;""", model=User)
+        ORDER BY created_at DESC LIMIT 15;""", model=User)
         # Sort based on prefix match
 
         return [UserQueryResponse.from_prisma(u) for u in users]
@@ -663,7 +663,7 @@ async def get_search_users(query: str) -> list[UserQueryResponse]:
     WITH users_full_name AS (SELECT CONCAT(first_name, ' ', last_name) AS full_name, "User".* FROM "User")
 
     SELECT * from users_full_name AS uf WHERE uf.full_name ILIKE $1 
-    AND id != '4ee604f3-987d-4295-a2fa-b58d88e5b5e0' LIMIT 5;"""
+    AND id != '4ee604f3-987d-4295-a2fa-b58d88e5b5e0' LIMIT 15;"""
     users = await client.query_raw(sql_query, f'%{query}%', model=User)
 
     # TODO: Search by matching prefix first
