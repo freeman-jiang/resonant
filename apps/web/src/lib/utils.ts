@@ -56,7 +56,7 @@ export function getRelativeTime(pythonDatetimeString: string): string {
   const year = day * 365;
 
   if (differenceInSeconds < minute) {
-    return `Just now`;
+    return `just now`;
   } else if (differenceInSeconds < hour) {
     if (Math.floor(differenceInSeconds / minute) === 1) {
       return `1 minute ago`;
