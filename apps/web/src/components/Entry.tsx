@@ -67,14 +67,14 @@ export const Entry = (page: Page) => {
   // Look if the current user's id is in the list of senders
   const canUnsend = user && senders.some((sender) => sender.id === user.id);
 
-  const Broadcast = () => {
+  const SharedUsers = () => {
     if (senders.length === 0) {
       return null;
     }
     return (
-      <div className="text-xs text-slate-500">
+      <div className="mt-2 text-xs text-slate-500">
         <div className="flex items-center ">
-          {/* <span className="mr-2">Broadcasted by:</span> */}
+          <span className="mr-2">Shared by:</span>
           {renderAvatars()}
           <span className="ml-2">
             {getRelativeTime(mostRecentSender.sent_on)}
@@ -89,7 +89,6 @@ export const Entry = (page: Page) => {
   return (
     <div>
       <div className="border-b border-slate-400 pb-2">
-        <Broadcast />
         <div className="flex flex-row items-center justify-between">
           <Link href={linkToRelated} className="cursor-pointer">
             <h2 className="text-xl font-semibold tracking-tight text-slate-900">
@@ -115,6 +114,7 @@ export const Entry = (page: Page) => {
             {formatExcerpt(page.excerpt)}
           </p>
         </Link>
+        <SharedUsers />
       </div>
     </div>
   );

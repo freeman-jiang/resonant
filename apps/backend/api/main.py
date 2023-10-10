@@ -698,13 +698,11 @@ async def find_page(body: FindPageRequest) -> Union[FindPageResponse, ShouldAdd]
     pageres = PageResponse.from_prisma_page(page, dont_trim=True)
 
     pageres.senders = (await get_senders_for_pages([page.id]))[page.id]
-    print(pageres.senders)
 
     if user_id:
         # a user has broadcasted if they are a sender and SPECIFICALLY they sent to the global broadcast special user
         has_broadcasted = any(
             [s.id == user_id and s.receiver_id == '4ee604f3-987d-4295-a2fa-b58d88e5b5e0' for s in pageres.senders])
-        print(has_broadcasted)
 
     else:
         has_broadcasted = False

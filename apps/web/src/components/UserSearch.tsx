@@ -1,7 +1,6 @@
 import { sendMessage } from "@/api";
 import { usePage, useUserSearch } from "@/api/hooks";
 import { useSupabase } from "@/supabase/client";
-import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
@@ -15,13 +14,20 @@ import {
 import { useToast } from "./ui/use-toast";
 
 // TODO: Fix screen flashing on every keypress
-export function UserSearch() {
-  const url = useSearchParams().get("url");
+interface Props {
+  url: string;
+}
+
+export function UserSearch({ url }: Props) {
   const [query, setQuery] = useState("");
   const { data: users, isFetching } = useUserSearch(query);
   const { session } = useSupabase();
-  const { data } = usePage(url, session);
+  const { data, isLoading } = usePage(url, session);
   const { toast } = useToast();
+
+  if (isLoading) {
+    return <div>loading</div>;
+  }
 
   if (data.type !== "page") {
     return null;

@@ -17,7 +17,7 @@ import {
   TooltipTrigger,
 } from "./ui/tooltip";
 
-interface Props extends React.HTMLAttributes<HTMLButtonElement> {
+interface Props {
   url: string;
 }
 
@@ -49,7 +49,7 @@ export const SendButton = ({ url, ...rest }: Props) => {
           <div className="text-sm text-slate-500">
             It will arrive directly in their feed.
           </div>
-          <UserSearch />
+          <UserSearch url={url} />
         </DialogHeader>
       </DialogContent>
     </Dialog>

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSupabase } from "@/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bookmark, CircleOff, MoreHorizontal, Send } from "lucide-react";
+import { Bookmark, CircleOff, MoreHorizontal, Rss } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "./ui/use-toast";
 
@@ -61,6 +61,7 @@ export const FeedbackButton = ({ canUnsend, page, ...props }: Props) => {
   };
 
   const Share = () => {
+    // TODO: Fix this for For You page not working
     if (canUnsend) {
       return (
         <DropdownMenuItem
@@ -74,7 +75,7 @@ export const FeedbackButton = ({ canUnsend, page, ...props }: Props) => {
 
     return (
       <DropdownMenuItem className="cursor-pointer gap-2" onClick={handleShare}>
-        <Send className="h-4 w-4" /> Broadcast this
+        <Rss className="h-4 w-4" /> Broadcast this
       </DropdownMenuItem>
     );
   };
@@ -97,23 +98,23 @@ export const FeedbackButton = ({ canUnsend, page, ...props }: Props) => {
           </DropdownMenuItem>
           <Share />
           {/* <DropdownMenuItem
-            className="cursor-pointer gap-2"
-            onClick={() => handleFeedback(Feedback.Loved)}
-          >
-            <Heart className="h-4 w-4" />
-            Loved this
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="cursor-pointer gap-2"
-            onClick={() => handleFeedback(Feedback.Liked)}
-          >
-            <ThumbsUp className="h-4 w-4" />
-            Liked this
-          </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer gap-2">
-            <Ban className="h-4 w-4" />
-            Not interested
-          </DropdownMenuItem> */}
+                className="cursor-pointer gap-2"
+                onClick={() => handleFeedback(Feedback.Loved)}
+              >
+                <Heart className="h-4 w-4" />
+                Loved this
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer gap-2"
+                onClick={() => handleFeedback(Feedback.Liked)}
+              >
+                <ThumbsUp className="h-4 w-4" />
+                Liked this
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer gap-2">
+                <Ban className="h-4 w-4" />
+                Not interested
+              </DropdownMenuItem> */}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
