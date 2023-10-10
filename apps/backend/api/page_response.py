@@ -6,6 +6,8 @@ from nltk import sent_tokenize
 from prisma.models import Message, Page, User
 from pydantic import BaseModel
 
+from crawler.recommendation.nodes import url_to_domain
+
 
 @functools.lru_cache
 def sent_tokenize_excerpt(text: str) -> str:
@@ -35,6 +37,9 @@ class PageResponse(BaseModel):
     excerpt: str
     date: str = ""
     senders: list[Sender] = []
+
+    # List of URLs
+    linked_by: list[str] = []
     score: Optional[float] = None
     url_only: bool = False
 
@@ -44,13 +49,28 @@ class PageResponse(BaseModel):
         excerpt = p.content if dont_trim else sent_tokenize_excerpt(
             p.content)
 
+
+        linked_by = []
+        if p.parent_url is None:
+            pass
+        elif url_to_domain(p.parent_url) == url_to_domain(p.url):
+            # If linked by the same domain, it's probably an RSS feed.
+            pass
+        elif 'hnrss.org' in p.parent_url or 'lobste.rs/rss' in p.parent_url:
+            pass
+        else:
+            linked_by = [p.parent_url]
+
         return PageResponse(
             id=p.id,
             url=p.url,
             title=p.title,
             date=p.date or "",
             excerpt=excerpt,
-            score=score
+            score=score,
+
+            # TODO: include all parent URLs (right now we just include a single parent)
+            linked_by=linked_by,
         )
 
     @classmethod
