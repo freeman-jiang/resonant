@@ -6,8 +6,10 @@ import { Session } from "@supabase/supabase-js";
 import NextLink from "next/link";
 import { AddPage } from "./AddPage";
 import { BroadcastButton } from "./BroadcastButton";
+import { LinkedBy } from "./LinkedBy";
 import { PageBox } from "./PageBox";
 import { SaveButton } from "./SaveButton";
+import { Senders } from "./Senders";
 import { Button } from "./ui/button";
 
 interface Props {
@@ -42,6 +44,10 @@ export const PageLayout = ({ url, session }: Props) => {
   return (
     <div>
       <PageBox data={page} />
+      <div>
+        <Senders senders={page.senders} />
+        <LinkedBy page={page} />
+      </div>
       <div className="mt-4 flex gap-3">
         <SendButton url={url} />
         <BroadcastButton url={page.url} />
