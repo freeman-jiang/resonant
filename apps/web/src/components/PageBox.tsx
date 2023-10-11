@@ -26,7 +26,7 @@ export const PageBox = ({ data }: Props) => {
         <p className="text-sm font-light text-slate-700">
           {extractDomain(data.url)}
         </p>
-        <p className="mt-2 font-mono text-sm text-slate-500">
+        <p className="mt-2 break-all font-mono text-sm text-slate-500">
           {formatExcerpt(data.excerpt, 500)}
         </p>
       </div>

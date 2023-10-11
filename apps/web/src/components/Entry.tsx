@@ -54,7 +54,7 @@ export const Entry = (page: Page) => {
           href={linkToRelated}
           onClick={() => trackClickOutboundLink(page.url)}
         >
-          <p className="mt-2 font-mono text-sm text-slate-500">
+          <p className="mt-2 break-all font-mono text-sm text-slate-500">
             {formatExcerpt(page.excerpt)}
           </p>
         </Link>

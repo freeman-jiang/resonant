@@ -75,7 +75,7 @@ export const Entry = (page: Page) => {
             </div>
           </div>
         </div>
-        <p className="mt-2 font-mono text-sm text-slate-500">
+        <p className="mt-2 break-all font-mono text-sm text-slate-500">
           {formatExcerpt(page.excerpt)}
         </p>
       </div>
