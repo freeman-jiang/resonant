@@ -294,6 +294,7 @@ async def add_senders(pages: list[PageResponse]):
         p.senders = senders[p.id]
 
 
+@app.get('/random-feed')
 async def random_feed(limit: int = 60) -> list[PageResponse]:
     """
     Gets a random set of Pages with depth <= 1, based on the seed.

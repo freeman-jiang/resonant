@@ -10,7 +10,7 @@ const topics = {
   Climate: "climate change",
   Philosophy: "philosophy",
   Politics: "politics",
-  Science: "science",
+  // Science: "science",
 };
 
 export const Topics = () => {
@@ -36,6 +36,14 @@ export const Topics = () => {
           variant={!topic && path === "/all" ? "default" : "outline"}
         >
           All
+        </Badge>
+      </NextLink>
+      <NextLink href={"/random"} onClick={() => trackClickTopic("All")}>
+        <Badge
+          className="cursor-pointer text-sm"
+          variant={!topic && path === "/random" ? "default" : "outline"}
+        >
+          Random
         </Badge>
       </NextLink>
       {Object.entries(topics).map(([badgeTopic, prompt]) => (

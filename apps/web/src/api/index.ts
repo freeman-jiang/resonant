@@ -34,7 +34,7 @@ export async function fetchGlobalFeed() {
   return response.data;
 }
 
-export async function fetchFeed() {
+export async function fetchRandomFeed() {
   const response = await fetch(`${NEXT_PUBLIC_BASE_URL}/random-feed`, {
     next: {
       revalidate: 1800, // Refresh every half hour

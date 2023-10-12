@@ -10,6 +10,7 @@ import {
   Page,
   crawlUrl,
   fetchGlobalFeed,
+  fetchRandomFeed,
   findPage,
   getSavedPages,
   getUser,
@@ -228,6 +229,36 @@ export const UserFeedBoundary = async ({
   await queryClient.prefetchQuery({
     queryKey: [USER_FEED_QUERY_KEY, userId],
     queryFn: () => getUserFeed(userId),
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      {children}
+    </HydrationBoundary>
+  );
+};
+
+export const RANDOM_FEED_QUERY_KEY = "random-feed";
+
+export const useRandomFeed = () => {
+  return useQuery({
+    queryKey: [RANDOM_FEED_QUERY_KEY],
+    queryFn: () => fetchRandomFeed(),
+  });
+};
+
+interface RandomFeedBoundaryProps {
+  children: React.ReactNode;
+}
+
+export const RandomFeedBoundary = async ({
+  children,
+}: RandomFeedBoundaryProps) => {
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: [RANDOM_FEED_QUERY_KEY],
+    queryFn: () => fetchRandomFeed(),
   });
 
   return (
