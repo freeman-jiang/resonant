@@ -18,9 +18,8 @@ interface Inputs {
 
 export const AddComment = ({ data }: Props) => {
   const { page } = data;
-  const {
-    session: { user },
-  } = useSupabase();
+  const { session } = useSupabase();
+  const user = session?.user;
   const queryClient = useQueryClient();
 
   const { mutate } = useMutation({
@@ -63,6 +62,7 @@ export const AddComment = ({ data }: Props) => {
     <form onSubmit={handleSubmit(onSubmit)}>
       <Textarea {...register("content")} />
       <Button
+        disabled={!user}
         size="sm"
         className="mt-4 bg-slate-600 hover:bg-slate-600"
         type="submit"

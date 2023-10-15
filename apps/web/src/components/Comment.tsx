@@ -38,13 +38,14 @@ interface Inputs {
 
 export const Comment = ({ comment, page }: Props) => {
   const { author } = comment;
-  const commentAuthorName = formatFullName(author.first_name, author.last_name);
+  const commentAuthorName = comment.is_deleted
+    ? "[deleted]"
+    : formatFullName(author.first_name, author.last_name);
   const initials = `${author.first_name[0]}${author.last_name[0]}`;
   const { register, handleSubmit } = useForm<Inputs>();
   const queryClient = useQueryClient();
-  const {
-    session: { user },
-  } = useSupabase();
+  const { session } = useSupabase();
+  const user = session?.user;
   const invalidatePage = () => {
     queryClient.invalidateQueries({ queryKey: [PAGE_QUERY_KEY, page.url] });
   };
@@ -119,7 +120,7 @@ export const Comment = ({ comment, page }: Props) => {
               {formatRelativeTime(comment.created_at)}
             </p>
           </div>
-          {user.id === comment.author.id && (
+          {user && user.id === comment.author.id && (
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <div>
@@ -142,7 +143,11 @@ export const Comment = ({ comment, page }: Props) => {
         </p>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button variant="link" className="p-0 text-slate-700">
+            <Button
+              variant="link"
+              className="p-0 text-slate-700"
+              disabled={!user}
+            >
               Reply
             </Button>
           </DialogTrigger>
@@ -154,7 +159,7 @@ export const Comment = ({ comment, page }: Props) => {
               <DialogTitle>Reply to: {commentAuthorName}</DialogTitle>
             </DialogHeader>
             <div className="max-w-md truncate text-sm text-slate-500">
-              "{comment.content}"
+              {`"${comment.content}"`}
             </div>
             <form onSubmit={handleSubmit(onSubmit)}>
               <Textarea {...register("content")} />

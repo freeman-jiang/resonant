@@ -767,7 +767,7 @@ async def _create_comment_tree(page: Page):
         include={
             'author': True,
         },
-        order={'updated_at': 'asc'}
+        order={'created_at': 'asc'}
     )
     num_comments = len(comments)
 
