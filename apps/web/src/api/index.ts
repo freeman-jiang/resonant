@@ -71,10 +71,26 @@ export const crawlUrl = async (url: string) => {
   return data;
 };
 
-interface ExistingPageResponse {
+export interface UserResponse {
+  id: string;
+  first_name: string;
+  last_name: string;
+  profile_picture_url?: string;
+}
+export interface PageComment {
+  id: number;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  author: UserResponse;
+  upvotes: number;
+}
+
+export interface ExistingPageResponse {
   page: Page;
   has_broadcasted: boolean;
   type: "page";
+  comments: PageComment[];
 }
 
 interface ShouldAdd {
@@ -224,7 +240,7 @@ interface CommentCreateBody {
 }
 
 export const createComment = async (body: CommentCreateBody) => {
-  const { data } = await axios.post(`/comments`, body);
+  const { data } = await axios.post<PageComment>(`/comments`, body);
   return data;
 };
 

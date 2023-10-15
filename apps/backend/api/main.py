@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from prisma import Prisma
-from prisma.models import Message, Page, User
+from prisma.models import Comment, Message, Page, User
 from pydantic import BaseModel, validator
 
 load_dotenv()
@@ -71,10 +71,41 @@ class FindPageRequest(BaseModel):
         return v
 
 
+# to hide email
+class UserResponse(BaseModel):
+    id: str
+    first_name: str
+    last_name: str
+    profile_picture_url: Optional[str]
+
+    @classmethod
+    def from_user(cls, user: User):
+        return UserResponse(id=user.id, first_name=user.first_name, last_name=user.last_name,
+                            profile_picture_url=user.profile_picture_url)
+
+
+class CommentResponse(BaseModel):
+    id: int
+    content: str
+    created_at: datetime
+    updated_at: datetime
+    author: UserResponse
+    upvotes: int
+
+    @classmethod
+    def from_comment(cls, comment: Comment):
+        assert (comment.author)
+        return CommentResponse(id=comment.id, content=comment.content, created_at=comment.created_at,
+                               updated_at=comment.updated_at, author=UserResponse.from_user(
+                                   comment.author),
+                               upvotes=comment.upvotes)
+
+
 class FindPageResponse(BaseModel):
     page: PageResponse
     has_broadcasted: bool
     type: str = "page"
+    comments: list[CommentResponse]
 
 
 async def get_senders_for_pages(page_ids: list[int]) -> dict[int, list[Sender]]:
@@ -708,7 +739,44 @@ async def find_page(body: FindPageRequest) -> Union[FindPageResponse, ShouldAdd]
     else:
         has_broadcasted = False
 
-    return FindPageResponse(page=pageres, has_broadcasted=has_broadcasted)
+    comments = await _get_comments(page)
+    return FindPageResponse(page=pageres, has_broadcasted=has_broadcasted, comments=comments)
+
+
+async def _get_comments(page: Page) -> list[CommentResponse]:
+    # Create the comment tree
+    comments = await client.comment.find_many(
+        where={'page_id': page.id},
+        include={
+            'author': True,
+            'children': {
+                'include': {
+                    'author': True,
+                    'children': True
+                }
+            }
+        }
+    )
+
+    print(comments)
+
+    return [CommentResponse.from_comment(c) for c in comments]
+
+    # # First get the root comments
+    # root_comments = await client.comment.find_many(where={
+    #     'page_id': page.id,
+    #     'parent_id': None,
+    # }, include={'author': True})
+
+    # # Then get the children of each root comment
+    # children = await client.comment.find_many(where={
+    #     'page_id': page.id,
+    #     'parent_id': {
+    #         'in': [c.id for c in root_comments]
+    #     }
+    # }, include={'author': True})
+
+    # # Group the children by their parent
 
 
 class FollowUserRequest(BaseModel):
@@ -790,7 +858,7 @@ class CommentUpdate(BaseModel):
     commentId: int
 
 
-@app.post("/comments", response_model=CommentCreate)
+@app.post("/comments")
 async def create_comment(body: CommentCreate):
     # Check if the page exists
     page = db.get_page(id=body.pageId)
@@ -798,7 +866,21 @@ async def create_comment(body: CommentCreate):
         raise HTTPException(status_code=404, detail="Page not found")
 
     # Create a new comment
-    new_comment = await client.comment.create({
+
+    if not body.parentId:
+        new_comment = await client.comment.create({
+            'author': {
+                'connect': {
+                    'id': body.userId
+                }
+            },
+            'content': body.content,
+            'page_id': body.pageId,
+        })
+
+        return new_comment
+
+    return await client.comment.create({
         'author': {
             'connect': {
                 'id': body.userId
@@ -806,13 +888,15 @@ async def create_comment(body: CommentCreate):
         },
         'content': body.content,
         'page_id': body.pageId,
-        'parent_id': body.parentId,
+        'parent': {
+            'connect': {
+                'id': body.parentId
+            }
+        }
     })
 
-    return new_comment
 
-
-@app.put("/comments", response_model=CommentCreate)
+@app.put("/comments")
 async def update_comment(body: CommentUpdate):
     existing_comment = await client.comment.find_first(where={"id": body.commentId})
     if not existing_comment:
@@ -827,7 +911,7 @@ async def update_comment(body: CommentUpdate):
     return updated_comment
 
 
-@app.delete("/comments/{comment_id}", response_model=CommentCreate)
+@app.delete("/comments/{comment_id}")
 async def delete_comment(comment_id: int):
     existing_comment = await client.comment.find_first(where={"id": comment_id})
     if not existing_comment:

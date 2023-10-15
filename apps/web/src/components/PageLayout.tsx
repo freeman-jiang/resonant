@@ -8,6 +8,7 @@ import { AddPage } from "./AddPage";
 import { BroadcastButton } from "./BroadcastButton";
 import { LinkedBy } from "./LinkedBy";
 import { PageBox } from "./PageBox";
+import { PageComments } from "./PageComments";
 import { SaveButton } from "./SaveButton";
 import { Senders } from "./Senders";
 import { Button } from "./ui/button";
@@ -52,6 +53,13 @@ export const PageLayout = ({ url, session }: Props) => {
         <SendButton url={url} />
         <BroadcastButton url={page.url} />
         <SaveButton page={page} />
+      </div>
+
+      <div className="mt-4">
+        <h2 className="text-xl font-semibold text-slate-900">
+          Discussion <span>({data.comments.length})</span>
+        </h2>
+        <PageComments data={data} />
       </div>
 
       {/* <SearchBoundary query={url}> */}
