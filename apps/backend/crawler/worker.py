@@ -53,7 +53,7 @@ class Worker:
         """Get, crawl, and parse links from the queue one at a time"""
         # Prevents exhausting the queue and exiting all at once
         await asyncio.sleep(random.uniform(0, 1) * 5)
-        async with ClientSession(timeout=ClientTimeout(connect=4, total=10)) as session:
+        async with ClientSession(timeout=ClientTimeout(total=20)) as session:
             spoof_chrome_user_agent(session)
 
             while not self.done:
@@ -123,16 +123,23 @@ class Worker:
 
         for suppressed in SUPPRESSED_DOMAINS:
             if suppressed in link.url:
+                print("Encountered suppressed domain, skipping", link.url)
                 return None, []
 
         try:
             async with session.get(link.url) as response:
                 if not response.ok:
+                    print("Encountered non-200 response, skipping", response.status)
                     return None, []
                 response = await response.read()
 
-                return parse_html(response, link, should_rss)
+                response, rss = parse_html(response, link, should_rss)
+
+                if response is None:
+                    print("Encountered parse error, skipping", link.url)
+                return response, rss
         except asyncio.TimeoutError:
+            print("Encountered timeout, skipping", link.url)
             return None, []
 
 

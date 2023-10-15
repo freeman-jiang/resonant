@@ -17,19 +17,26 @@ KAGI_FEED_URLS = 'https://raw.githubusercontent.com/kagisearch/smallweb/main/sma
 async def add_kagi_urls():
     config = Config()
 
-    db = Prisma()
-    await db.connect()
-    pc = PostgresClient(config, db)
+    pc = PostgresClient()
+    pc.connect()
 
     response = requests.get(KAGI_FEED_URLS)
     urls = response.text.split('\n')
 
+    started = False
     for url in urls:
-        if url < 'https://www.boristhebrave.com/feed':
-            continue
-        links = find_feed_urls_cached(Link.from_url(url))
-        print(links)
-        await pc.add_tasks(links)
+        if started:
+            domain = Link.from_url(url).domain()
+
+            if pc.query(f'''SELECT 1 FROM "CrawlTask" WHERE url LIKE '%{domain}%' LIMIT 1''') is not None:
+                print("Skipping", url)
+                continue
+            links = find_feed_urls_cached(Link.from_url(url))
+            print(links)
+            pc.add_tasks(links)
+
+        if url == 'https://blog.al4.co.nz/feed/':
+            started = True
     return urls
 
 if __name__ == "__main__":
