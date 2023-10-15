@@ -8,6 +8,7 @@ import {
 import { useSupabase } from "@/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { MessageCircle, MoreHorizontal, Trash } from "lucide-react";
+import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -70,6 +71,9 @@ export const Comment = ({ comment, page }: Props) => {
     onSettled: () => {
       invalidatePage();
     },
+    onSuccess: () => {
+      setOpen(false);
+    },
   });
 
   const onSubmit: SubmitHandler<Inputs> = async ({ content }) => {
@@ -78,6 +82,8 @@ export const Comment = ({ comment, page }: Props) => {
     }
     addComment(content);
   };
+
+  const [open, setOpen] = useState(false);
 
   const renderChildren = () => {
     if (comment.children.length === 0) {
@@ -134,7 +140,7 @@ export const Comment = ({ comment, page }: Props) => {
         <p className="mt-1 text-gray-500 dark:text-gray-400">
           {comment.content}
         </p>
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button variant="link" className="p-0 text-slate-700">
               Reply
