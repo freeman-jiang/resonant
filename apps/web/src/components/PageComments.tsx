@@ -21,7 +21,7 @@ export const PageComments = ({ data }: Props) => {
   return (
     <div className="mt-2">
       <AddComment data={data} />
-      <div className="mt-4">
+      <div className="-ml-6 mt-4">
         {comments.map((comment) => (
           <Comment key={comment.id} comment={comment} page={data.page} />
         ))}

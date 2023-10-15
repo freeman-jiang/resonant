@@ -91,14 +91,23 @@ class CommentResponse(BaseModel):
     updated_at: datetime
     author: UserResponse
     upvotes: int
+    children: list['CommentResponse']
 
     @classmethod
     def from_comment(cls, comment: Comment):
         assert (comment.author)
+
+        # Until the SQL statement gets the recursion properly this does nothing
+        children: list[CommentResponse] = []
+        if comment.children:
+            # recurse
+            children = [CommentResponse.from_comment(c)
+                        for c in comment.children]
+
         return CommentResponse(id=comment.id, content=comment.content, created_at=comment.created_at,
                                updated_at=comment.updated_at, author=UserResponse.from_user(
                                    comment.author),
-                               upvotes=comment.upvotes)
+                               upvotes=comment.upvotes, children=children)
 
 
 class FindPageResponse(BaseModel):
@@ -739,47 +748,40 @@ async def find_page(body: FindPageRequest) -> Union[FindPageResponse, ShouldAdd]
     else:
         has_broadcasted = False
 
-    comments = await _get_comments(page)
+    comments = await _create_comment_tree(page)
     return FindPageResponse(page=pageres, has_broadcasted=has_broadcasted, comments=comments)
 
 
-async def _get_comments(page: Page) -> list[CommentResponse]:
-    # Create the comment tree
-    # Sort by most recent (if we need to order by multiple you need to use a raw query)
+async def _create_comment_tree(page: Page):
+    # Get all comments that belong to this page
     comments = await client.comment.find_many(
         where={'page_id': page.id},
         include={
             'author': True,
-            'children': {
-                'include': {
-                    'author': True,
-                    'children': True
-                }
-            }
-        }, order={
-            'created_at': 'desc'
-        }
+        },
+        order={'updated_at': 'asc'}
     )
 
-    print(comments)
+    # Create a dict with id -> comment
+    comments_by_id = {c.id: c for c in comments}
 
-    return [CommentResponse.from_comment(c) for c in comments]
+    # Create a dict with parent_id -> list of comments
+    children_by_parent: dict[int | None, list[Comment]] = defaultdict(list)
+    for c in comments:
+        children_by_parent[c.parent_id].append(c)
 
-    # # First get the root comments
-    # root_comments = await client.comment.find_many(where={
-    #     'page_id': page.id,
-    #     'parent_id': None,
-    # }, include={'author': True})
+    # For each parent, populate the children list
+    for parent_id, children in children_by_parent.items():
+        if parent_id is None:
+            continue
 
-    # # Then get the children of each root comment
-    # children = await client.comment.find_many(where={
-    #     'page_id': page.id,
-    #     'parent_id': {
-    #         'in': [c.id for c in root_comments]
-    #     }
-    # }, include={'author': True})
+        parent = comments_by_id[parent_id]
+        parent.children = children  # mutating
 
-    # # Group the children by their parent
+    # Sort only the root comments by updated_at (newest first)
+    comments.sort(key=lambda x: x.updated_at, reverse=True)
+
+    return [CommentResponse.from_comment(c) for c in comments if c.parent_id is None]
 
 
 class FollowUserRequest(BaseModel):

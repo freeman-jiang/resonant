@@ -84,6 +84,7 @@ export interface PageComment {
   updated_at: string;
   author: UserResponse;
   upvotes: number;
+  children: PageComment[];
 }
 
 export interface ExistingPageResponse {

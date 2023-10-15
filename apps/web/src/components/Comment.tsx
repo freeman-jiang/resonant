@@ -57,8 +57,22 @@ export const Comment = ({ comment, page }: Props) => {
     mutate(content);
   };
 
+  const renderChildren = () => {
+    if (comment.children.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="mt-4">
+        {comment.children.map((child) => (
+          <Comment key={child.id} comment={child} page={page} />
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <div className="rounded-lg bg-white py-3 text-base dark:bg-gray-900">
+    <div className="ml-6 py-3 text-base dark:bg-gray-900">
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center">
           <p className="mr-3 inline-flex items-center text-sm font-semibold text-gray-900 dark:text-white">
@@ -103,6 +117,7 @@ export const Comment = ({ comment, page }: Props) => {
           </form>
         </DialogContent>
       </Dialog>
+      {renderChildren()}
     </div>
   );
 };
