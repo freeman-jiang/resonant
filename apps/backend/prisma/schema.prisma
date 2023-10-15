@@ -71,6 +71,7 @@ model User {
   following           User[]      @relation("UserFollows")
   created_at          DateTime    @default(now()) @db.Timestamptz
   updated_at          DateTime    @default(now()) @updatedAt @db.Timestamptz
+  Comment             Comment[]
 
   @@schema("public")
 }
@@ -112,6 +113,23 @@ model Message {
 
   sender   User @relation("SentMessages", fields: [sender_id], references: [id], onDelete: Restrict)
   receiver User @relation("ReceivedMessages", fields: [receiver_id], references: [id], onDelete: Restrict)
+
+  @@schema("public")
+}
+
+model Comment {
+  id         Int       @id @default(autoincrement())
+  content    String
+  created_at DateTime  @default(now()) @db.Timestamptz
+  updated_at DateTime? @updatedAt @db.Timestamptz
+  upvotes    Int       @default(0)
+  author_id  String    @db.Uuid
+  author     User      @relation(fields: [author_id], references: [id])
+  parent_id  Int?
+  parent     Comment?  @relation("Children", fields: [parent_id], references: [id])
+  children   Comment[] @relation("Children")
+
+  page_id Int // Do not link the page because it's not stored in Supabase
 
   @@schema("public")
 }
