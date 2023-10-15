@@ -6,6 +6,7 @@ import { MessageCircle } from "lucide-react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
+import { useToast } from "./ui/use-toast";
 
 interface Props {
   data: ExistingPageResponse;
@@ -36,7 +37,7 @@ export const AddComment = ({ data }: Props) => {
         [PAGE_QUERY_KEY, page.url],
         {
           ...data,
-          comments: [...data.comments, newComment],
+          comments: [newComment, ...data.comments], // since we sort by desc date
         },
       );
     },
@@ -46,15 +47,26 @@ export const AddComment = ({ data }: Props) => {
   });
 
   const { register, handleSubmit } = useForm<Inputs>();
+  const { toast } = useToast();
 
   const onSubmit: SubmitHandler<Inputs> = async ({ content }) => {
+    if (!content) {
+      toast({
+        title: "Comment cannot be empty",
+      });
+      return;
+    }
     mutate(content);
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Textarea {...register("content")} />
-      <Button size="sm" className="mt-4 bg-slate-600" type="submit">
+      <Button
+        size="sm"
+        className="mt-4 bg-slate-600 hover:bg-slate-600"
+        type="submit"
+      >
         <MessageCircle className="mr-2 h-4 w-4" /> Comment
       </Button>
     </form>

@@ -745,6 +745,7 @@ async def find_page(body: FindPageRequest) -> Union[FindPageResponse, ShouldAdd]
 
 async def _get_comments(page: Page) -> list[CommentResponse]:
     # Create the comment tree
+    # Sort by most recent (if we need to order by multiple you need to use a raw query)
     comments = await client.comment.find_many(
         where={'page_id': page.id},
         include={
@@ -755,6 +756,8 @@ async def _get_comments(page: Page) -> list[CommentResponse]:
                     'children': True
                 }
             }
+        }, order={
+            'created_at': 'desc'
         }
     )
 
@@ -876,11 +879,11 @@ async def create_comment(body: CommentCreate):
             },
             'content': body.content,
             'page_id': body.pageId,
-        })
+        }, include={'author': True})
 
-        return new_comment
+        return CommentResponse.from_comment(new_comment)
 
-    return await client.comment.create({
+    new_comment = await client.comment.create({
         'author': {
             'connect': {
                 'id': body.userId
@@ -893,7 +896,8 @@ async def create_comment(body: CommentCreate):
                 'id': body.parentId
             }
         }
-    })
+    }, include={'author': True})
+    return CommentResponse.from_comment(new_comment)
 
 
 @app.put("/comments")

@@ -1,12 +1,62 @@
-import { PageComment } from "@/api";
-import { getRelativeTime as formatRelativeTime } from "@/lib/utils";
+"use client";
+import { Page, PageComment, createComment } from "@/api";
+import { PAGE_QUERY_KEY } from "@/api/hooks";
+import {
+  formatFullName,
+  getRelativeTime as formatRelativeTime,
+} from "@/lib/utils";
+import { useSupabase } from "@/supabase/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { MessageCircle } from "lucide-react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import { Textarea } from "./ui/textarea";
 
 interface Props {
   comment: PageComment;
+  page: Page;
 }
 
-export const Comment = ({ comment }: Props) => {
+interface Inputs {
+  content: string;
+}
+
+export const Comment = ({ comment, page }: Props) => {
   const { author } = comment;
+  const commentAuthorName = formatFullName(author.first_name, author.last_name);
+  const { register, handleSubmit } = useForm<Inputs>();
+  const queryClient = useQueryClient();
+  const {
+    session: { user },
+  } = useSupabase();
+
+  const { mutate } = useMutation({
+    mutationFn: (content: string) =>
+      createComment({
+        content,
+        pageId: page.id,
+        userId: user.id,
+        parentId: comment.id,
+      }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: [PAGE_QUERY_KEY, page.url] });
+    },
+  });
+
+  const onSubmit: SubmitHandler<Inputs> = async ({ content }) => {
+    if (!content) {
+      return;
+    }
+    mutate(content);
+  };
+
   return (
     <div className="rounded-lg bg-white py-3 text-base dark:bg-gray-900">
       <div className="mb-2 flex items-center justify-between">
@@ -17,54 +67,42 @@ export const Comment = ({ comment }: Props) => {
               src={author.profile_picture_url}
               alt="Michael Gough"
             />
-            {`${author.first_name} ${author.last_name}`}
+            {commentAuthorName}
           </p>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {formatRelativeTime(comment.created_at)}
           </p>
         </div>
-        <button
-          id="dropdownComment1Button"
-          data-dropdown-toggle="dropdownComment1"
-          className="inline-flex items-center rounded-lg bg-white p-2 text-center text-sm font-medium text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-50 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-          type="button"
-        >
-          <svg
-            className="h-4 w-4"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="currentColor"
-            viewBox="0 0 16 3"
-          >
-            <path d="M2 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm6.041 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM14 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" />
-          </svg>
-          <span className="sr-only">Comment settings</span>
-        </button>
       </div>
       <p className="text-gray-500 dark:text-gray-400">{comment.content}</p>
-      <div className="mt-4 flex items-center space-x-4">
-        <button
-          type="button"
-          className="flex items-center text-sm font-medium text-gray-500 hover:underline dark:text-gray-400"
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="link" className="p-0 text-slate-700">
+            Reply
+          </Button>
+        </DialogTrigger>
+        <DialogContent
+          onCloseAutoFocus={(e) => e.preventDefault()}
+          className="max-w-lg"
         >
-          <svg
-            className="mr-1.5 h-3.5 w-3.5"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 20 18"
-          >
-            <path
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M5 5h5M5 8h2m6-3h2m-5 3h6m2-7H2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h3v5l5-5h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1Z"
-            />
-          </svg>
-          Reply
-        </button>
-      </div>
+          <DialogHeader>
+            <DialogTitle>Reply to: {commentAuthorName}</DialogTitle>
+          </DialogHeader>
+          <div className="max-w-md truncate text-sm text-slate-500">
+            "{comment.content}"
+          </div>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Textarea {...register("content")} />
+            <Button
+              size="sm"
+              className="mt-4 bg-slate-600 hover:bg-slate-600/80"
+              type="submit"
+            >
+              <MessageCircle className="mr-2 h-4 w-4" /> Comment
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

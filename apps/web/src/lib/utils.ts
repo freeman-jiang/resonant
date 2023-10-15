@@ -89,3 +89,7 @@ export function getRelativeTime(pythonDatetimeString: string): string {
     }
   }
 }
+
+export const formatFullName = (firstName: string, lastName: string) => {
+  return `${firstName} ${lastName}`;
+};
