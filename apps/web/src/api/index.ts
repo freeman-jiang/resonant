@@ -215,3 +215,29 @@ export const getUserFeed = async (userId: string) => {
   const { data } = await axios.get<Page[]>(`/feed/${userId}`);
   return data;
 };
+
+interface CommentCreateBody {
+  content: string;
+  pageId: number;
+  parentId?: number;
+  userId: string;
+}
+
+export const createComment = async (body: CommentCreateBody) => {
+  const { data } = await axios.post(`/comments`, body);
+  return data;
+};
+
+interface CommentUpdateBody {
+  content: string;
+  commentId: number;
+}
+
+export const updateComment = async (body: CommentUpdateBody) => {
+  const { data } = await axios.put(`/comments`, body);
+  return data;
+};
+
+export const deleteComment = async (commentId: number) => {
+  await axios.delete(`/comments/${commentId}`);
+};

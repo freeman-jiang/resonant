@@ -780,19 +780,20 @@ async def get_user_feed(userId: str) -> list[PageResponse]:
 
 class CommentCreate(BaseModel):
     content: str
-    page_id: int
-    parent_id: Optional[int] = None
-    user_id: str
+    pageId: int
+    parentId: Optional[int] = None
+    userId: str
 
 
 class CommentUpdate(BaseModel):
     content: str
+    commentId: int
 
 
 @app.post("/comments", response_model=CommentCreate)
 async def create_comment(body: CommentCreate):
     # Check if the page exists
-    page = db.get_page(id=body.page_id)
+    page = db.get_page(id=body.pageId)
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
 
@@ -800,25 +801,25 @@ async def create_comment(body: CommentCreate):
     new_comment = await client.comment.create({
         'author': {
             'connect': {
-                'id': body.user_id
+                'id': body.userId
             }
         },
         'content': body.content,
-        'page_id': body.page_id,
-        'parent_id': body.parent_id,
+        'page_id': body.pageId,
+        'parent_id': body.parentId,
     })
 
     return new_comment
 
 
-@app.put("/comments/{comment_id}", response_model=CommentCreate)
-async def update_comment(comment_id: int, body: CommentUpdate):
-    existing_comment = await client.comment.find_first(where={"id": comment_id})
+@app.put("/comments", response_model=CommentCreate)
+async def update_comment(body: CommentUpdate):
+    existing_comment = await client.comment.find_first(where={"id": body.commentId})
     if not existing_comment:
         raise HTTPException(status_code=404, detail="Comment not found")
 
     updated_comment = await client.comment.update(where={
-        'id': comment_id
+        'id': body.commentId
     }, data={
         'content': body.content
     })
