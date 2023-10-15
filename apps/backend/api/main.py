@@ -115,6 +115,7 @@ class FindPageResponse(BaseModel):
     has_broadcasted: bool
     type: str = "page"
     comments: list[CommentResponse]
+    num_comments: int
 
 
 async def get_senders_for_pages(page_ids: list[int]) -> dict[int, list[Sender]]:
@@ -748,8 +749,8 @@ async def find_page(body: FindPageRequest) -> Union[FindPageResponse, ShouldAdd]
     else:
         has_broadcasted = False
 
-    comments = await _create_comment_tree(page)
-    return FindPageResponse(page=pageres, has_broadcasted=has_broadcasted, comments=comments)
+    comments, num_comments = await _create_comment_tree(page)
+    return FindPageResponse(page=pageres, has_broadcasted=has_broadcasted, comments=comments, num_comments=num_comments)
 
 
 async def _create_comment_tree(page: Page):
@@ -761,6 +762,7 @@ async def _create_comment_tree(page: Page):
         },
         order={'updated_at': 'asc'}
     )
+    num_comments = len(comments)
 
     # Create a dict with id -> comment
     comments_by_id = {c.id: c for c in comments}
@@ -781,7 +783,7 @@ async def _create_comment_tree(page: Page):
     # Sort only the root comments by updated_at (newest first)
     comments.sort(key=lambda x: x.updated_at, reverse=True)
 
-    return [CommentResponse.from_comment(c) for c in comments if c.parent_id is None]
+    return [CommentResponse.from_comment(c) for c in comments if c.parent_id is None], num_comments
 
 
 class FollowUserRequest(BaseModel):

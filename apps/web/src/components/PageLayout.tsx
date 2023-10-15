@@ -57,7 +57,7 @@ export const PageLayout = ({ url, session }: Props) => {
 
       <div className="mt-4">
         <h2 className="text-xl font-semibold text-slate-900">
-          Discussion <span>({data.comments.length})</span>
+          Discussion <span>({data.num_comments})</span>
         </h2>
         <PageComments data={data} />
       </div>

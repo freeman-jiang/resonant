@@ -73,7 +73,7 @@ export const Comment = ({ comment, page }: Props) => {
 
   return (
     <div className="ml-6 py-3 text-base dark:bg-gray-900">
-      <div className="mb-2 flex items-center justify-between">
+      <div className="relative top-4 border-l pl-4">
         <div className="flex items-center">
           <p className="mr-3 inline-flex items-center text-sm font-semibold text-gray-900 dark:text-white">
             <img
@@ -87,37 +87,37 @@ export const Comment = ({ comment, page }: Props) => {
             {formatRelativeTime(comment.created_at)}
           </p>
         </div>
-      </div>
-      <p className="text-gray-500 dark:text-gray-400">{comment.content}</p>
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="link" className="p-0 text-slate-700">
-            Reply
-          </Button>
-        </DialogTrigger>
-        <DialogContent
-          onCloseAutoFocus={(e) => e.preventDefault()}
-          className="max-w-lg"
-        >
-          <DialogHeader>
-            <DialogTitle>Reply to: {commentAuthorName}</DialogTitle>
-          </DialogHeader>
-          <div className="max-w-md truncate text-sm text-slate-500">
-            "{comment.content}"
-          </div>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <Textarea {...register("content")} />
-            <Button
-              size="sm"
-              className="mt-4 bg-slate-600 hover:bg-slate-600/80"
-              type="submit"
-            >
-              <MessageCircle className="mr-2 h-4 w-4" /> Comment
+        <p className="text-gray-500 dark:text-gray-400">{comment.content}</p>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="link" className="p-0 text-slate-700">
+              Reply
             </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-      {renderChildren()}
+          </DialogTrigger>
+          <DialogContent
+            onCloseAutoFocus={(e) => e.preventDefault()}
+            className="max-w-lg"
+          >
+            <DialogHeader>
+              <DialogTitle>Reply to: {commentAuthorName}</DialogTitle>
+            </DialogHeader>
+            <div className="max-w-md truncate text-sm text-slate-500">
+              "{comment.content}"
+            </div>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <Textarea {...register("content")} />
+              <Button
+                size="sm"
+                className="mt-4 bg-slate-600 hover:bg-slate-600/80"
+                type="submit"
+              >
+                <MessageCircle className="mr-2 h-4 w-4" /> Comment
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+        {renderChildren()}
+      </div>
     </div>
   );
 };

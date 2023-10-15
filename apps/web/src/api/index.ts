@@ -92,6 +92,7 @@ export interface ExistingPageResponse {
   has_broadcasted: boolean;
   type: "page";
   comments: PageComment[];
+  num_comments: number;
 }
 
 interface ShouldAdd {
