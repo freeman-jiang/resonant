@@ -91,6 +91,7 @@ class CommentResponse(BaseModel):
     updated_at: datetime
     author: UserResponse
     upvotes: int
+    is_deleted: bool
     children: list['CommentResponse']
 
     @classmethod
@@ -104,10 +105,16 @@ class CommentResponse(BaseModel):
             children = [CommentResponse.from_comment(c)
                         for c in comment.children]
 
+        if comment.is_deleted:
+            return CommentResponse(id=comment.id, content="[deleted]", created_at=comment.created_at,
+                                   updated_at=comment.updated_at, author=UserResponse(
+                                       id="", first_name="", last_name="", profile_picture_url=""),
+                                   upvotes=comment.upvotes, is_deleted=comment.is_deleted, children=children)
+
         return CommentResponse(id=comment.id, content=comment.content, created_at=comment.created_at,
                                updated_at=comment.updated_at, author=UserResponse.from_user(
                                    comment.author),
-                               upvotes=comment.upvotes, children=children)
+                               upvotes=comment.upvotes, is_deleted=comment.is_deleted, children=children)
 
 
 class FindPageResponse(BaseModel):
@@ -925,4 +932,14 @@ async def delete_comment(comment_id: int):
     if not existing_comment:
         raise HTTPException(status_code=404, detail="Comment not found")
 
-    await client.comment.delete(where={"id": comment_id})
+    # we don't actually delete, we follow reddit's convention
+    # Delete the content and set the deleted field to true (to maintain threads)
+
+    deleted_comment = await client.comment.update(where={
+        'id': comment_id
+    }, data={
+        'content': '',
+        'is_deleted': True
+    })
+
+    return deleted_comment

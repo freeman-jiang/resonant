@@ -1,5 +1,5 @@
 "use client";
-import { Page, PageComment, createComment } from "@/api";
+import { Page, PageComment, createComment, deleteComment } from "@/api";
 import { PAGE_QUERY_KEY } from "@/api/hooks";
 import {
   formatFullName,
@@ -7,8 +7,9 @@ import {
 } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, MoreHorizontal, Trash } from "lucide-react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -17,6 +18,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 import { Textarea } from "./ui/textarea";
 
 interface Props {
@@ -31,13 +38,28 @@ interface Inputs {
 export const Comment = ({ comment, page }: Props) => {
   const { author } = comment;
   const commentAuthorName = formatFullName(author.first_name, author.last_name);
+  const initials = `${author.first_name[0]}${author.last_name[0]}`;
   const { register, handleSubmit } = useForm<Inputs>();
   const queryClient = useQueryClient();
   const {
     session: { user },
   } = useSupabase();
+  const invalidatePage = () => {
+    queryClient.invalidateQueries({ queryKey: [PAGE_QUERY_KEY, page.url] });
+  };
 
-  const { mutate } = useMutation({
+  const { mutate: trashComment } = useMutation({
+    mutationFn: () => deleteComment(comment.id),
+    onSettled: () => {
+      invalidatePage();
+    },
+  });
+
+  const handleDelete = () => {
+    trashComment();
+  };
+
+  const { mutate: addComment } = useMutation({
     mutationFn: (content: string) =>
       createComment({
         content,
@@ -46,7 +68,7 @@ export const Comment = ({ comment, page }: Props) => {
         parentId: comment.id,
       }),
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: [PAGE_QUERY_KEY, page.url] });
+      invalidatePage();
     },
   });
 
@@ -54,7 +76,7 @@ export const Comment = ({ comment, page }: Props) => {
     if (!content) {
       return;
     }
-    mutate(content);
+    addComment(content);
   };
 
   const renderChildren = () => {
@@ -72,22 +94,46 @@ export const Comment = ({ comment, page }: Props) => {
   };
 
   return (
-    <div className="ml-6 py-3 text-base dark:bg-gray-900">
+    <div className="ml-6 py-3 text-base">
       <div className="relative top-4 border-l pl-4">
-        <div className="flex items-center">
-          <p className="mr-3 inline-flex items-center text-sm font-semibold text-gray-900 dark:text-white">
-            <img
-              className="mr-2 h-6 w-6 rounded-full"
-              src={author.profile_picture_url}
-              alt="Michael Gough"
-            />
-            {commentAuthorName}
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {formatRelativeTime(comment.created_at)}
-          </p>
+        <div className="flex justify-between">
+          <div className="flex items-center">
+            <p className="mr-3 inline-flex items-center text-sm font-medium text-gray-900 dark:text-white">
+              <Avatar className="h-6 w-6">
+                <AvatarImage
+                  src={comment.is_deleted ? "" : author.profile_picture_url}
+                />
+                <AvatarFallback className="text-xs">
+                  {comment.is_deleted ? "X" : initials}
+                </AvatarFallback>
+              </Avatar>
+              <span className="ml-1.5">{commentAuthorName}</span>
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {formatRelativeTime(comment.created_at)}
+            </p>
+          </div>
+          {user.id === comment.author.id && (
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <div>
+                  <MoreHorizontal className="h-4 w-4" />
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2"
+                  onClick={handleDelete}
+                >
+                  <Trash className="h-4 w-4" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
-        <p className="text-gray-500 dark:text-gray-400">{comment.content}</p>
+        <p className="mt-1 text-gray-500 dark:text-gray-400">
+          {comment.content}
+        </p>
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="link" className="p-0 text-slate-700">
