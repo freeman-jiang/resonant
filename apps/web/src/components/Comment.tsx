@@ -138,7 +138,7 @@ export const Comment = ({ comment, page }: Props) => {
             </DropdownMenu>
           )}
         </div>
-        <p className="mt-1 text-gray-500 dark:text-gray-400">
+        <p className="mt-1 w-full overflow-clip whitespace-break-spaces text-gray-500 dark:text-gray-400">
           {comment.content}
         </p>
         <Dialog open={open} onOpenChange={setOpen}>
