@@ -97,8 +97,6 @@ async def get_similar_articles(client: Prisma, user_id: str) -> list[PageRespons
         'user_id': user.id
     })
 
-    liked_page_ids = set([lp.page_id for lp in liked_pages])
-
     # Select K random pages to generate feed from
     selected_liked_pages = random.choices(
         liked_pages, k=min(20, len(liked_pages)))
