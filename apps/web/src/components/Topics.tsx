@@ -38,7 +38,7 @@ export const Topics = () => {
           All
         </Badge>
       </NextLink>
-      <NextLink href={"/random"} onClick={() => trackClickTopic("All")}>
+      <NextLink href={"/random"} onClick={() => trackClickTopic("Random")}>
         <Badge
           className="cursor-pointer text-sm"
           variant={!topic && path === "/random" ? "default" : "outline"}
@@ -46,6 +46,17 @@ export const Topics = () => {
           Random
         </Badge>
       </NextLink>
+      {/* <NextLink
+        href={"/recommended"}
+        onClick={() => trackClickTopic("Recommended")}
+      >
+        <Badge
+          className="cursor-pointer text-sm"
+          variant={!topic && path === "/recommended" ? "default" : "outline"}
+        >
+          Recommended
+        </Badge>
+      </NextLink> */}
       {Object.entries(topics).map(([badgeTopic, prompt]) => (
         <NextLink
           key={badgeTopic}

@@ -1,3 +1,4 @@
+import { trackComment } from "@/analytics/mixpanel";
 import { ExistingPageResponse, createComment } from "@/api";
 import { PAGE_QUERY_KEY } from "@/api/hooks";
 import { useSupabase } from "@/supabase/client";
@@ -56,6 +57,7 @@ export const AddComment = ({ data }: Props) => {
       return;
     }
     mutate(content);
+    trackComment({ pageUrl: page.url, comment: content });
   };
 
   return (

@@ -1,4 +1,5 @@
 "use client";
+import { trackComment } from "@/analytics/mixpanel";
 import { Page, PageComment, createComment, deleteComment } from "@/api";
 import { PAGE_QUERY_KEY } from "@/api/hooks";
 import {
@@ -61,7 +62,7 @@ export const Comment = ({ comment, page }: Props) => {
     trashComment();
   };
 
-  const { mutate: addComment } = useMutation({
+  const { mutate: replyToComment } = useMutation({
     mutationFn: (content: string) =>
       createComment({
         content,
@@ -81,7 +82,8 @@ export const Comment = ({ comment, page }: Props) => {
     if (!content) {
       return;
     }
-    addComment(content);
+    replyToComment(content);
+    trackComment({ pageUrl: page.url, comment: content });
   };
 
   const [open, setOpen] = useState(false);
@@ -138,7 +140,7 @@ export const Comment = ({ comment, page }: Props) => {
             </DropdownMenu>
           )}
         </div>
-        <p className="mt-1 text-gray-500 dark:text-gray-400">
+        <p className="mt-1 w-full overflow-clip whitespace-break-spaces text-gray-500 dark:text-gray-400">
           {comment.content}
         </p>
         <Dialog open={open} onOpenChange={setOpen}>

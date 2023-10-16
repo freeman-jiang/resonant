@@ -2,10 +2,13 @@
 
 import { useGlobalFeed } from "@/api/hooks";
 import { Entry } from "./Entry";
-import { Feed } from "./Feed";
+import { Feed, LoadingFeed } from "./Feed";
 
 export const GlobalFeed = () => {
   const { data: feed } = useGlobalFeed();
+  if (!feed) {
+    return <LoadingFeed />;
+  }
 
   return (
     <div className="space-y-2">

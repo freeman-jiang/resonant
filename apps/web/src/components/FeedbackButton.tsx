@@ -1,6 +1,6 @@
 "use client";
-import { trackBroadcast, trackSave } from "@/analytics/mixpanel";
-import { Page, savePage, sharePage, unsharePage } from "@/api";
+import { trackBroadcast, trackLike } from "@/analytics/mixpanel";
+import { Page, likePage, sharePage, unsharePage } from "@/api";
 import { GLOBAL_FEED_QUERY_KEY } from "@/api/hooks";
 import {
   DropdownMenu,
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSupabase } from "@/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bookmark, CircleOff, MoreHorizontal, Rss } from "lucide-react";
+import { CircleOff, Heart, MoreHorizontal, Rss } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "./ui/use-toast";
 
@@ -32,15 +32,15 @@ export const FeedbackButton = ({ canUnsend, page, ...props }: Props) => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
-  const handleSave = async () => {
+  const handleLike = async () => {
     if (!user) {
       router.push("/login");
       return;
     }
-    await savePage(user.id, page.id);
-    trackSave();
+    await likePage(user.id, page.id);
+    trackLike();
     toast({
-      title: "Saved! 🎉",
+      title: "Liked! 🎉",
     });
   };
 
@@ -93,9 +93,9 @@ export const FeedbackButton = ({ canUnsend, page, ...props }: Props) => {
         <DropdownMenuContent>
           <DropdownMenuItem
             className="cursor-pointer gap-2"
-            onClick={handleSave}
+            onClick={handleLike}
           >
-            <Bookmark className="h-4 w-4" /> Save this
+            <Heart className="h-4 w-4" /> Like this
           </DropdownMenuItem>
           <Share />
           {/* <DropdownMenuItem

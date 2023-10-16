@@ -11,8 +11,9 @@ import {
   crawlUrl,
   fetchGlobalFeed,
   fetchRandomFeed,
+  fetchRecommendedFeed,
   findPage,
-  getSavedPages,
+  getLikedPages,
   getUser,
   getUserFeed,
   searchFor,
@@ -116,29 +117,29 @@ export const SearchBoundary = async ({
   );
 };
 
-export const SAVED_FEED_QUERY_KEY = "saved-feed";
+export const LIKED_FEED_QUERY_KEY = "liked-feed";
 
-export const useSavedFeed = (session: Session) => {
+export const useLikedFeed = (session: Session) => {
   return useQuery({
-    queryKey: [SAVED_FEED_QUERY_KEY],
-    queryFn: () => getSavedPages(session.user.id),
+    queryKey: [LIKED_FEED_QUERY_KEY],
+    queryFn: () => getLikedPages(session.user.id),
   });
 };
 
-interface SavedFeedBoundaryProps {
+interface LikedFeedBoundaryProps {
   children: React.ReactNode;
   session: Session;
 }
 
-export const SavedFeedBoundary = async ({
+export const LikedFeedBoundary = async ({
   children,
   session,
-}: SavedFeedBoundaryProps) => {
+}: LikedFeedBoundaryProps) => {
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: [SAVED_FEED_QUERY_KEY],
-    queryFn: () => getSavedPages(session.user.id),
+    queryKey: [LIKED_FEED_QUERY_KEY],
+    queryFn: () => getLikedPages(session.user.id),
   });
 
   return (
@@ -266,4 +267,13 @@ export const RandomFeedBoundary = async ({
       {children}
     </HydrationBoundary>
   );
+};
+
+export const RECOMMENDED_FEED_QUERY_KEY = "recommended-feed";
+
+export const useRecommendedFeed = (userId: string) => {
+  return useQuery({
+    queryKey: [RECOMMENDED_FEED_QUERY_KEY],
+    queryFn: () => fetchRecommendedFeed(userId),
+  });
 };

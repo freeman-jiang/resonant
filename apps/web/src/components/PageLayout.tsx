@@ -6,10 +6,10 @@ import { Session } from "@supabase/supabase-js";
 import NextLink from "next/link";
 import { AddPage } from "./AddPage";
 import { BroadcastButton } from "./BroadcastButton";
+import { LikeButton } from "./LikeButton";
 import { LinkedBy } from "./LinkedBy";
 import { PageBox } from "./PageBox";
 import { PageComments } from "./PageComments";
-import { SaveButton } from "./SaveButton";
 import { Senders } from "./Senders";
 import { Button } from "./ui/button";
 
@@ -51,8 +51,8 @@ export const PageLayout = ({ url, session }: Props) => {
       </div>
       <div className="mt-4 flex gap-3">
         <SendButton url={url} />
-        <BroadcastButton url={page.url} />
-        <SaveButton page={page} />
+        <BroadcastButton url={url} />
+        <LikeButton page={page} />
       </div>
 
       <div className="mt-4">

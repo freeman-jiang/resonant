@@ -9,8 +9,8 @@ export const trackClickOutboundLink = (url: string) => {
   mixpanel.track("Click Outbound Link", { url });
 };
 
-export const trackSave = () => {
-  mixpanel.track("Save");
+export const trackLike = () => {
+  mixpanel.track("Like");
 };
 
 export const trackBroadcast = () => {
@@ -43,4 +43,14 @@ export const trackClickLinkedBy = (pageUrl: string, linkedByUrl: string) => {
 
 export const trackClickTopic = (topic: string) => {
   mixpanel.track("Click Topic", { topic });
+};
+
+export const trackComment = ({
+  pageUrl,
+  comment,
+}: {
+  pageUrl: string;
+  comment: string;
+}) => {
+  mixpanel.track("Comment", { pageUrl, comment });
 };

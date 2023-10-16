@@ -152,18 +152,18 @@ export const getUser = async (uuid: string): Promise<GetUserResponse> => {
   return response.json() as Promise<GetUserResponse>;
 };
 
-export const savePage = async (userId: string, pageId: number) => {
-  const { data } = await axios.get(`/save/${userId}/${pageId}`);
+export const likePage = async (userId: string, pageId: number) => {
+  const { data } = await axios.get(`/like/${userId}/${pageId}`);
   return data;
 };
 
-export const unsavePage = async (userId: string, pageId: number) => {
-  const { data } = await axios.delete(`/unsave/${userId}/${pageId}`);
+export const unlikePage = async (userId: string, pageId: number) => {
+  const { data } = await axios.delete(`/unlike/${userId}/${pageId}`);
   return data;
 };
 
-export const getSavedPages = async (userId: string) => {
-  const { data } = await axios.get<Page[]>(`/saved/${userId}`);
+export const getLikedPages = async (userId: string) => {
+  const { data } = await axios.get<Page[]>(`/liked/${userId}`);
   return data;
 };
 
@@ -259,4 +259,9 @@ export const updateComment = async (body: CommentUpdateBody) => {
 
 export const deleteComment = async (commentId: number) => {
   await axios.delete(`/comments/${commentId}`);
+};
+
+export const fetchRecommendedFeed = async (userId: string) => {
+  const { data } = await axios.get<Page[]>(`/recommended?userId=${userId}`);
+  return data;
 };
