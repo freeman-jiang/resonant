@@ -1,16 +1,14 @@
-from collections import defaultdict, deque
 import itertools
-from datetime import datetime
 import random
-
-from prisma import Prisma
-from prisma.models import Message, Page, Comment
+from collections import defaultdict, deque
+from datetime import datetime
 
 from api.add_senders import add_senders
 from api.page_response import PageResponse, Sender
-
 from crawler.prismac import pg_client
 from crawler.recommendation.embedding import generate_feed_from_page
+from prisma import Prisma
+from prisma.models import Comment, Message, Page
 
 SUPERSTACK_RECEIVER_ID = '4ee604f3-987d-4295-a2fa-b58d88e5b5e0'
 
@@ -64,7 +62,7 @@ async def get_inbox_messages(client: Prisma, user_id: str) -> list[Message]:
     messages = await client.message.find_many(order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True},
                                               where={
                                                   'receiver_id': str(user_id)
-                                              })
+    })
 
     return messages
 
@@ -76,28 +74,19 @@ async def get_friend_comments(client: Prisma, user_id: str) -> list[Comment]:
             "author_id": {"not": user_id},
             "is_deleted": False
         },
-        distinct=["page_id"]  # Ensure only distinct page_id values are returned
+        # Ensure only distinct page_id values are returned
+        distinct=["page_id"]
     )
 
     # Extract the page_id values from the comments
     return friend_comments
 
 
-async def get_friend_broadcasts(client: Prisma, user_id: str) -> list[Message]:
-    """Everyone is your friend"""
-    return await get_inbox_messages(client, SUPERSTACK_RECEIVER_ID)
-
-
 async def get_friend_activity(client: Prisma, user_id: str) -> list[Message | Comment]:
     """Comments and broadcasts"""
     friend_comments = await get_friend_comments(client, user_id)
-    friend_broadcasts = await get_friend_broadcasts(client, user_id)
 
-    # todo: deduplicate this
-    union = friend_broadcasts + friend_comments
-
-    union.sort(key = lambda k: getattr(k, 'sent_on', None) or getattr(k, 'created_at'), reverse=True)
-    return union
+    return friend_comments
 
 
 async def get_similar_articles(client: Prisma, user_id: str) -> list[PageResponse]:
@@ -120,17 +109,20 @@ async def get_similar_articles(client: Prisma, user_id: str) -> list[PageRespons
 
     similar: list[PageResponse] = []
 
-    liked_pages = pg_client.get_page_stubs_by_id([lp.page_id for lp in selected_liked_pages])
+    liked_pages = pg_client.get_page_stubs_by_id(
+        [lp.page_id for lp in selected_liked_pages])
     for lp in liked_pages:
         similar.extend(await generate_feed_from_page(lp.url))
 
     # Since some articles might be similar to multiple articles that the user liked, we need to deduplicate
     # If something shows up multiple times, it's score increases (matches person's interests more)
-    similar_grouped: dict[int, PageResponse] = {}  # Map page_id -> PageResponse
+    # Map page_id -> PageResponse
+    similar_grouped: dict[int, PageResponse] = {}
 
     for s in similar:
         if s.id in similar_grouped:
-            similar_grouped[s.id].score += s.score + 1  # Add one to "bonus" matching multiple of their liked stuff
+            # Add one to "bonus" matching multiple of their liked stuff
+            similar_grouped[s.id].score += s.score + 1
         else:
             similar_grouped[s.id] = s
 
@@ -228,7 +220,6 @@ async def mix_feed(client: Prisma, user_id: str) -> list[PageResponse]:
             continue
 
         resulting_feed.append(combined_feed[ty].popleft())
-
 
     # Return the mixed feed to the user
     return resulting_feed
