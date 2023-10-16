@@ -9,7 +9,7 @@ const topics = {
   Software: "software engineering",
   Climate: "climate change",
   Philosophy: "philosophy",
-  // Politics: "politics",
+  Politics: "politics",
   // Science: "science",
 };
 
@@ -46,7 +46,7 @@ export const Topics = () => {
           Random
         </Badge>
       </NextLink>
-      <NextLink
+      {/* <NextLink
         href={"/recommended"}
         onClick={() => trackClickTopic("Recommended")}
       >
@@ -56,7 +56,7 @@ export const Topics = () => {
         >
           Recommended
         </Badge>
-      </NextLink>
+      </NextLink> */}
       {Object.entries(topics).map(([badgeTopic, prompt]) => (
         <NextLink
           key={badgeTopic}
