@@ -62,7 +62,7 @@ export const Comment = ({ comment, page }: Props) => {
     trashComment();
   };
 
-  const { mutate: addComment } = useMutation({
+  const { mutate: replyToComment } = useMutation({
     mutationFn: (content: string) =>
       createComment({
         content,
@@ -82,7 +82,7 @@ export const Comment = ({ comment, page }: Props) => {
     if (!content) {
       return;
     }
-    addComment(content);
+    replyToComment(content);
     trackComment({ pageUrl: page.url, comment: content });
   };
 
