@@ -260,3 +260,8 @@ export const updateComment = async (body: CommentUpdateBody) => {
 export const deleteComment = async (commentId: number) => {
   await axios.delete(`/comments/${commentId}`);
 };
+
+export const fetchRecommendedFeed = async (userId: string) => {
+  const { data } = await axios.get<Page[]>(`/recommended?userId=${userId}`);
+  return data;
+};

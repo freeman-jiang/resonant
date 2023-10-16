@@ -1,3 +1,4 @@
+import asyncio
 import os
 import random
 from collections import defaultdict
@@ -151,14 +152,14 @@ async def test_find_page():
     print(await find_page(FindPageRequest(url='https://shuttersparks.net/specious-appeal-to-fairness/')))
 
 
-@app.get('/recommend')
-async def recommend(userid: UUID) -> list[PageResponse]:
+@app.get('/recommended')
+async def recommend(userId: UUID) -> list[PageResponse]:
     """
     Get a random sample of similar pages from the pages user has already liked from LikedPage
     :param userid:
     :return:
     """
-    user = await find_user(str(userid))
+    user = await find_user(str(userId))
 
     # Get a random sample of pages the user has liked
     liked_pages = await client.likedpage.find_many(take=100, where={
@@ -170,25 +171,27 @@ async def recommend(userid: UUID) -> list[PageResponse]:
     # Select K random pages to generate feed from
     selected_liked_pages = random.choices(
         liked_pages, k=min(10, len(liked_pages)))
-    
 
     if len(selected_liked_pages) == 0:
-        print(f'User {userid} has no liked pages')
+        print(f'User {userId} has no liked pages')
         return []
 
     similar: list[PageResponse] = []
 
-    liked_pages = db.get_page_stubs_by_id([lp.page_id for lp in selected_liked_pages])
+    liked_pages = db.get_page_stubs_by_id(
+        [lp.page_id for lp in selected_liked_pages])
     for lp in liked_pages:
         similar.extend(await generate_feed_from_page(lp.url))
 
     # Since some articles might be similar to multiple articles that the user liked, we need to deduplicate
     # If something shows up multiple times, it's score increases (matches person's interests more)
-    similar_grouped: dict[str, PageResponse] = {} # Map page_id -> PageResponse
+    # Map page_id -> PageResponse
+    similar_grouped: dict[str, PageResponse] = {}
 
     for s in similar:
         if s.id in similar_grouped:
-            similar_grouped[s.id].score += s.score + 1 # Add one to "bonus" matching multiple of their liked stuff
+            # Add one to "bonus" matching multiple of their liked stuff
+            similar_grouped[s.id].score += s.score + 1
         else:
             similar_grouped[s.id] = s
 
@@ -196,8 +199,9 @@ async def recommend(userid: UUID) -> list[PageResponse]:
     await add_senders(similar_final)
 
     # TODO: shuffle this list so that users get a diverse representation of their interests, rather than just highest score
-    similar_final.sort(key = lambda x: x.score, reverse=True)
+    similar_final.sort(key=lambda x: x.score, reverse=True)
     return similar_final
+
 
 @app.get('/saved/{userid}')
 async def get_liked_pages(userid: str) -> list[PageResponse]:
@@ -868,7 +872,14 @@ async def get_user_feed(userId: str) -> list[PageResponse]:
         'receiver_id': userId
     })
 
-    result, _ = await _process_messages(messages)
+    messages_task = asyncio.create_task(_process_messages(messages))
+    recommended_task = asyncio.create_task(recommend(userId=userId))
+
+    result, _ = await messages_task
+    recommended = await recommended_task
+
+    # Interweave the two lists, alternating between recommended and messages
+    result = [x for t in zip(result, recommended) for x in t]
 
     return result
 

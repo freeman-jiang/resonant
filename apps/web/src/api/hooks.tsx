@@ -11,6 +11,7 @@ import {
   crawlUrl,
   fetchGlobalFeed,
   fetchRandomFeed,
+  fetchRecommendedFeed,
   findPage,
   getSavedPages,
   getUser,
@@ -266,4 +267,13 @@ export const RandomFeedBoundary = async ({
       {children}
     </HydrationBoundary>
   );
+};
+
+export const RECOMMENDED_FEED_QUERY_KEY = "recommended-feed";
+
+export const useRecommendedFeed = (userId: string) => {
+  return useQuery({
+    queryKey: [RECOMMENDED_FEED_QUERY_KEY],
+    queryFn: () => fetchRecommendedFeed(userId),
+  });
 };

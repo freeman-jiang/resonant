@@ -3,7 +3,7 @@
 import { useUserFeed } from "@/api/hooks";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { Feed } from "./Feed";
+import { Feed, LoadingFeed } from "./Feed";
 import { buttonVariants } from "./ui/button";
 
 interface Props {
@@ -12,6 +12,10 @@ interface Props {
 
 export const UserFeed = ({ userId }: Props) => {
   const { data: feed } = useUserFeed(userId);
+
+  if (!feed) {
+    return <LoadingFeed />;
+  }
 
   if (feed.length === 0) {
     return (
