@@ -9,8 +9,8 @@ export const trackClickOutboundLink = (url: string) => {
   mixpanel.track("Click Outbound Link", { url });
 };
 
-export const trackSave = () => {
-  mixpanel.track("Save");
+export const trackLike = () => {
+  mixpanel.track("Like");
 };
 
 export const trackBroadcast = () => {

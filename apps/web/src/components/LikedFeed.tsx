@@ -1,7 +1,7 @@
 "use client";
 import { trackClickOutboundLink, trackClickPage } from "@/analytics/mixpanel";
-import { Page, unsavePage } from "@/api";
-import { SAVED_FEED_QUERY_KEY, useSavedFeed } from "@/api/hooks";
+import { Page, unlikePage } from "@/api";
+import { LIKED_FEED_QUERY_KEY, useLikedFeed } from "@/api/hooks";
 import { extractDomain, formatExcerpt } from "@/lib/utils";
 import { useSupabase } from "@/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -24,9 +24,9 @@ export const Entry = (page: Page) => {
   } = useSupabase();
   const queryClient = useQueryClient();
 
-  const handleUnsave = async () => {
-    await unsavePage(user.id, page.id);
-    queryClient.invalidateQueries({ queryKey: [SAVED_FEED_QUERY_KEY] });
+  const handleUnlike = async () => {
+    await unlikePage(user.id, page.id);
+    queryClient.invalidateQueries({ queryKey: [LIKED_FEED_QUERY_KEY] });
   };
 
   return (
@@ -66,9 +66,9 @@ export const Entry = (page: Page) => {
                 <DropdownMenuContent>
                   <DropdownMenuItem
                     className="cursor-pointer gap-2"
-                    onClick={handleUnsave}
+                    onClick={handleUnlike}
                   >
-                    <X className="h-4 w-4" /> Unsave this
+                    <X className="h-4 w-4" /> Unlike this
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -83,9 +83,9 @@ export const Entry = (page: Page) => {
   );
 };
 
-export const SavedFeed = () => {
+export const LikedFeed = () => {
   const { session } = useSupabase();
-  const { data: feed } = useSavedFeed(session);
+  const { data: feed } = useLikedFeed(session);
 
   return (
     <div className="mt-5 space-y-2">

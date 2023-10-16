@@ -48,8 +48,8 @@ export function UserNav() {
         >
           Friends
         </Link> */}
-        <Link href="/saved" className={cn(buttonVariants({ variant: "link" }))}>
-          Saved
+        <Link href="/liked" className={cn(buttonVariants({ variant: "link" }))}>
+          Liked
         </Link>
       </div>
       <DropdownMenu>
