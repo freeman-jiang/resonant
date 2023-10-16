@@ -51,7 +51,7 @@ export const PageLayout = ({ url, session }: Props) => {
       </div>
       <div className="mt-4 flex gap-3">
         <SendButton url={url} />
-        <BroadcastButton url={page.url} />
+        <BroadcastButton url={url} />
         <SaveButton page={page} />
       </div>
 
