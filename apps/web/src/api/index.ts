@@ -231,7 +231,8 @@ export const sendMessage = async (message: SendMessagesRequest) => {
 };
 
 export const getUserFeed = async (userId: string) => {
-  const { data } = await axios.get<Page[]>(`/feed/${userId}`);
+  const url = userId ? `/feed?userId=${userId}` : `/feed`;
+  const { data } = await axios.get<Page[]>(url);
   return data;
 };
 
