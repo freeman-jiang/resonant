@@ -25,6 +25,7 @@ async def add_kagi_urls():
 
     started = False
     for url in urls:
+        print("Processing", url)
         if started:
             domain = Link.from_url(url).domain()
 
@@ -35,7 +36,7 @@ async def add_kagi_urls():
             print(links)
             pc.add_tasks(links)
 
-        if url == 'https://blog.al4.co.nz/feed/':
+        if url == 'https://bombthrower.com/feed/':
             started = True
     return urls
 

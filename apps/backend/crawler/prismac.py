@@ -149,15 +149,22 @@ class PostgresClient:
         else:
             return None
 
+    @classmethod
+    def _reorder_pages(cls, ids: list[int], pages: list[Page]) -> list[Page]:
+        index_hashmap = {id: idx for idx, id in enumerate(ids)}
+
+        # Remains in same order as ids list
+        return sorted(pages, key=lambda p: index_hashmap[p.id])
     def get_pages_by_id(self, ids: list[int]) -> list[Page]:
         query = sql.SQL('SELECT * FROM "Page" WHERE id = ANY(%s);')
         self._cursor.execute(query, (ids,))
-        return [Page(**page) for page in self._cursor.fetchall()]
+
+        return PostgresClient._reorder_pages(ids, [Page(**page) for page in self._cursor.fetchall()])
 
     def get_page_stubs_by_id(self, ids: list[int]) -> list[Page]:
         query = sql.SQL('SELECT id, title, date, author, created_at, updated_at, outbound_urls, parent_url, url, content_hash, depth, page_rank FROM "Page" WHERE id = ANY(%s);')
         self._cursor.execute(query, (ids,))
-        return [Page(**page, content = '') for page in self._cursor.fetchall()]
+        return PostgresClient._reorder_pages(ids, [Page(**page, content = '') for page in self._cursor.fetchall()])
 
     def __enter__(self):
         self.connect()
@@ -165,3 +172,6 @@ class PostgresClient:
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.disconnect()
+
+
+pg_client = PostgresClient()

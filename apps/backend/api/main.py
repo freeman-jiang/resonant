@@ -1,14 +1,16 @@
 import os
+from .feed_mix import _process_messages, SUPERSTACK_RECEIVER_ID, mix_feed
 import random
 from collections import defaultdict
 from datetime import datetime
 from typing import Optional, Union
+from .add_senders import get_senders_for_pages, add_senders
 from uuid import UUID
 
 import pytest
 from api.page_response import PageResponse, Sender
 from crawler.link import Link, clean_url
-from crawler.prismac import PostgresClient
+from crawler.prismac import PostgresClient, pg_client
 from crawler.recommendation.embedding import (NearestNeighboursQuery,
                                               _query_similar,
                                               generate_feed_from_page,
@@ -25,7 +27,6 @@ load_dotenv()
 
 app = FastAPI()
 client = Prisma(datasource={'url': os.environ['DATABASE_URL_SUPABASE']})
-db = PostgresClient(None)
 
 origins = [
     "http://localhost:3000",
@@ -49,7 +50,7 @@ app.add_middleware(
 async def startup():
     print("Connecting to database...")
     await client.connect()
-    db.connect()
+    pg_client.connect()
 
 
 async def find_user(userid: str):
@@ -125,30 +126,6 @@ class FindPageResponse(BaseModel):
     num_comments: int
 
 
-async def get_senders_for_pages(page_ids: list[int]) -> dict[int, list[Sender]]:
-    messages = await client.message.find_many(
-        order={'sent_on': 'desc'},
-        include={'sender': True},
-        where={
-            'page_id': {
-                'in': page_ids
-            }
-        })
-
-    sender_map = defaultdict(list)
-
-    for m in messages:
-        sender = Sender.from_message(m)
-        sender_map[m.page_id].append(sender)
-
-    return sender_map
-
-
-@pytest.mark.asyncio
-async def test_find_page():
-    await startup()
-
-    print(await find_page(FindPageRequest(url='https://shuttersparks.net/specious-appeal-to-fairness/')))
 
 
 @app.get('/recommend')
@@ -178,7 +155,7 @@ async def recommend(userid: UUID) -> list[PageResponse]:
 
     similar: list[PageResponse] = []
 
-    liked_pages = db.get_page_stubs_by_id([lp.page_id for lp in selected_liked_pages])
+    liked_pages = pg_client.get_page_stubs_by_id([lp.page_id for lp in selected_liked_pages])
     for lp in liked_pages:
         similar.extend(await generate_feed_from_page(lp.url))
 
@@ -193,7 +170,7 @@ async def recommend(userid: UUID) -> list[PageResponse]:
             similar_grouped[s.id] = s
 
     similar_final = list(similar_grouped.values())
-    await add_senders(similar_final)
+    await add_senders(client, similar_final)
 
     # TODO: shuffle this list so that users get a diverse representation of their interests, rather than just highest score
     similar_final.sort(key = lambda x: x.score, reverse=True)
@@ -209,7 +186,7 @@ async def get_liked_pages(userid: str) -> list[PageResponse]:
     lps.sort(key=lambda x: x.created_at, reverse=True)
     page_ids = [lp.page_id for lp in lps]
 
-    pages = db.get_pages_by_id(page_ids)
+    pages = pg_client.get_pages_by_id(page_ids)
     # sort by most recent
     pages.sort(key=lambda x: page_ids.index(x.id))
 
@@ -218,7 +195,7 @@ async def get_liked_pages(userid: str) -> list[PageResponse]:
 
 @app.get("/save/{userid}/{pageid}")
 async def save(userid: str, pageid: int) -> None:
-    page = db.get_page(id=pageid)
+    page = pg_client.get_page(id=pageid)
 
     if page is None:
         raise HTTPException(400, "Page does not exist")
@@ -260,14 +237,14 @@ async def _broadcast(user: User, page: Page):
     message = await client.message.find_first(where={
         'page_id': page.id,
         'sender_id': user.id,
-        'receiver_id': '4ee604f3-987d-4295-a2fa-b58d88e5b5e0',
+        'receiver_id': SUPERSTACK_RECEIVER_ID,
     })
     if message is None:
         await client.message.create(data={
             'page_id': page.id,
             'sender_id': user.id,
             # Hardcode superstack.app@gmail.com ID for global shares
-            'receiver_id': '4ee604f3-987d-4295-a2fa-b58d88e5b5e0',
+            'receiver_id': SUPERSTACK_RECEIVER_ID,
         })
 
 
@@ -313,14 +290,21 @@ class SearchQuery(BaseModel):
         Link.from_url(v)
         return v
 
-
+@app.post("/search-topic")
+async def search_topic(body: SearchQuery) -> list[PageResponse]:
+    """
+    Exact same as /search endpoint, but shuffles the PageResponse for each day to have new articles for each feed.
+    :param body:
+    :return:
+    """
+    pass
 @app.post("/search")
 async def search(body: SearchQuery) -> list[PageResponse]:
     if body.url:
         url = body.url
         print("Searching for similar URLs to", url)
 
-        contains_url = db.query(
+        contains_url = pg_client.query(
             'SELECT 1 FROM "Page" p INNER JOIN Embeddings e ON p.url = e.url WHERE p.url = %s', [url])
 
         if contains_url:
@@ -338,7 +322,7 @@ async def search(body: SearchQuery) -> list[PageResponse]:
         query = NearestNeighboursQuery(vector=want_vec, text_query=body.query)
         similar = _query_similar(query)
 
-    await add_senders(similar)
+    await add_senders(client, similar)
 
     return similar
 
@@ -346,13 +330,6 @@ async def search(body: SearchQuery) -> list[PageResponse]:
 @app.get("/")
 def health_check():
     return {"status": "ok"}
-
-
-async def add_senders(pages: list[PageResponse]):
-    senders = await get_senders_for_pages([p.id for p in pages])
-
-    for p in pages:
-        p.senders = senders[p.id]
 
 
 @app.get('/random-feed')
@@ -371,7 +348,7 @@ async def random_feed(limit: int = 60) -> list[PageResponse]:
     # Format it as "YYYY-MM-DD"
     seed = current_datetime.strftime("%Y-%m-%d") + 'A'
 
-    random_pages = db.query("""
+    random_pages = pg_client.query("""
     WITH random_ids AS (SELECT id, MD5(CONCAT(%s::text, content_hash)) FROM "Page" ORDER BY md5 LIMIT 300)
     SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1 ORDER BY COALESCE(page_rank, 0) DESC LIMIT %s
     """, [seed, limit])
@@ -379,14 +356,14 @@ async def random_feed(limit: int = 60) -> list[PageResponse]:
     random_pages = [Page(**p) for p in random_pages]
     pages = [PageResponse.from_prisma_page(p) for p in random_pages]
 
-    await add_senders(pages)
+    await add_senders(client, pages)
 
     return pages
 
 
 @app.post('/share/{user_id}/{page_id}')
 async def share_page(user_id: str, page_id: int) -> None:
-    page = db.get_page(id=page_id)
+    page = pg_client.get_page(id=page_id)
 
     if page is None:
         raise HTTPException(400, "Page does not exist")
@@ -452,7 +429,7 @@ class UrlRequest(BaseModel):
 @app.post('/search_url')
 async def search_url(body: UrlRequest) -> Union[ShouldAdd, AlreadyAdded]:
     url = clean_url(body.url)
-    page = db.get_page(url=url)
+    page = pg_client.get_page(url=url)
 
     if page:
         return AlreadyAdded(url=url)
@@ -476,7 +453,7 @@ class Crawl(BaseModel):
 async def crawl_user(body: UrlRequest) -> Crawl | AlreadyAdded:
     url = clean_url(body.url)
 
-    if db.get_page(url=url) is not None:
+    if pg_client.get_page(url=url) is not None:
         return AlreadyAdded(url=url)
 
     try:
@@ -501,7 +478,7 @@ class CreatePageRequest(BaseModel):
 async def _create_page(body: CreatePageRequest) -> Page:
     link = Link(parent_url=f"user: {body.userid}", url=body.url, text="")
     vec, response = await crawl_interactive(link)
-    page_response = db.store_raw_page(3, response)
+    page_response = pg_client.store_raw_page(3, response)
 
     if page_response is not None:
         await store_embeddings_for_pages([page_response])
@@ -510,7 +487,7 @@ async def _create_page(body: CreatePageRequest) -> Page:
 
 @app.post('/add_page')
 async def create_page(body: CreatePageRequest) -> PageResponse:
-    existing_page = db.get_page(url=body.url)
+    existing_page = pg_client.get_page(url=body.url)
     if existing_page:
         return PageResponse.from_prisma_page(existing_page)
 
@@ -522,10 +499,6 @@ async def create_page(body: CreatePageRequest) -> PageResponse:
     return PageResponse.from_prisma_page(page_response)
 
 
-@pytest.mark.asyncio
-async def test_create_page():
-    db.connect()
-    await create_page(CreatePageRequest(url='https://student.cs.uwaterloo.ca/~cs241e/current/a3.html'))
 
 
 @app.post('/message')
@@ -600,40 +573,7 @@ async def get_global_feed() -> UserFeedResponse:
 
 
 # TODO: clean up and rename
-async def _process_messages(messages: list[Message]):
-    grouped_messages: dict[str, list[Message]] = defaultdict(list)
-    for m in messages:
-        group_key = m.page_id or m.url
-        grouped_messages[group_key].append(m)
 
-    page_ids_to_fetch = set(
-        [m.page_id for m in messages if m.page_id is not None])
-
-    pages = db.get_pages_by_id(list(page_ids_to_fetch))
-
-    pages = {p.id: p for p in pages}
-
-    result: list[PageResponse] = []
-
-    for m in grouped_messages:
-        r = grouped_messages[m][0]
-        if r.page_id is not None:
-            page = pages.get(r.page_id)
-
-            # The page has been deleted from server.henryn.ca DB
-            if page is None:
-                continue
-
-            page_response = PageResponse.from_prisma_page(page)
-        else:
-            # should not happen currently | we really should not reach here...
-            raise ValueError("URLs not supported yet")
-
-        page_response.senders = [Sender.from_message(
-            m) for m in grouped_messages[m]]
-        result.append(page_response)
-
-    return result, pages
 
 
 @pytest.mark.asyncio
@@ -752,14 +692,14 @@ async def test_like():
 async def find_page(body: FindPageRequest) -> Union[FindPageResponse, ShouldAdd]:
     url = clean_url(body.url)
     user_id = body.userId
-    page = db.get_page(url=url)
+    page = pg_client.get_page(url=url)
 
     if page is None:
         return ShouldAdd(url=url)
 
     pageres = PageResponse.from_prisma_page(page, dont_trim=True)
 
-    pageres.senders = (await get_senders_for_pages([page.id]))[page.id]
+    pageres.senders = (await get_senders_for_pages(client, [page.id]))[page.id]
 
     if user_id:
         # a user has broadcasted if they are a sender and SPECIFICALLY they sent to the global broadcast special user
@@ -862,15 +802,17 @@ async def update_user(body: UpdateUserRequest) -> None:
     )
 
 
-@app.get('/feed/{userId}')
-async def get_user_feed(userId: str) -> list[PageResponse]:
-    messages = await client.message.find_many(order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True}, where={
-        'receiver_id': userId
-    })
-
-    result, _ = await _process_messages(messages)
-
-    return result
+@app.get('/feed/{user_id}')
+async def get_user_feed(user_id: UUID) -> list[PageResponse]:
+    response = await mix_feed(client, str(user_id))
+    return response
+    # messages = await client.message.find_many(order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True}, where={
+    #     'receiver_id': userId
+    # })
+    #
+    # result, _ = await _process_messages(messages)
+    #
+    # return result
 
 
 class CommentCreate(BaseModel):
@@ -888,7 +830,7 @@ class CommentUpdate(BaseModel):
 @app.post("/comments")
 async def create_comment(body: CommentCreate):
     # Check if the page exists
-    page = db.get_page(id=body.pageId)
+    page = pg_client.get_page(id=body.pageId)
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
 
