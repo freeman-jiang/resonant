@@ -44,3 +44,13 @@ export const trackClickLinkedBy = (pageUrl: string, linkedByUrl: string) => {
 export const trackClickTopic = (topic: string) => {
   mixpanel.track("Click Topic", { topic });
 };
+
+export const trackComment = ({
+  pageUrl,
+  comment,
+}: {
+  pageUrl: string;
+  comment: string;
+}) => {
+  mixpanel.track("Comment", { pageUrl, comment });
+};

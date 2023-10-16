@@ -1,4 +1,5 @@
 "use client";
+import { trackComment } from "@/analytics/mixpanel";
 import { Page, PageComment, createComment, deleteComment } from "@/api";
 import { PAGE_QUERY_KEY } from "@/api/hooks";
 import {
@@ -82,6 +83,7 @@ export const Comment = ({ comment, page }: Props) => {
       return;
     }
     addComment(content);
+    trackComment({ pageUrl: page.url, comment: content });
   };
 
   const [open, setOpen] = useState(false);
