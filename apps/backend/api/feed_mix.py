@@ -67,11 +67,11 @@ async def get_inbox_messages(client: Prisma, user_id: str) -> list[Message]:
     return messages
 
 
-async def get_friend_comments(client: Prisma, user_id: str) -> list[Comment]:
+async def get_friend_comments(client: Prisma, user_id: str | None) -> list[Comment]:
     # Query for comments made by users who are not the same as the user with the given user_id
     friend_comments = await client.comment.find_many(
         where={
-            "author_id": {"not": user_id},
+            # "author_id": {"not": user_id},
             "is_deleted": False
         },
         # Ensure only distinct page_id values are returned
@@ -82,7 +82,7 @@ async def get_friend_comments(client: Prisma, user_id: str) -> list[Comment]:
     return friend_comments
 
 
-async def get_friend_activity(client: Prisma, user_id: str) -> list[Message | Comment]:
+async def get_friend_activity(client: Prisma, user_id: str | None) -> list[Message | Comment]:
     """Comments and broadcasts"""
     friend_comments = await get_friend_comments(client, user_id)
 
@@ -163,7 +163,7 @@ async def page_ids_to_page_response(client: Prisma, ids: list[int]) -> list[Page
     return pages_filled
 
 
-async def mix_feed(client: Prisma, user_id: str) -> list[PageResponse]:
+async def mix_feed(client: Prisma, user_id: str | None) -> list[PageResponse]:
     """
     The whole mixer should be cached once per day
 
@@ -179,7 +179,7 @@ async def mix_feed(client: Prisma, user_id: str) -> list[PageResponse]:
     """
 
     # Get inbox messages for the user
-    inbox_messages: list[Message] = await get_inbox_messages(client, user_id)
+    inbox_messages: list[Message] = await get_inbox_messages(client, user_id) if user_id is not None else []
 
     inbox_messages: list[PageResponse] = await page_ids_to_page_response(client, [x.page_id for x in inbox_messages])
 
@@ -192,7 +192,7 @@ async def mix_feed(client: Prisma, user_id: str) -> list[PageResponse]:
     friend_activity: list[PageResponse] = await page_ids_to_page_response(client, friend_activity)
 
     # Get similar articles based on the user's liked pages
-    similar_articles = await get_similar_articles(client, user_id)
+    similar_articles = await get_similar_articles(client, user_id) if user_id is not None else []
 
     # Get random pages from the global pool
     random_articles = await random_feed(client)

@@ -803,9 +803,9 @@ async def update_user(body: UpdateUserRequest) -> None:
     )
 
 
-@app.get('/feed/{user_id}')
-async def get_user_feed(user_id: UUID) -> list[PageResponse]:
-    response = await mix_feed(client, str(user_id))
+@app.get('/feed')
+async def get_user_feed(user_id: Optional[UUID] = None) -> list[PageResponse]:
+    response = await mix_feed(client, str(user_id) if user_id is not None else None)
     return response
     # messages = await client.message.find_many(order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True}, where={
     #     'receiver_id': userId
