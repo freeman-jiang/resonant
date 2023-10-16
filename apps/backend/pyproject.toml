@@ -6,7 +6,7 @@ authors = ["Henry Nguyen <henry2833@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.11"
 pydantic = "^1.10"
 trafilatura = "^1.6.1"
 aiohttp = "^3.8.5"
