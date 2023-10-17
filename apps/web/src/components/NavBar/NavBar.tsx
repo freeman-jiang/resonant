@@ -1,6 +1,7 @@
 import { UserBoundary } from "@/api/hooks";
 import { getSupabaseServer } from "@/supabase/server";
 import Link from "next/link";
+import { Feedback } from "./Feedback";
 import { RightButton } from "./RightButton";
 import { UserNav } from "./UserNav";
 
@@ -19,6 +20,7 @@ export async function NavBar({
         </Link>
 
         <div className="flex items-center gap-2">
+          <Feedback />
           <UserBoundary session={session}>
             <UserNav />
             <RightButton />
