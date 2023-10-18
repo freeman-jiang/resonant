@@ -126,7 +126,7 @@ def main():
         topdomains[domain] = topdomains[domain] / \
             (domains[domain].individual_pages)
 
-    topurls = trustrank(nodes, max_iterations=10)
+    topurls = trustrank(nodes, max_iterations=0)
 
 
     page_score = combine_domain_and_page_scores(topdomains, topurls)

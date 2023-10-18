@@ -36,7 +36,7 @@ async def add_kagi_urls():
             print(links)
             pc.add_tasks(links)
 
-        if url == 'https://bombthrower.com/feed/':
+        if url == 'https://halestrom.net/darksleep/feed.atom':
             started = True
     return urls
 

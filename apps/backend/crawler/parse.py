@@ -79,6 +79,9 @@ def filter_out_ugc_sponsored(html: bytes) -> str:
     # Parse the HTML content
     tree = etree.HTML(html)
 
+    if tree is None:
+        return html.decode('utf-8', errors = 'ignore')
+
     # Find and remove <a> tags with rel="ugc", "sponsored", or "nofollow"
     links_to_remove = tree.xpath(
         "//a[@rel='ugc' or @rel='sponsored' or @rel='nofollow']")
@@ -142,7 +145,8 @@ def extract_links_from_html(html: str, link: Link) -> list[Link]:
 def find_feed_urls(base_domain: str):
     urls = set(trafilatura.feeds.find_feed_urls(base_domain))
 
-    for suffix in ['/feed', '/rss', '/atom.xml', '']:
+    for suffix in ['', '/feed', '/rss', '/atom.xml']:
+
         # Parse the RSS feed
         feed_url = base_domain + suffix
         feed = feedparser.parse(feed_url)
@@ -151,6 +155,10 @@ def find_feed_urls(base_domain: str):
         for entry in feed.entries:
             if 'link' in entry:
                 urls.add(entry.link)
+
+        if len(urls) > 1:
+            break
+
 
     return list(urls)
 

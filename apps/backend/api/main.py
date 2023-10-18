@@ -350,7 +350,7 @@ async def random_feed(limit: int = 60) -> list[PageResponse]:
     seed = current_datetime.strftime("%Y-%m-%d") + 'A'
 
     random_pages = pg_client.query("""
-    WITH random_ids AS (SELECT id, MD5(CONCAT(%s::text, content_hash)) FROM "Page" ORDER BY md5 LIMIT 300)
+    WITH random_ids AS (SELECT id, MD5(CONCAT(%s::text, content_hash)) FROM "Page" ORDER BY md5 LIMIT 5000)
     SELECT p.* From "Page" p INNER JOIN random_ids ON random_ids.id = p.id WHERE p.depth <= 1 ORDER BY COALESCE(page_rank, 0) DESC LIMIT %s
     """, [seed, limit])
 
@@ -807,13 +807,6 @@ async def update_user(body: UpdateUserRequest) -> None:
 async def get_user_feed(userId: Optional[UUID] = None) -> list[PageResponse]:
     response = await mix_feed(client, str(userId) if userId is not None else None)
     return response
-    # messages = await client.message.find_many(order={'sent_on': 'desc'}, include={'sender': True, 'receiver': True}, where={
-    #     'receiver_id': userId
-    # })
-    #
-    # result, _ = await _process_messages(messages)
-    #
-    # return result
 
 
 class CommentCreate(BaseModel):
