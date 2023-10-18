@@ -27,9 +27,7 @@ export default async function AuthenticationPage() {
               <h1 className="text-2xl font-semibold tracking-tight">
                 Create an account
               </h1>
-              <p className="text-sm text-slate-600">
-                Enter your email below to create your account
-              </p>
+              <p className="text-sm text-slate-600">Sign in with Google</p>
             </div>
             <UserAuthForm />
             {/* <p className="text-muted-foreground px-8 text-center text-sm">

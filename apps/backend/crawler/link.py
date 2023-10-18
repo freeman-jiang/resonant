@@ -217,11 +217,11 @@ def is_valid_url(url: str) -> bool:
 
 
 def clean_url(url: str):
-    """Removes hashtags and query parameters from a URL"""
+    """Removes hashtags from a URL"""
     parsed_url = urlparse(url)
 
     # Remove hashtags and query parameters
-    cleaned_url_parts = parsed_url._replace(fragment='', query='')
+    cleaned_url_parts = parsed_url._replace(fragment='')
 
     # Reconstruct the cleaned URL
     cleaned_url = urlunparse(cleaned_url_parts)

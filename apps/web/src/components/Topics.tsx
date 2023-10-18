@@ -20,16 +20,14 @@ export const Topics = () => {
 
   return (
     <div className="mt-3 flex flex-row flex-wrap gap-2 pb-2">
-      {session && (
-        <NextLink href={"/"} onClick={() => trackClickTopic("For You")}>
-          <Badge
-            className="cursor-pointer text-sm"
-            variant={!topic && path === "/" ? "default" : "outline"}
-          >
-            For You
-          </Badge>
-        </NextLink>
-      )}
+      <NextLink href={"/"} onClick={() => trackClickTopic("For You")}>
+        <Badge
+          className="cursor-pointer text-sm"
+          variant={!topic && path === "/" ? "default" : "outline"}
+        >
+          For You
+        </Badge>
+      </NextLink>
       <NextLink href={"/all"} onClick={() => trackClickTopic("All")}>
         <Badge
           className="cursor-pointer text-sm"

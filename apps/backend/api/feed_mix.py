@@ -204,7 +204,9 @@ async def mix_feed(client: Prisma, user_id: str | None) -> list[PageResponse]:
     }
 
     feed_order = itertools.cycle(['inbox', 'friend', 'similar', 'random'])
-    resulting_feed = []
+
+    resulting_feed_ids: set[int] = set()  # Used to deduplicate
+    resulting_feed: list[PageResponse] = []
 
     for ty in feed_order:
         if len(resulting_feed) > 60:
@@ -217,7 +219,12 @@ async def mix_feed(client: Prisma, user_id: str | None) -> list[PageResponse]:
             del combined_feed[ty]
             continue
 
-        resulting_feed.append(combined_feed[ty].popleft())
+        page = combined_feed[ty].popleft()
+        if page.id in resulting_feed_ids:
+            continue
+        else:
+            resulting_feed_ids.add(page.id)
+            resulting_feed.append(page)
 
     # Return the mixed feed to the user
     return resulting_feed

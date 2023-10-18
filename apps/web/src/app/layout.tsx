@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Resonant",
-  description: "A digital feed for the intellectually curious",
+  description: "Search engine and feed for high-quality independent content",
 };
 const inter = Inter({ subsets: ["latin"] });
 
