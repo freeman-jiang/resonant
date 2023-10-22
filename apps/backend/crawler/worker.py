@@ -83,7 +83,8 @@ class Worker:
         try:
             response, rss_links = await self.crawl(link, session)
 
-            self.prisma.add_outgoing_links(rss_links)
+            if len(rss_links):
+                self.prisma.add_outgoing_links(rss_links)
 
             if not response:
                 await self.done_queue.put(True)
@@ -119,7 +120,9 @@ class Worker:
         Crawl and parse the given `link`, returning a `CrawlResult` if successful, or `None` if not.
         The second tuple element is a list of RSS links found on that *domain*.
         """
-        should_rss = not await self.prisma.is_already_explored(link.domain())
+        # should_rss = not await self.prisma.is_already_explored(link.domain())
+        # Always false because we manually crawl all RSS links now...
+        should_rss = False
 
         for suppressed in SUPPRESSED_DOMAINS:
             if suppressed in link.url:
