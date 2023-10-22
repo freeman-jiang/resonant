@@ -22,11 +22,11 @@ def top_domains(trustrank_values: dict) -> dict[str, float]:
 NORMAL_ADDS = defaultdict(int)
 
 
-def add_rank(d, url, value, msg=""):
+def add_rank(d, url, value):
     d[url] += value
 
 
-def trustrank(graph: dict[str, Node], damping_factor=0.80, max_iterations=100, tolerance=1.0) -> dict[str, float]:
+def trustrank(graph: dict[str, Node], damping_factor=0.90, max_iterations=100, tolerance=1.0) -> dict[str, float]:
     trusted_nodes = [(url, node.individual_pages)
                      for url, node in graph.items() if node.best_depth <= 1]
     trusted_nodes_len = sum(

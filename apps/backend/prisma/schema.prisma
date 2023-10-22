@@ -101,6 +101,15 @@ enum TaskStatus {
   @@schema("public")
 }
 
+model Rss {
+  id         Int      @id @default(autoincrement())
+  url        String   @unique
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  @@schema("public")
+}
+
 model Message {
   id Int @id @default(autoincrement())
 

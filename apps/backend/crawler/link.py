@@ -21,6 +21,13 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.",  "twitter.com", "facebook.com"
                       'cloud.google',
                       'bbc.co',
                       'docs.oracle',
+                      'flickr.com',
+                      'imdb.com',
+                      'www.patreon.com',
+                      'code.google.com',
+                      'die.net',
+                      'home-assistant.io',
+
                       'docs.rs',
                       'rfc-editor.org',
                       'tensorflow.org',

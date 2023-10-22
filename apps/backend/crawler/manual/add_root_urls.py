@@ -9,7 +9,6 @@ from prisma import Prisma
 from crawler.config import Config
 from crawler.link import Link
 from crawler.prismac import PostgresClient
-from ..root_urls import ROOT_URLS
 
 load_dotenv()
 
@@ -88,16 +87,17 @@ async def main():
     config = Config()
     db = Prisma()
     await db.connect()
-    pc = PostgresClient(config, db)
+    pc = PostgresClient()
+    pc.connect()
 
     urls = []
 
-    urls += [x["url"] for x in ROOT_URLS]
+    # urls += [x["url"] for x in ROOT_URLS]
     # with open("crawler/ROOT_URLS.txt", "r") as f:
     #     urls = f.readlines()
 
     # urls += add_dm_hn_urls()
-    # urls += add_aldaily_urls()
+    urls += add_aldaily_urls()
     # urls += add_ooh_directory_urls()
 
     links = []
@@ -109,7 +109,7 @@ async def main():
             print("Invalid URL: ", url)
             continue
         links.append(link)
-    tasks_created = await pc.add_tasks(links)
+    tasks_created = pc.add_tasks(links)
 
     print(
         f"Added {tasks_created} new tasks to the work queue")

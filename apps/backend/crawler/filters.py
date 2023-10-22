@@ -69,6 +69,6 @@ def should_keep(crawl: CrawlResult) -> bool:
 
 
 def test_2():
-    url = 'http://pnaerc.blogspot.com/2023/09/streetcar-for-sale.html'
+    url = 'https://jocelynemurphy.github.io/whyidowhatido'
     cr = CrawlResult.testing_crawl_link(url)
     print(should_keep(cr))
