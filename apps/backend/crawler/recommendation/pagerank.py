@@ -1,14 +1,11 @@
 import json
 from collections import defaultdict
 
+from crawler.dbaccess import db
+from crawler.recommendation.nodes import Node, PageAsNode, url_to_domain
+from dotenv import load_dotenv
 from psycopg import Connection
 from psycopg.rows import kwargs_row
-
-from crawler.dbaccess import db
-
-from dotenv import load_dotenv
-
-from crawler.recommendation.nodes import PageAsNode, Node, url_to_domain
 
 load_dotenv()
 
@@ -33,7 +30,8 @@ def trustrank(graph: dict[str, Node], damping_factor=0.90, max_iterations=100, t
         x.individual_pages for x in graph.values() if x.best_depth <= 1)
 
     # Initialize TrustRank values
-    trustrank_values = {url: node.score for url, node in graph.items()}
+    trustrank_values: dict[str, float] = {
+        url: node.score for url, node in graph.items()}
     initial_values = {url: 0 for url, node in graph.items()}
     new_trustrank_values = initial_values.copy()
 
@@ -127,7 +125,6 @@ def main():
             (domains[domain].individual_pages)
 
     topurls = trustrank(nodes, max_iterations=0)
-
 
     page_score = combine_domain_and_page_scores(topdomains, topurls)
 
