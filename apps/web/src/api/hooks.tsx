@@ -14,6 +14,7 @@ import {
   fetchRecommendedFeed,
   findPage,
   getLikedPages,
+  getPageNodes,
   getUser,
   getUserFeed,
   searchFor,
@@ -84,6 +85,15 @@ export const PageBoundary = async ({
       {children}
     </HydrationBoundary>
   );
+};
+
+export const PAGE_NODES_KEY = "page-nodes";
+
+export const usePageNodes = (pageUrl: string) => {
+  return useQuery({
+    queryKey: [PAGE_NODES_KEY, pageUrl],
+    queryFn: () => getPageNodes(pageUrl),
+  });
 };
 
 const SEARCH_QUERY_KEY = "search";

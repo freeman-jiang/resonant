@@ -16,6 +16,13 @@ export interface Page {
   linked_by: string[];
 }
 
+export interface PageNode {
+  title: string;
+  url: string;
+  id: number;
+  outboundLinks: string[]; // outbound urls
+}
+
 export interface Sender {
   id: string;
   first_name: string;
@@ -94,6 +101,7 @@ export interface ExistingPageResponse {
   type: "page";
   comments: PageComment[];
   num_comments: number;
+  outbound_urls: string[];
 }
 
 interface ShouldAdd {
@@ -264,5 +272,17 @@ export const deleteComment = async (commentId: number) => {
 
 export const fetchRecommendedFeed = async (userId: string) => {
   const { data } = await axios.get<Page[]>(`/recommended?userId=${userId}`);
+  return data;
+};
+
+interface PageNodesResponse {
+  node: PageNode;
+  neighbors: PageNode[]; // outbound
+}
+
+export const getPageNodes = async (pageUrl: string) => {
+  const { data } = await axios.post<PageNodesResponse>(`/pagenodes`, {
+    url: pageUrl,
+  });
   return data;
 };

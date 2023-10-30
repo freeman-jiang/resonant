@@ -1,11 +1,9 @@
 import asyncio
 import os
-from .feed_mix import _process_messages, SUPERSTACK_RECEIVER_ID, mix_feed
 import random
 from collections import defaultdict
 from datetime import datetime
 from typing import Optional, Union
-from .add_senders import get_senders_for_pages, add_senders
 from uuid import UUID
 
 import pytest
@@ -23,6 +21,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from prisma import Prisma
 from prisma.models import Comment, Message, Page, User
 from pydantic import BaseModel, validator
+
+from .add_senders import add_senders, get_senders_for_pages
+from .feed_mix import SUPERSTACK_RECEIVER_ID, _process_messages, mix_feed
 
 load_dotenv()
 
@@ -125,8 +126,7 @@ class FindPageResponse(BaseModel):
     type: str = "page"
     comments: list[CommentResponse]
     num_comments: int
-
-
+    outbound_urls: list[str]
 
 
 @app.get('/recommended')
@@ -155,7 +155,8 @@ async def recommend(userId: UUID) -> list[PageResponse]:
 
     similar: list[PageResponse] = []
 
-    liked_pages = pg_client.get_page_stubs_by_id([lp.page_id for lp in selected_liked_pages])
+    liked_pages = pg_client.get_page_stubs_by_id(
+        [lp.page_id for lp in selected_liked_pages])
     for lp in liked_pages:
         similar.extend(await generate_feed_from_page(lp.url))
 
@@ -291,6 +292,7 @@ class SearchQuery(BaseModel):
         Link.from_url(v)
         return v
 
+
 @app.post("/search-topic")
 async def search_topic(body: SearchQuery) -> list[PageResponse]:
     """
@@ -299,6 +301,8 @@ async def search_topic(body: SearchQuery) -> list[PageResponse]:
     :return:
     """
     pass
+
+
 @app.post("/search")
 async def search(body: SearchQuery) -> list[PageResponse]:
     if body.url:
@@ -500,8 +504,6 @@ async def create_page(body: CreatePageRequest) -> PageResponse:
     return PageResponse.from_prisma_page(page_response)
 
 
-
-
 @app.post('/message')
 async def send_message(body: SendMessageRequest) -> None:
     """
@@ -574,7 +576,6 @@ async def get_global_feed() -> UserFeedResponse:
 
 
 # TODO: clean up and rename
-
 
 
 @pytest.mark.asyncio
@@ -711,7 +712,7 @@ async def find_page(body: FindPageRequest) -> Union[FindPageResponse, ShouldAdd]
         has_broadcasted = False
 
     comments, num_comments = await _create_comment_tree(page)
-    return FindPageResponse(page=pageres, has_broadcasted=has_broadcasted, comments=comments, num_comments=num_comments)
+    return FindPageResponse(page=pageres, has_broadcasted=has_broadcasted, comments=comments, num_comments=num_comments, outbound_urls=page.outbound_urls)
 
 
 async def _create_comment_tree(page: Page):
@@ -892,3 +893,40 @@ async def delete_comment(comment_id: int):
     })
 
     return deleted_comment
+
+
+# export interface PageNode {
+#   title: string;
+#   url: string;
+#   id: number;
+#   outboundUrls: string[]; // outbound urls
+# }
+
+class PageNode(BaseModel):
+    title: str
+    url: str
+    id: int
+    outboundUrls: list[str]
+
+    @classmethod
+    def from_page(cls, page: Page):
+        return PageNode(title=page.title, url=page.url, id=page.id, outboundUrls=page.outbound_urls)
+
+
+class PageNodesResponse(BaseModel):
+    node: PageNode
+    neighbors: list[PageNode]  # outbound
+
+
+@app.post("/pagenodes")
+async def get_outbound_nodes(body: UrlRequest):
+    page = pg_client.get_page(url=body.url)
+
+    if page is None:
+        raise HTTPException(400, "Page does not exist")
+
+    outbound_pages = pg_client.get_pages_by_url(page.outbound_urls)
+    node = PageNode.from_page(page)
+
+    neighbors = [PageNode.from_page(p) for p in outbound_pages]
+    return PageNodesResponse(neighbors=neighbors, node=node)

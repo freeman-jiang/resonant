@@ -44,6 +44,7 @@ export const PageLayout = ({ url, session }: Props) => {
 
   return (
     <div>
+      <div>hello world</div>
       <PageBox data={page} />
       <div>
         <Senders senders={page.senders} />
