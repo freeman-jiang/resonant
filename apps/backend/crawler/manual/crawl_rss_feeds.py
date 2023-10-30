@@ -1,7 +1,5 @@
 import datetime
 
-import feedparser
-import requests
 from psycopg.rows import dict_row
 
 from crawler.dbaccess import db
@@ -12,7 +10,7 @@ from crawler.prismac import PostgresClient
 if __name__ == "__main__":
     cursor = db.cursor(row_factory=dict_row)
     rssfeeds = cursor.execute("""
-    SELECT url FROM "Rss" WHERE url NOT LIKE 'no rss found%'
+    SELECT url FROM "Rss" WHERE url NOT LIKE 'no rss found%' AND last_crawled_at < NOW() - INTERVAL '1 week'
     """).fetchall()
 
     rssfeeds = [x['url'] for x in rssfeeds]

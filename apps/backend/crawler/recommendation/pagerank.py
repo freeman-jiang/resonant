@@ -1,3 +1,4 @@
+import subprocess
 import json
 from collections import defaultdict
 
@@ -85,15 +86,28 @@ def trustrank(graph: dict[str, Node], damping_factor=0.90, max_iterations=100, t
     return trustrank_values
 
 
-def insert_pagerank(db: Connection, pages: list[PageAsNode], scores: dict[str, float]):
+def insert_pagerank(db: Connection, scores: dict[int, float]):
+    print(f"Inserting pagerank {len(scores)}")
     cursor = db.cursor()
-    for p in pages:
-        p.page_rank = scores[p.url]
 
-    update_data = [(p.page_rank, p.id) for p in pages]
+    # Create temp table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pagerank (
+          id INT PRIMARY KEY,
+          score FLOAT
+        );
+      """)
 
-    update_statement = 'UPDATE "Page" SET page_rank = %s WHERE id = %s;'
-    cursor.executemany(update_statement, update_data)
+    with cursor.copy("COPY pagerank (id, score) FROM STDIN") as copy:
+        for id, score in scores.items():
+            copy.write_row((id, score))
+    db.commit()
+
+    print("Inserted pagerank scores")
+
+    update_statement = 'UPDATE "Page" p SET page_rank = pr.score FROM pagerank pr WHERE p.id = pr.id;'
+
+    cursor.execute(update_statement)
     db.commit()
 
 
@@ -110,28 +124,25 @@ def combine_domain_and_page_scores(domains: dict[str, float], pages: dict[str, f
 
 def main():
     cursor = db.cursor(row_factory=kwargs_row(PageAsNode))
-    pages = cursor.execute(
-        "SELECT id, url,outbound_urls,depth  FROM \"Page\"").fetchall()
-    json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
-    # pages = json.load(open("/tmp/file.json", "r"))
-    # pages = [PageAsNode(**p) for p in pages]
-    print("Got pages", len(pages))
+    # pages = cursor.execute(
+    #     "SELECT id, url,outbound_urls,depth  FROM \"Page\"").fetchall()
+    # json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
 
-    nodes = Node.from_db(pages)
-    domains = Node.convert_to_domains(nodes)
+    cmd = ["cargo", "run", "--release", "--", "quiet"]
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, cwd="../pagerank")
 
-    topdomains = trustrank(domains)
+    output = result.stdout.decode("utf-8")
+    print("Done calculating pagerank!!")
 
-    for domain in topdomains:
-        topdomains[domain] = topdomains[domain] / \
-            (domains[domain].individual_pages)
+    page_score = {}
+    for line in output.split("\n"):
+        if line.strip():
+            url, id, score = eval(line)
+            id = int(id)
+            score = float(score)
+            page_score[id] = score
 
-    topurls = trustrank(nodes, max_iterations=0)
-
-
-    page_score = combine_domain_and_page_scores(topdomains, topurls)
-
-    insert_pagerank(db, pages, page_score)
+    insert_pagerank(db, page_score)
 
 
 if __name__ == "__main__":

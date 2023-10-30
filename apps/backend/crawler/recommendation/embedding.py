@@ -128,6 +128,12 @@ def _query_fts(query: str) -> list[PageResponse]:
     Query using full-text search for exact word matches
 
     FTS `score` is a number between 0 and 1, where 1 is a perfect match
+
+    The rules for query are:
+        unquoted text: text not inside quote marks will be converted to terms separated by & operators, as if processed by plainto_tsquery.
+        "quoted text": text inside quote marks will be converted to terms separated by <-> operators, as if processed by phraseto_tsquery.
+        OR: the word “or” will be converted to the | operator.
+        -: a dash will be converted to the ! operator.
     :param query:
     :return:
     """
@@ -138,7 +144,7 @@ def _query_fts(query: str) -> list[PageResponse]:
                ) AS score
         FROM "Page"
         WHERE ts @@ {query}
-        ORDER BY score DESC LIMIT 50""").format(query=sql.SQL("plainto_tsquery('english', {})").format(query))
+        ORDER BY score DESC LIMIT 50""").format(query=sql.SQL("websearch_to_tsquery('english', {})").format(query))
     cursor = db.cursor(row_factory=dict_row)
 
     similar = cursor.execute(sql_query, ).fetchall()
@@ -148,7 +154,7 @@ def _query_fts(query: str) -> list[PageResponse]:
 
 
 def test_query_fts():
-    print(_query_fts("python language"))
+    print(_query_fts('"python language"'))
 def normalize_scores(pages: list[PageResponse], func: Optional[Callable] = None):
     """
     Normalize scores to be between 1 and 2

@@ -42,23 +42,29 @@ if __name__ == "__main__":
     domains = [x['domain'] for x in domains]
 
     rss_links = []
+    activated = False
+    skip = 0
     for domain in domains:
-        cursor.execute(f"SELECT 1 FROM \"Rss\" WHERE url LIKE '%{domain}%'")
+        if domain == 'www.half-life.com':
+            activated = True
+        if activated is False:
+            continue
+        cursor.execute(f"SELECT 1 FROM \"Rss\" WHERE url LIKE '%{domain}%' or url='no rss found-{domain}'")
 
-        if cursor.fetchall():
+        if cursor.fetchone():
             print("Already have RSS for", domain)
         else:
             rss = find_rss_for_domain(domain)
             if rss:
                 print(domain, rss)
                 cursor.execute("""
-                        INSERT INTO "Rss" ("url") VALUES (%s)
+                        INSERT INTO "Rss" ("url") VALUES (%s)  ON CONFLICT DO NOTHING;
                         """, (rss,))
                 db.commit()
             else:
                 print("No RSS for", domain)
                 cursor.execute("""
-                        INSERT INTO "Rss" ("url") VALUES (%s)
+                        INSERT INTO "Rss" ("url") VALUES (%s)  ON CONFLICT DO NOTHING;
                         """, (f"no rss found-{domain}",))
                 db.commit()
 
