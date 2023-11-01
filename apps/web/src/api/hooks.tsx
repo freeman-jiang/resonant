@@ -10,6 +10,7 @@ import {
   Page,
   crawlUrl,
   fetchGlobalFeed,
+  fetchInbox,
   fetchRandomFeed,
   fetchRecommendedFeed,
   findPage,
@@ -285,5 +286,14 @@ export const useRecommendedFeed = (userId: string) => {
   return useQuery({
     queryKey: [RECOMMENDED_FEED_QUERY_KEY],
     queryFn: () => fetchRecommendedFeed(userId),
+  });
+};
+
+export const INBOX_QUERY_KEY = "inbox";
+
+export const useInbox = (userId: string) => {
+  return useQuery({
+    queryKey: [INBOX_QUERY_KEY],
+    queryFn: () => fetchInbox(userId),
   });
 };
