@@ -92,10 +92,10 @@ def insert_pagerank(db: Connection, scores: dict[int, float]):
 
     # Create temp table
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS pagerank (
+        CREATE TEMP TABLE pagerank (
           id INT PRIMARY KEY,
           score FLOAT
-        );
+        ) ON COMMIT DROP;
       """)
 
     with cursor.copy("COPY pagerank (id, score) FROM STDIN") as copy:
@@ -105,7 +105,7 @@ def insert_pagerank(db: Connection, scores: dict[int, float]):
 
     print("Inserted pagerank scores")
 
-    update_statement = 'UPDATE "Page" p SET page_rank = pr.score FROM pagerank pr WHERE p.id = pr.id;'
+    update_statement = 'UPDATE "Page" p SET page_rank = pr.score FROM pagerank pr WHERE p.id = pr.id AND pr.score > 0.01;'
 
     cursor.execute(update_statement)
     db.commit()
@@ -124,9 +124,9 @@ def combine_domain_and_page_scores(domains: dict[str, float], pages: dict[str, f
 
 def main():
     cursor = db.cursor(row_factory=kwargs_row(PageAsNode))
-    # pages = cursor.execute(
-    #     "SELECT id, url,outbound_urls,depth  FROM \"Page\"").fetchall()
-    # json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
+    pages = cursor.execute(
+        "SELECT id, url,outbound_urls,depth  FROM \"Page\"").fetchall()
+    json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
 
     cmd = ["cargo", "run", "--release", "--", "quiet"]
     result = subprocess.run(cmd, stdout=subprocess.PIPE, cwd="../pagerank")

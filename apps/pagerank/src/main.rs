@@ -360,7 +360,7 @@ fn combine_scores(
         let domain = url_to_domain(&url);
         let domain_score = domain_scores[&domain];
 
-        let score = domain_score.powf(0.25) * (page_score + 1.0);
+        let score = domain_score.powf(0.15) * (page_score + 1.0);
 
         combined.push((url, score));
     }
