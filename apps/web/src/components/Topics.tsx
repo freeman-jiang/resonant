@@ -25,17 +25,19 @@ export const Topics = () => {
           className="cursor-pointer text-sm"
           variant={!topic && path === "/" ? "default" : "outline"}
         >
-          For You
+          {session ? "Inbox" : "All"}
         </Badge>
       </NextLink>
-      <NextLink href={"/all"} onClick={() => trackClickTopic("All")}>
-        <Badge
-          className="cursor-pointer text-sm"
-          variant={!topic && path === "/all" ? "default" : "outline"}
-        >
-          All
-        </Badge>
-      </NextLink>
+      {session && (
+        <NextLink href={"/all"} onClick={() => trackClickTopic("All")}>
+          <Badge
+            className="cursor-pointer text-sm"
+            variant={!topic && path === "/all" ? "default" : "outline"}
+          >
+            All
+          </Badge>
+        </NextLink>
+      )}
       <NextLink href={"/random"} onClick={() => trackClickTopic("Random")}>
         <Badge
           className="cursor-pointer text-sm"

@@ -286,3 +286,9 @@ export const getPageNodes = async (pageUrl: string) => {
   });
   return data;
 };
+
+
+export const fetchInbox = async (userId: string) => {
+  const { data } = await axios.get<Page[]>(`/inbox/${userId}`);
+  return data;
+}
