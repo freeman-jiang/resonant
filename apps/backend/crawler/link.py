@@ -25,6 +25,7 @@ SUPPRESSED_DOMAINS = {"wikipedia.org", "amazon.",  "twitter.com", "facebook.com"
                       'cbr.com',
                       'bbc.co',
                       'phonearena.com',
+                      'redballoon.work',
                       'docs.oracle',
                       'flickr.com',
                       'imdb.com',

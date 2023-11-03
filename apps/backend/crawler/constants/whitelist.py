@@ -1,2 +1,2 @@
 
-WHITELIST_DOMAINS = {'hypertext.joodaloop.com'}
+WHITELIST_DOMAINS = {'hypertext.joodaloop.com', 'lethain.com'}
