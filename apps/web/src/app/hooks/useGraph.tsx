@@ -35,12 +35,9 @@ const defaultLinkColor = "#d8dee9"; // grey
 const activeLinkColor = "#94a3b8";
 const defaultNodeColor = "#80eaa5"; // green
 const activeNodeColor = "#38d5f5"; // bright blue
-
-const initialOpacity = (localGraph.opacityScale - 1) / 3.75;
+const GRAPH_SVG_ID = "graph-svg";
 
 const getLabelId = (id: number) => `labelfor-${id}`;
-
-let didInit = false;
 
 // Expects there to be an empty div with the given id
 export const useGraph = (
@@ -82,12 +79,13 @@ export const useGraph = (
       )
       .force("center", d3.forceCenter().strength(localGraph.centerForce));
 
-    const height = Math.max(graph.offsetHeight, 400);
+    const height = Math.max(graph.offsetHeight, 200);
     const width = graph.offsetWidth;
 
     const boundingBox = d3
       .select<HTMLElement, NodeData>(`#${id}`)
       .append("svg")
+      .attr("id", GRAPH_SVG_ID)
       .attr("width", width)
       .attr("height", height)
       .attr("viewBox", [
@@ -161,9 +159,53 @@ export const useGraph = (
     const nodeRadius = (d: NodeData): number => {
       const isCurrent = d.url === pageNode.url;
       if (isCurrent) {
-        return 4;
+        return 5;
       }
       return 4;
+    };
+
+    const getInitialOpacity = (n: NodeData) => {
+      const isCurrent = n.url === pageNode.url;
+      if (isCurrent) {
+        return 0.3;
+      }
+      return 0.2;
+    };
+
+    function handleMousover(event: MouseEvent, node: NodeData) {
+      const neighbors = d3
+        .selectAll<HTMLElement, NodeData>(`.graph-node`)
+        .filter((d) => d.id !== node.id);
+      const linkNodes = d3.selectAll(".graph-link").filter((d: LinkDatum) => {
+        return d.source.id === node.id || d.target.id === node.id;
+      }); // TODO: Only select links that are connected to this node
+      const label = boundingBox.select(`#${getLabelId(node.id)}`);
+
+      label.transition().duration(200).style("opacity", 1);
+
+      // Highlight the links
+      linkNodes.transition().duration(200).attr("stroke", activeLinkColor);
+    }
+
+    const handleMouseout = (event: MouseEvent, node: NodeData) => {
+      const linkNodes = d3.selectAll(".graph-link"); // TODO: Only select links that are connected to this node
+      const label = boundingBox.select(`#${getLabelId(node.id)}`);
+
+      label
+        .transition()
+        .duration(200)
+        .style("opacity", getInitialOpacity(node));
+
+      // Return the links to normal
+      linkNodes
+        .transition()
+        .duration(200)
+        .attr("stroke", defaultLinkColor)
+        .attr("stroke-width", 1);
+    };
+
+    const handleClick = (event: MouseEvent, node: NodeData) => {
+      router.push(`/c?url=${node.url}`);
     };
 
     const svgNodes = graphNode
@@ -173,52 +215,45 @@ export const useGraph = (
       .attr("id", (d) => d.id)
       .attr("r", nodeRadius)
       .style("cursor", "pointer")
-      .on("click", (event, node) => {
-        router.push(`/c?url=${node.url}`);
-      })
-      .on("mouseover", function (event, node) {
-        const neighbors = d3
-          .selectAll<HTMLElement, NodeData>(`.graph-node`)
-          .filter((d) => d.id !== node.id);
-        const linkNodes = d3.selectAll(".graph-link").filter((d: LinkDatum) => {
-          return d.source.id === node.id || d.target.id === node.id;
-        }); // TODO: Only select links that are connected to this node
-        const label = boundingBox.select(`#${getLabelId(node.id)}`);
-
-        label.transition().duration(200).style("opacity", 1);
-
-        // Highlight the links
-        linkNodes.transition().duration(200).attr("stroke", activeLinkColor);
-      })
-      .on("mouseout", function (event, node) {
-        const linkNodes = d3.selectAll(".graph-link"); // TODO: Only select links that are connected to this node
-        const label = boundingBox.select(`#${getLabelId(node.id)}`);
-
-        label.transition().duration(200).style("opacity", initialOpacity);
-
-        // Return the links to normal
-        linkNodes
-          .transition()
-          .duration(200)
-          .attr("stroke", defaultLinkColor)
-          .attr("stroke-width", 1);
-      })
+      .on("click", handleClick)
+      .on("mouseover", handleMousover)
+      .on("mouseout", handleMouseout)
       .call(drag(simulation));
 
     // draw labels
     const labels = graphNode
       .append("text")
       .attr("dx", 0)
-      .attr("dy", (d) => -nodeRadius(d) + "px")
+      .attr("dy", (d) => nodeRadius(d) + 10)
       .attr("text-anchor", "middle")
       .text((d) => d.title)
       .attr("id", (d) => getLabelId(d.id))
-      .style("opacity", initialOpacity)
-      .style("pointer-events", "none")
+      .style("opacity", getInitialOpacity)
       .style("font-size", localGraph.fontSize + "em")
+      .style("cursor", "pointer")
+      .on("click", handleClick)
+      .on("mouseover", handleMousover)
+      .on("mouseout", handleMouseout)
       .raise()
       // @ts-ignore
       .call(drag(simulation));
+
+    boundingBox.call(
+      d3
+        .zoom<SVGSVGElement, NodeData>()
+        .extent([
+          [500, 500],
+          [width, height],
+        ])
+        .scaleExtent([0.5, 2])
+        .on("zoom", ({ transform }: any) => {
+          svgLinks.attr("transform", transform);
+          svgNodes.attr("transform", transform);
+          const scale = transform.k * localGraph.opacityScale;
+          const scaledOpacity = Math.max((scale - 1) / 3.75, 0);
+          labels.attr("transform", transform).style("opacity", scaledOpacity);
+        }),
+    );
 
     // progress the simulation
     simulation.on("tick", () => {
@@ -235,10 +270,10 @@ export const useGraph = (
   };
 
   useEffect(() => {
-    if (didInit) {
-      return;
+    // Check if the graph already exists
+    const existingGraph = document.getElementById(GRAPH_SVG_ID);
+    if (!existingGraph) {
+      renderGraph();
     }
-    renderGraph();
-    didInit = true;
-  }, []);
+  }, [id, pageNode, neighbors]);
 };

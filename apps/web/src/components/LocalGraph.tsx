@@ -9,14 +9,14 @@ interface Props {
 
 const graphId = "graph";
 // This is apparently actually idiomatic: https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application
-let didInit = false;
 
 export function LocalGraph({ node, neighbors }: Props) {
   useGraph(graphId, node, neighbors);
 
   return (
-    <div>
-      <div id={graphId} />
+    <div className="mt-3">
+      <div className="text-lg font-medium">Graph View</div>
+      <div className="border border-slate-200" id={graphId} />
     </div>
   );
 }
