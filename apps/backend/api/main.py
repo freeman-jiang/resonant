@@ -937,12 +937,9 @@ async def get_outbound_nodes(body: UrlRequest):
     # remove self reference
     deduplicated_pages = [p for p in deduplicated_pages if p.id != page.id]
 
-    print([p.url for p in deduplicated_pages], page.url)
-
     node = PageNode.from_page(page)
 
     neighbors = [PageNode.from_page(p) for p in deduplicated_pages]
-    print([x.url for x in neighbors], node.url)
     return PageNodesResponse(neighbors=neighbors, node=node)
 
 

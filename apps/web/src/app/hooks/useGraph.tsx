@@ -21,7 +21,7 @@ const localGraph = {
   drag: true,
   zoom: true,
   depth: 1,
-  scale: 1.1,
+  scale: 1,
   repelForce: 1,
   centerForce: 0.3,
   linkDistance: 100,
@@ -32,8 +32,8 @@ const localGraph = {
 };
 
 const defaultLinkColor = "#d8dee9"; // grey
-const activeLinkColor = "#94a3b8";
-const defaultNodeColor = "#80eaa5"; // green
+const activeLinkColor = "#34d399";
+const defaultNodeColor = "#34d399"; // green
 const activeNodeColor = "#38d5f5"; // bright blue
 const GRAPH_SVG_ID = "graph-svg";
 
@@ -79,7 +79,11 @@ export const useGraph = (
       )
       .force("center", d3.forceCenter().strength(localGraph.centerForce));
 
-    const height = Math.max(graph.offsetHeight, 200);
+    const calculateHeight = () => {
+      return Math.min(200 + neighbors.length * 20, 500);
+    };
+
+    const height = calculateHeight();
     const width = graph.offsetWidth;
 
     const boundingBox = d3
@@ -115,7 +119,7 @@ export const useGraph = (
 
     const drag = (simulation: d3.Simulation<NodeData, LinkData>) => {
       function dragstarted(event: any, d: NodeData) {
-        if (!event.active) simulation.alphaTarget(1).restart();
+        if (!event.active) simulation.alphaTarget(0.3).restart();
         d.fx = d.x;
         d.fy = d.y;
       }
@@ -169,7 +173,7 @@ export const useGraph = (
       if (isCurrent) {
         return 0.3;
       }
-      return 0.2;
+      return 0.15;
     };
 
     function handleMousover(event: MouseEvent, node: NodeData) {
@@ -181,10 +185,10 @@ export const useGraph = (
       }); // TODO: Only select links that are connected to this node
       const label = boundingBox.select(`#${getLabelId(node.id)}`);
 
-      label.transition().duration(200).style("opacity", 1);
+      label.transition().duration(300).style("opacity", 1);
 
       // Highlight the links
-      linkNodes.transition().duration(200).attr("stroke", activeLinkColor);
+      linkNodes.transition().duration(300).attr("stroke", activeLinkColor);
     }
 
     const handleMouseout = (event: MouseEvent, node: NodeData) => {
@@ -193,13 +197,13 @@ export const useGraph = (
 
       label
         .transition()
-        .duration(200)
+        .duration(300)
         .style("opacity", getInitialOpacity(node));
 
       // Return the links to normal
       linkNodes
         .transition()
-        .duration(200)
+        .duration(300)
         .attr("stroke", defaultLinkColor)
         .attr("stroke-width", 1);
     };
@@ -249,8 +253,7 @@ export const useGraph = (
         .on("zoom", ({ transform }: any) => {
           svgLinks.attr("transform", transform);
           svgNodes.attr("transform", transform);
-          const scale = transform.k * localGraph.opacityScale;
-          const scaledOpacity = Math.max((scale - 1) / 3.75, 0);
+          const scaledOpacity = transform.k * 0.2;
           labels.attr("transform", transform).style("opacity", scaledOpacity);
         }),
     );
