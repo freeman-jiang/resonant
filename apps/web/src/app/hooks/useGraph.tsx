@@ -11,25 +11,42 @@ type LinkData = {
   target: string;
 };
 
-type SVGLinkData = d3.SimulationLinkDatum<NodeData>;
+type LinkDatum = {
+  index: 0;
+  source: NodeData;
+  target: NodeData;
+};
 
 const localGraph = {
   drag: true,
   zoom: true,
   depth: 1,
   scale: 1.1,
-  repelForce: 0.5,
+  repelForce: 1,
   centerForce: 0.3,
-  linkDistance: 70,
+  linkDistance: 100,
   fontSize: 0.6,
   opacityScale: 2.5,
   showTags: true,
   removeTags: [],
 };
 
+const defaultLinkColor = "#d8dee9"; // grey
+const activeLinkColor = "#94a3b8";
+const defaultNodeColor = "#80eaa5"; // green
+const activeNodeColor = "#38d5f5"; // bright blue
+
+const initialOpacity = (localGraph.opacityScale - 1) / 3.75;
+
+const getLabelId = (id: number) => `labelfor-${id}`;
+
 let didInit = false;
 
-export const useGraph = (id: string, node: PageNode, neighbors: PageNode[]) => {
+export const useGraph = (
+  id: string,
+  pageNode: PageNode,
+  neighbors: PageNode[],
+) => {
   const router = useRouter();
 
   const renderGraph = () => {
@@ -37,14 +54,12 @@ export const useGraph = (id: string, node: PageNode, neighbors: PageNode[]) => {
     const links: LinkData[] = [];
 
     for (const neighbor of neighbors) {
-      links.push({ source: node.url, target: neighbor.url });
+      links.push({ source: pageNode.url, target: neighbor.url });
     }
 
-    const nodes: NodeData[] = [node, ...neighbors].map((node) => {
+    const nodes: NodeData[] = [pageNode, ...neighbors].map((node) => {
       return { ...node, title: node.title };
     });
-
-    console.log(nodes);
 
     const graphData: { nodes: NodeData[]; links: LinkData[] } = {
       nodes,
@@ -66,7 +81,7 @@ export const useGraph = (id: string, node: PageNode, neighbors: PageNode[]) => {
       )
       .force("center", d3.forceCenter().strength(localGraph.centerForce));
 
-    const height = Math.max(graph.offsetHeight, 250);
+    const height = Math.max(graph.offsetHeight, 400);
     const width = graph.offsetWidth;
 
     const boundingBox = d3
@@ -79,8 +94,8 @@ export const useGraph = (id: string, node: PageNode, neighbors: PageNode[]) => {
         -height / 2 / localGraph.scale,
         width / localGraph.scale,
         height / localGraph.scale,
-      ])
-      .attr("class", "bg-slate-100");
+      ]);
+    // .attr("class", "bg-black");
 
     // draw links between nodes
     const svgLinks = boundingBox
@@ -88,7 +103,8 @@ export const useGraph = (id: string, node: PageNode, neighbors: PageNode[]) => {
       .selectAll("line")
       .data(graphData.links)
       .join("line")
-      .attr("class", "stroke-slate-500 graph-link")
+      .attr("class", "graph-link")
+      .attr("stroke", defaultLinkColor)
       .attr("stroke-width", 1);
 
     // Container for all the nodes
@@ -125,15 +141,24 @@ export const useGraph = (id: string, node: PageNode, neighbors: PageNode[]) => {
 
     // calculate color
     const nodeClass = (d: NodeData): string => {
-      const isCurrent = d.url === node.url;
+      const isCurrent = d.url === pageNode.url;
       if (isCurrent) {
-        return "fill-emerald-500 graph-node-current";
+        return "graph-node-current";
       }
-      return "fill-slate-500 graph-node";
+      return "graph-node";
+    };
+
+    // calculate node fill color
+    const nodeFill = (d: NodeData): string => {
+      const isCurrent = d.url === pageNode.url;
+      if (isCurrent) {
+        return activeNodeColor;
+      }
+      return defaultNodeColor;
     };
 
     const nodeRadius = (d: NodeData): number => {
-      const isCurrent = d.url === node.url;
+      const isCurrent = d.url === pageNode.url;
       if (isCurrent) {
         return 4;
       }
@@ -143,6 +168,7 @@ export const useGraph = (id: string, node: PageNode, neighbors: PageNode[]) => {
     const svgNodes = graphNode
       .append("circle")
       .attr("class", nodeClass)
+      .attr("fill", nodeFill)
       .attr("id", (d) => d.id)
       .attr("r", nodeRadius)
       .style("cursor", "pointer")
@@ -150,28 +176,31 @@ export const useGraph = (id: string, node: PageNode, neighbors: PageNode[]) => {
         router.push(`/c?url=${node.url}`);
       })
       .on("mouseover", function (event, node) {
-        const neighbors = d3.selectAll<HTMLElement, NodeData>(`.graph-node`);
-        const links = d3.selectAll<HTMLElement, SVGLinkData>(`.graph-link`);
+        const neighbors = d3
+          .selectAll<HTMLElement, NodeData>(`.graph-node`)
+          .filter((d) => d.id !== node.id);
+        const linkNodes = d3.selectAll(".graph-link").filter((d: LinkDatum) => {
+          return d.source.id === node.id || d.target.id === node.id;
+        }); // TODO: Only select links that are connected to this node
+        const label = boundingBox.select(`#${getLabelId(node.id)}`);
 
-        // FIXME: Not working
-        // Highlight the neighbors and links
-        neighbors.transition().duration(200).attr("fill", "red");
+        label.transition().duration(200).style("opacity", 1);
 
         // Highlight the links
-        links
-          .transition()
-          .duration(200)
-          .attr("stroke", "red")
-          .attr("stroke-width", 1);
+        linkNodes.transition().duration(200).attr("stroke", activeLinkColor);
+      })
+      .on("mouseout", function (event, node) {
+        const linkNodes = d3.selectAll(".graph-link"); // TODO: Only select links that are connected to this node
+        const label = boundingBox.select(`#${getLabelId(node.id)}`);
 
-        // FIXME: Not working
-        // show text for self
-        d3.select("text ")
+        label.transition().duration(200).style("opacity", initialOpacity);
+
+        // Return the links to normal
+        linkNodes
           .transition()
           .duration(200)
-          // .attr("opacity", d3.select(parent).select("text").style("opacity"))
-          .style("opacity", 1)
-          .style("font-size", "0.75rem");
+          .attr("stroke", defaultLinkColor)
+          .attr("stroke-width", 1);
       })
       .call(drag(simulation));
 
@@ -182,7 +211,8 @@ export const useGraph = (id: string, node: PageNode, neighbors: PageNode[]) => {
       .attr("dy", (d) => -nodeRadius(d) + "px")
       .attr("text-anchor", "middle")
       .text((d) => d.title)
-      .style("opacity", (localGraph.opacityScale - 1) / 3.75)
+      .attr("id", (d) => getLabelId(d.id))
+      .style("opacity", initialOpacity)
       .style("pointer-events", "none")
       .style("font-size", localGraph.fontSize + "em")
       .raise()
@@ -193,12 +223,12 @@ export const useGraph = (id: string, node: PageNode, neighbors: PageNode[]) => {
     simulation.on("tick", () => {
       // Draw the links
       svgLinks
-        .attr("x1", (d: any) => d.source.x)
-        .attr("y1", (d: any) => d.source.y)
-        .attr("x2", (d: any) => d.target.x)
-        .attr("y2", (d: any) => d.target.y);
+        .attr("x1", (d) => d.source.x)
+        .attr("y1", (d) => d.source.y)
+        .attr("x2", (d) => d.target.x)
+        .attr("y2", (d) => d.target.y);
 
-      svgNodes.attr("cx", (d: any) => d.x).attr("cy", (d: any) => d.y);
+      svgNodes.attr("cx", (d: NodeData) => d.x).attr("cy", (d: any) => d.y);
       labels.attr("x", (d: any) => d.x).attr("y", (d: any) => d.y);
     });
   };
