@@ -927,9 +927,22 @@ async def get_outbound_nodes(body: UrlRequest):
         raise HTTPException(400, "Page does not exist")
 
     outbound_pages = pg_client.get_pages_by_url(page.outbound_urls)
+    inbound_pages = pg_client.reverse_find_pages_by_url(body.url)
+
+    combined_pages = outbound_pages + inbound_pages
+
+    # deduplicate outbound and inbound
+    deduplicated_pages = list({p.id: p for p in combined_pages}.values())
+
+    # remove self reference
+    deduplicated_pages = [p for p in deduplicated_pages if p.id != page.id]
+
+    print([p.url for p in deduplicated_pages], page.url)
+
     node = PageNode.from_page(page)
 
-    neighbors = [PageNode.from_page(p) for p in outbound_pages]
+    neighbors = [PageNode.from_page(p) for p in deduplicated_pages]
+    print([x.url for x in neighbors], node.url)
     return PageNodesResponse(neighbors=neighbors, node=node)
 
 

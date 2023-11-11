@@ -162,6 +162,13 @@ class PostgresClient:
 
         return [Page(**p) for p in self._cursor.fetchall()]
 
+    def reverse_find_pages_by_url(self, page_url: str) -> list[Page]:
+        # Find pages that contain the urls in their outbound_urls
+        query = sql.SQL('SELECT * FROM "Page" WHERE %s = ANY(outbound_urls);')
+        self._cursor.execute(query, (page_url,))
+
+        return [Page(**p) for p in self._cursor.fetchall()]
+
     def get_pages_by_id(self, ids: list[int]) -> list[Page]:
         query = sql.SQL('SELECT * FROM "Page" WHERE id = ANY(%s);')
         self._cursor.execute(query, (ids,))
