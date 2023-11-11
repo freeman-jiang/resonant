@@ -119,7 +119,7 @@ export const useGraph = (
 
     const drag = (simulation: d3.Simulation<NodeData, LinkData>) => {
       function dragstarted(event: any, d: NodeData) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
+        if (!event.active) simulation.alphaTarget(0.7).restart();
         d.fx = d.x;
         d.fy = d.y;
       }
@@ -130,7 +130,7 @@ export const useGraph = (
       }
 
       function dragended(event: any, d: NodeData) {
-        if (!event.active) simulation.alphaTarget(0);
+        if (!event.active) simulation.alphaTarget(1).restart();
         d.fx = null;
         d.fy = null;
       }
