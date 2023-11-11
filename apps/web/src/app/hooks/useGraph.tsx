@@ -116,7 +116,6 @@ export const useGraph = (id: string, node: PageNode, neighbors: PageNode[]) => {
         d.fy = null;
       }
 
-      const noop = () => {};
       return d3
         .drag<Element, NodeData>()
         .on("start", dragstarted)
@@ -154,8 +153,7 @@ export const useGraph = (id: string, node: PageNode, neighbors: PageNode[]) => {
         const neighbors = d3.selectAll<HTMLElement, NodeData>(`.graph-node`);
         const links = d3.selectAll<HTMLElement, SVGLinkData>(`.graph-link`);
 
-        console.log(neighbors);
-
+        // FIXME: Not working
         // Highlight the neighbors and links
         neighbors.transition().duration(200).attr("fill", "red");
 
@@ -166,6 +164,7 @@ export const useGraph = (id: string, node: PageNode, neighbors: PageNode[]) => {
           .attr("stroke", "red")
           .attr("stroke-width", 1);
 
+        // FIXME: Not working
         // show text for self
         d3.select("text ")
           .transition()
@@ -173,7 +172,8 @@ export const useGraph = (id: string, node: PageNode, neighbors: PageNode[]) => {
           // .attr("opacity", d3.select(parent).select("text").style("opacity"))
           .style("opacity", 1)
           .style("font-size", "0.75rem");
-      });
+      })
+      .call(drag(simulation));
 
     // draw labels
     const labels = graphNode
