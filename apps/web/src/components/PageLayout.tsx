@@ -1,16 +1,9 @@
 "use client";
 import { usePage } from "@/api/hooks";
-import { RelatedFeed } from "@/components/RelatedFeed";
-import { SendButton } from "@/components/SendButton";
 import { Session } from "@supabase/supabase-js";
 import NextLink from "next/link";
 import { AddPage } from "./AddPage";
-import { BroadcastButton } from "./BroadcastButton";
-import { LikeButton } from "./LikeButton";
-import { LinkedBy } from "./LinkedBy";
-import { PageBox } from "./PageBox";
-import { PageComments } from "./PageComments";
-import { Senders } from "./Senders";
+import { ExistingPage } from "./ExistingPage";
 import { Button } from "./ui/button";
 
 interface Props {
@@ -42,29 +35,5 @@ export const PageLayout = ({ url, session }: Props) => {
 
   const { page } = data;
 
-  return (
-    <div>
-      <PageBox data={page} />
-      <div>
-        <Senders senders={page.senders} />
-        <LinkedBy page={page} />
-      </div>
-      <div className="mt-4 flex gap-3">
-        <SendButton url={url} />
-        <BroadcastButton url={url} />
-        <LikeButton page={page} />
-      </div>
-
-      <div className="mt-4">
-        <h2 className="text-xl font-semibold text-slate-900">
-          Discussion <span>({data.num_comments})</span>
-        </h2>
-        <PageComments data={data} />
-      </div>
-
-      {/* <SearchBoundary query={url}> */}
-      <RelatedFeed url={url} />
-      {/* </SearchBoundary> */}
-    </div>
-  );
+  return <ExistingPage data={data} />;
 };

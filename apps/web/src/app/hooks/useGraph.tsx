@@ -42,6 +42,7 @@ const getLabelId = (id: number) => `labelfor-${id}`;
 
 let didInit = false;
 
+// Expects there to be an empty div with the given id
 export const useGraph = (
   id: string,
   pageNode: PageNode,
