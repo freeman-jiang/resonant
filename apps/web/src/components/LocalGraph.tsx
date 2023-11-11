@@ -1,7 +1,6 @@
 "use client";
 import { PageNode } from "@/api";
-import { renderGraph } from "@/app/d3/renderGraph";
-import { useEffect } from "react";
+import { useGraph } from "@/app/hooks/useGraph";
 
 interface Props {
   node: PageNode;
@@ -13,13 +12,7 @@ const graphId = "graph";
 let didInit = false;
 
 export function LocalGraph({ node, neighbors }: Props) {
-  useEffect(() => {
-    if (didInit) {
-      return;
-    }
-    renderGraph(graphId, node, neighbors);
-    didInit = true;
-  }, []);
+  useGraph(graphId, node, neighbors);
 
   return (
     <div>
