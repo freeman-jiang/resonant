@@ -259,10 +259,10 @@ export const useGraph = (
     simulation.on("tick", () => {
       // Draw the links
       svgLinks
-        .attr("x1", (d) => d.source.x)
-        .attr("y1", (d) => d.source.y)
-        .attr("x2", (d) => d.target.x)
-        .attr("y2", (d) => d.target.y);
+        .attr("x1", (d: any) => d.source.x)
+        .attr("y1", (d: any) => d.source.y)
+        .attr("x2", (d: any) => d.target.x)
+        .attr("y2", (d: any) => d.target.y);
 
       svgNodes.attr("cx", (d: NodeData) => d.x).attr("cy", (d: any) => d.y);
       labels.attr("x", (d: any) => d.x).attr("y", (d: any) => d.y);
