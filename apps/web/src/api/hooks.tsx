@@ -76,10 +76,18 @@ export const PageBoundary = async ({
 }: PageBoundaryProps) => {
   const queryClient = new QueryClient();
 
-  await queryClient.prefetchQuery({
-    queryKey: [PAGE_QUERY_KEY, url],
-    queryFn: () => findPage(url, session),
-  });
+  const requests = [
+    queryClient.prefetchQuery({
+      queryKey: [PAGE_QUERY_KEY, url],
+      queryFn: () => findPage(url, session),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: [PAGE_NODES_KEY, url],
+      queryFn: () => getPageNodes(url),
+    }),
+  ];
+
+  await Promise.all(requests);
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

@@ -275,5 +275,12 @@ export const useGraph = (
     if (!existingGraph) {
       renderGraph();
     }
+
+    return () => {
+      const existingGraph = document.getElementById(GRAPH_SVG_ID);
+      if (existingGraph) {
+        existingGraph.remove();
+      }
+    };
   }, [id, pageNode, neighbors]);
 };
