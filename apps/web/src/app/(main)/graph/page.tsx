@@ -11,8 +11,8 @@ export default function Page() {
     return <div>Loading...</div>;
   }
 
-  const { neighbors, node } = data;
-  console.log(neighbors, node);
+  const { neighbors, node } = data || {};
+  // console.log(neighbors, node);
 
   return <LocalGraph node={node} neighbors={neighbors} />;
 }
