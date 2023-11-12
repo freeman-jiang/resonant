@@ -31,9 +31,7 @@ export const ExistingPage = ({ data: existingPageResponse }: Props) => {
         <BroadcastButton url={url} />
         <LikeButton page={page} />
       </div>
-      <div>
-        {data && <LocalGraph node={data.node} neighbors={data.neighbors} />}
-      </div>
+      <div>{data && <LocalGraph data={data} />}</div>
       <div className="mt-4">
         <h2 className="text-xl font-semibold text-slate-900">
           Discussion <span>({existingPageResponse.num_comments})</span>

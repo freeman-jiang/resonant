@@ -1,17 +1,16 @@
 "use client";
-import { PageNode } from "@/api";
+import { PageNodesResponse } from "@/api";
 import { useGraph } from "@/app/hooks/useGraph";
 
 interface Props {
-  node: PageNode;
-  neighbors: PageNode[];
+  data: PageNodesResponse;
 }
 
 const graphId = "graph";
 // This is apparently actually idiomatic: https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application
 
-export function LocalGraph({ node, neighbors }: Props) {
-  useGraph(graphId, node, neighbors);
+export function LocalGraph({ data }: Props) {
+  useGraph(graphId, data);
 
   return (
     <div className="mt-3">

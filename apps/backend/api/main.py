@@ -916,7 +916,13 @@ class PageNode(BaseModel):
 
 class PageNodesResponse(BaseModel):
     node: PageNode
-    neighbors: list[PageNode]  # outbound
+    outbound: list[PageNode]
+    inbound: list[PageNode]
+
+
+def deduplicate(root: PageNode, pages: list[PageNode]) -> list[PageNode]:
+    dedup = list({p.id: p for p in pages}.values())
+    return [p for p in dedup if p.id != root.id]
 
 
 @app.post("/pagenodes")
@@ -929,18 +935,13 @@ async def get_outbound_nodes(body: UrlRequest):
     outbound_pages = pg_client.get_pages_by_url(page.outbound_urls)
     inbound_pages = pg_client.reverse_find_pages_by_url(body.url)
 
-    combined_pages = outbound_pages + inbound_pages
+    root = PageNode.from_page(page)
 
-    # deduplicate outbound and inbound
-    deduplicated_pages = list({p.id: p for p in combined_pages}.values())
+    outbound = deduplicate(root, [PageNode.from_page(p)
+                           for p in outbound_pages])
+    inbound = deduplicate(root, [PageNode.from_page(p) for p in inbound_pages])
 
-    # remove self reference
-    deduplicated_pages = [p for p in deduplicated_pages if p.id != page.id]
-
-    node = PageNode.from_page(page)
-
-    neighbors = [PageNode.from_page(p) for p in deduplicated_pages]
-    return PageNodesResponse(neighbors=neighbors, node=node)
+    return PageNodesResponse(outbound=outbound, inbound=inbound, node=root)
 
 
 @app.get("/inbox/{user_id}")
