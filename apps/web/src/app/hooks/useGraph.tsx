@@ -1,5 +1,5 @@
 // Heavily inspired by the Quartz graph view
-import { PageNode } from "@/api";
+import { PageNode, PageNodesResponse } from "@/api";
 import * as d3 from "d3";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -9,12 +9,14 @@ type NodeData = PageNode & d3.SimulationNodeDatum;
 type LinkData = {
   source: string;
   target: string;
+  type: "inbound" | "outbound";
 };
 
 type LinkDatum = {
   index: 0;
   source: NodeData;
   target: NodeData;
+  type: "inbound" | "outbound";
 };
 
 const localGraph = {
@@ -32,6 +34,8 @@ const localGraph = {
 };
 
 const defaultLinkColor = "#d8dee9"; // grey
+const inboundLinkColor = "#f56565"; // red
+const outboundLinkColor = "#38bdf8"; // blue
 const activeLinkColor = "#34d399";
 const defaultNodeColor = "#34d399"; // green
 const activeNodeColor = "#38d5f5"; // bright blue
@@ -40,24 +44,36 @@ const GRAPH_SVG_ID = "graph-svg";
 const getLabelId = (id: number) => `labelfor-${id}`;
 
 // Expects there to be an empty div with the given id
-export const useGraph = (
-  id: string,
-  pageNode: PageNode,
-  neighbors: PageNode[],
-) => {
+export const useGraph = (id: string, data: PageNodesResponse) => {
   const router = useRouter();
 
   const renderGraph = () => {
     const graph = document.getElementById(id);
     const links: LinkData[] = [];
 
-    for (const neighbor of neighbors) {
-      links.push({ source: pageNode.url, target: neighbor.url });
+    const { inbound, node: pageNode, outbound } = data;
+
+    for (const neighbor of inbound) {
+      links.push({
+        source: pageNode.url,
+        target: neighbor.url,
+        type: "inbound",
+      });
     }
 
-    const nodes: NodeData[] = [pageNode, ...neighbors].map((node) => {
-      return { ...node, title: node.title };
-    });
+    for (const neighbor of outbound) {
+      links.push({
+        source: pageNode.url,
+        target: neighbor.url,
+        type: "outbound",
+      });
+    }
+
+    const nodes: NodeData[] = [pageNode, ...inbound, ...outbound].map(
+      (node) => {
+        return { ...node, title: node.title };
+      },
+    );
 
     const graphData: { nodes: NodeData[]; links: LinkData[] } = {
       nodes,
@@ -80,7 +96,7 @@ export const useGraph = (
       .force("center", d3.forceCenter().strength(localGraph.centerForce));
 
     const calculateHeight = () => {
-      return Math.min(200 + neighbors.length * 20, 500);
+      return Math.min(200 + (inbound.length + outbound.length) * 20, 500);
     };
 
     const height = calculateHeight();
@@ -107,7 +123,11 @@ export const useGraph = (
       .data(graphData.links)
       .join("line")
       .attr("class", "graph-link")
-      .attr("stroke", defaultLinkColor)
+      .attr(
+        "stroke",
+        (d) => defaultLinkColor,
+        // d.type === "inbound" ? inboundLinkColor : outboundLinkColor,
+      )
       .attr("stroke-width", 1);
 
     // Container for all the nodes
@@ -204,7 +224,10 @@ export const useGraph = (
       linkNodes
         .transition()
         .duration(300)
-        .attr("stroke", defaultLinkColor)
+        .attr("stroke", (d: LinkDatum) => {
+          return defaultLinkColor;
+          // return d.type === "inbound" ? inboundLinkColor : outboundLinkColor;
+        })
         .attr("stroke-width", 1);
     };
 
@@ -285,5 +308,5 @@ export const useGraph = (
         existingGraph.remove();
       }
     };
-  }, [id, pageNode, neighbors]);
+  }, [id, data]);
 };

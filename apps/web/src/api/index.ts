@@ -275,9 +275,10 @@ export const fetchRecommendedFeed = async (userId: string) => {
   return data;
 };
 
-interface PageNodesResponse {
+export interface PageNodesResponse {
   node: PageNode;
-  neighbors: PageNode[]; // outbound
+  inbound: PageNode[]; // outbound
+  outbound: PageNode[];
 }
 
 export const getPageNodes = async (pageUrl: string) => {
@@ -287,8 +288,7 @@ export const getPageNodes = async (pageUrl: string) => {
   return data;
 };
 
-
 export const fetchInbox = async (userId: string) => {
   const { data } = await axios.get<Page[]>(`/inbox/${userId}`);
   return data;
-}
+};
