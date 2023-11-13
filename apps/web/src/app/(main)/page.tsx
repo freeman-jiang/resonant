@@ -1,5 +1,5 @@
 import { GlobalFeed } from "@/components/GlobalFeed";
-import { InboxFeed } from "@/components/feeds/InboxFeed";
+import { ForYouFeed } from "@/components/feeds/ForYouFeed";
 import { getSupabaseServer } from "@/supabase/server";
 
 export default async function Home() {
@@ -10,10 +10,5 @@ export default async function Home() {
     return <GlobalFeed />;
   }
 
-  return (
-    <InboxFeed userId={user.id} />
-    // <UserFeedBoundary userId={user.id}>
-    // <UserFeed userId={user?.id} />
-    // </UserFeedBoundary>
-  );
+  return <ForYouFeed userId={user.id} />;
 }

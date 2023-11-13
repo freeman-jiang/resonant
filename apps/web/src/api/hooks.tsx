@@ -9,6 +9,7 @@ import { ReactNode } from "react";
 import {
   Page,
   crawlUrl,
+  fetchForYou,
   fetchGlobalFeed,
   fetchInbox,
   fetchRandomFeed,
@@ -303,5 +304,14 @@ export const useInbox = (userId: string) => {
   return useQuery({
     queryKey: [INBOX_QUERY_KEY],
     queryFn: () => fetchInbox(userId),
+  });
+};
+
+export const FOR_YOU_KEY = "for-you";
+
+export const useForYou = (userId: string) => {
+  return useQuery({
+    queryKey: [FOR_YOU_KEY, userId],
+    queryFn: () => fetchForYou(userId),
   });
 };

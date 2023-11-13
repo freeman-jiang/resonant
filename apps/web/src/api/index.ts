@@ -292,3 +292,8 @@ export const fetchInbox = async (userId: string) => {
   const { data } = await axios.get<Page[]>(`/inbox/${userId}`);
   return data;
 };
+
+export const fetchForYou = async (userId: string) => {
+  const { data } = await axios.get<Page[]>(`/similar/${userId}`);
+  return data;
+};

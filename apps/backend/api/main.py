@@ -24,7 +24,8 @@ from pydantic import BaseModel, validator
 
 from .add_senders import add_senders, get_senders_for_pages
 from .feed_mix import (SUPERSTACK_RECEIVER_ID, _process_messages,
-                       get_inbox_messages, mix_feed, page_ids_to_page_response)
+                       get_inbox_messages, get_similar_articles, mix_feed,
+                       page_ids_to_page_response)
 
 load_dotenv()
 
@@ -941,6 +942,7 @@ async def get_outbound_nodes(body: UrlRequest):
                            for p in outbound_pages])
     inbound = deduplicate(root, [PageNode.from_page(p) for p in inbound_pages])
 
+    # TODO: Fix case where outbound and inbound have the same page
     return PageNodesResponse(outbound=outbound, inbound=inbound, node=root)
 
 
@@ -950,3 +952,9 @@ async def get_inbox(user_id: UUID):
     inbox: list[PageResponse] = await page_ids_to_page_response(client, [x.page_id for x in messages])
 
     return inbox
+
+
+@app.get("/similar/{user_id}")
+async def get_similar(user_id: UUID):
+    similar = await get_similar_articles(client, str(user_id))
+    return similar
