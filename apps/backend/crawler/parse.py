@@ -176,7 +176,11 @@ def find_feed_urls_cached(base_domain: Link) -> list[Link]:
 
 def parse_html(html: bytes, link: Link, should_rss: bool) -> Tuple[Optional[CrawlResult], list[Link]]:
     html = filter_out_ugc_sponsored(html)
-    a = parse_html_trafilatura(html, link)
+    try:
+        a = parse_html_trafilatura(html, link)
+    except Exception:
+        print("Exception parsing trafilatura for", link.url)
+        a = None
     if a is None:
         a = parse_html_newspaper(html, link)
 
