@@ -1,7 +1,10 @@
 import subprocess
 import json
+from . import graph_plot
 from collections import defaultdict
 
+import networkx
+import networkx as nx
 from psycopg import Connection
 from psycopg.rows import kwargs_row
 
@@ -10,6 +13,7 @@ from crawler.dbaccess import db
 from dotenv import load_dotenv
 
 from crawler.recommendation.nodes import PageAsNode, Node, url_to_domain
+
 
 load_dotenv()
 
@@ -40,6 +44,7 @@ def trustrank(graph: dict[str, Node], damping_factor=0.90, max_iterations=100, t
 
     for iters in range(max_iterations):
         total_diff = 0.0
+        random_jump_sum = 0
         for node_url, node in graph.items():
             pagerank_lost = 0
             if len(node.out) == 0:
@@ -59,10 +64,11 @@ def trustrank(graph: dict[str, Node], damping_factor=0.90, max_iterations=100, t
 
             random_jump = (
                 (1 - damping_factor) * trustrank_values[node_url] + pagerank_lost) / trusted_nodes_len
+            random_jump_sum += random_jump
 
-            for neighbor_url, multiplier in trusted_nodes:
-                add_rank(new_trustrank_values, neighbor_url,
-                         random_jump * multiplier)
+        for neighbor_url, multiplier in trusted_nodes:
+            add_rank(new_trustrank_values, neighbor_url,
+                     random_jump_sum * multiplier)
 
         old_sum = sum(trustrank_values.values())
         new_sum = sum(new_trustrank_values.values())
@@ -124,9 +130,29 @@ def combine_domain_and_page_scores(domains: dict[str, float], pages: dict[str, f
 
 def main():
     cursor = db.cursor(row_factory=kwargs_row(PageAsNode))
-    pages = cursor.execute(
-        "SELECT id, url,outbound_urls,depth  FROM \"Page\"").fetchall()
-    json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
+    # pages = cursor.execute(
+    #     "SELECT id, url,outbound_urls,depth  FROM \"Page\" LIMIT 500000").fetchall()
+    # json.dump([p.dict() for p in pages], open("/tmp/file.json", "w+"))
+    # pages = json.load(open("/tmp/file.json", "r"))
+    # pages = [PageAsNode(**x) for x in pages]
+
+    # nodes = Node.from_db(pages)
+    # domains = Node.convert_to_domains(nodes)
+    #
+    # # print("Domain length", len(domains))
+    # # graph = convert_to_networkx_graph(domains)
+    # # plot = graph_plot.plot_communities(graph)
+    # # return
+    #
+    # topdomains = trustrank(domains)
+    #
+    # for domain in topdomains:
+    #     topdomains[domain] = topdomains[domain] / \
+    #         (domains[domain].individual_pages)
+    #
+    # topurls = trustrank(nodes, max_iterations=10)
+    # print(topurls)
+    # return
 
     cmd = ["cargo", "run", "--release", "--", "quiet"]
     result = subprocess.run(cmd, stdout=subprocess.PIPE, cwd="../pagerank")
@@ -137,7 +163,10 @@ def main():
     page_score = {}
     for line in output.split("\n"):
         if line.strip():
-            url, id, score = eval(line)
+            try:
+                url, id, score = eval(line)
+            except Exception as e:
+                continue
             id = int(id)
             score = float(score)
             page_score[id] = score

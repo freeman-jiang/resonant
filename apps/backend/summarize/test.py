@@ -14,7 +14,7 @@ def process_articles(articles):
     """
     result = []
     for a in articles:
-        result.append({'title': a['title'], 'content': a['content'][0:5000]})
+        result.append({'title': a['title'][0:400], 'content': a['content'][0:2000]})
 
     return result
 

@@ -28,7 +28,7 @@ ranking_prompt = ChatPromptTemplate.from_messages([
 
 ranking_chain = ranking_prompt | model
 def process_article_batch(articles: list[dict]):
-    config =  RunnableConfig(max_concurrency=2)
+    config = RunnableConfig(max_concurrency=1)
     result = []
 
     quote_responses = quote_chain.batch(articles, config = config)
@@ -42,7 +42,7 @@ def process_article_batch(articles: list[dict]):
         result.append(json.loads(response))
     return result
 
-print(process_article_batch(articles))
+print(process_article_batch(articles[0:1]))
 # chain = prompt | model | StrOutputParser()
 #
 # airesponse = chain.batch(articles)

@@ -50,6 +50,14 @@ class Node(BaseModel):
             answer[domain].individual_pages += 1
             answer[domain].best_depth = min(
                 answer[domain].best_depth, node.best_depth)
+
+        for url, node in answer.items():
+            new_out = []
+            for o in node.out:
+                if o in answer:
+                    new_out.append(o)
+
+            node.out = new_out
         return answer
 
 
