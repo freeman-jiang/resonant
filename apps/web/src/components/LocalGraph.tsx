@@ -13,8 +13,8 @@ export function LocalGraph({ data }: Props) {
   useGraph(graphId, data);
 
   return (
-    <div className="mt-3">
-      <div className="text-lg font-medium">Graph View</div>
+    <div className="mt-4">
+      <div className="text-lg font-semibold">Link Graph</div>
       <div className="border border-slate-200" id={graphId} />
     </div>
   );
