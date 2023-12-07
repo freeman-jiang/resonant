@@ -916,9 +916,8 @@ class PageNode(BaseModel):
 
 
 class PageNodesResponse(BaseModel):
-    node: PageNode
-    outbound: list[PageNode]
-    inbound: list[PageNode]
+    root: PageNode
+    neighbors: list[PageNode]
 
 
 def deduplicate(root: PageNode, pages: list[PageNode]) -> list[PageNode]:
@@ -938,12 +937,13 @@ async def get_outbound_nodes(body: UrlRequest):
 
     root = PageNode.from_page(page)
 
-    outbound = deduplicate(root, [PageNode.from_page(p)
-                           for p in outbound_pages])
-    inbound = deduplicate(root, [PageNode.from_page(p) for p in inbound_pages])
+    # outbound = deduplicate(root, [PageNode.from_page(p)
+    #                        for p in outbound_pages])
+    # inbound = deduplicate(root, [PageNode.from_page(p) for p in inbound_pages])
+    neighbors = outbound_pages + inbound_pages
+    neighbors = deduplicate(root, [PageNode.from_page(p) for p in neighbors])
 
-    # TODO: Fix case where outbound and inbound have the same page
-    return PageNodesResponse(outbound=outbound, inbound=inbound, node=root)
+    return PageNodesResponse(root=root, neighbors=neighbors)
 
 
 @app.get("/inbox/{user_id}")

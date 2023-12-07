@@ -276,9 +276,10 @@ export const fetchRecommendedFeed = async (userId: string) => {
 };
 
 export interface PageNodesResponse {
-  node: PageNode;
-  inbound: PageNode[]; // outbound
-  outbound: PageNode[];
+  root: PageNode;
+  neighbors: PageNode[];
+  // inbound: PageNode[]; // outbound
+  // outbound: PageNode[];
 }
 
 export const getPageNodes = async (pageUrl: string) => {

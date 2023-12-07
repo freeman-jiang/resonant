@@ -51,29 +51,19 @@ export const useGraph = (id: string, data: PageNodesResponse) => {
     const graph = document.getElementById(id);
     const links: LinkData[] = [];
 
-    const { inbound, node: pageNode, outbound } = data;
+    const { root, neighbors } = data;
 
-    for (const neighbor of inbound) {
+    for (const neighbor of neighbors) {
       links.push({
-        source: pageNode.url,
+        source: root.url,
         target: neighbor.url,
         type: "inbound",
       });
     }
 
-    for (const neighbor of outbound) {
-      links.push({
-        source: pageNode.url,
-        target: neighbor.url,
-        type: "outbound",
-      });
-    }
-
-    const nodes: NodeData[] = [pageNode, ...inbound, ...outbound].map(
-      (node) => {
-        return { ...node, title: node.title };
-      },
-    );
+    const nodes: NodeData[] = [root, ...neighbors].map((node) => {
+      return { ...node, title: node.title };
+    });
 
     const graphData: { nodes: NodeData[]; links: LinkData[] } = {
       nodes,
@@ -96,7 +86,7 @@ export const useGraph = (id: string, data: PageNodesResponse) => {
       .force("center", d3.forceCenter().strength(localGraph.centerForce));
 
     const calculateHeight = () => {
-      return Math.min(200 + (inbound.length + outbound.length) * 20, 500);
+      return Math.min(200 + neighbors.length * 20, 500);
     };
 
     const height = calculateHeight();
@@ -164,7 +154,7 @@ export const useGraph = (id: string, data: PageNodesResponse) => {
 
     // calculate color
     const nodeClass = (d: NodeData): string => {
-      const isCurrent = d.url === pageNode.url;
+      const isCurrent = d.url === root.url;
       if (isCurrent) {
         return "graph-node-current";
       }
@@ -173,7 +163,7 @@ export const useGraph = (id: string, data: PageNodesResponse) => {
 
     // calculate node fill color
     const nodeFill = (d: NodeData): string => {
-      const isCurrent = d.url === pageNode.url;
+      const isCurrent = d.url === root.url;
       if (isCurrent) {
         return activeNodeColor;
       }
@@ -181,7 +171,7 @@ export const useGraph = (id: string, data: PageNodesResponse) => {
     };
 
     const nodeRadius = (d: NodeData): number => {
-      const isCurrent = d.url === pageNode.url;
+      const isCurrent = d.url === root.url;
       if (isCurrent) {
         return 5;
       }
@@ -189,7 +179,7 @@ export const useGraph = (id: string, data: PageNodesResponse) => {
     };
 
     const getInitialOpacity = (n: NodeData) => {
-      const isCurrent = n.url === pageNode.url;
+      const isCurrent = n.url === root.url;
       if (isCurrent) {
         return 0.3;
       }
