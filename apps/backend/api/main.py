@@ -946,6 +946,23 @@ async def get_outbound_nodes(body: UrlRequest):
     return PageNodesResponse(root=root, neighbors=neighbors)
 
 
+@app.get('/network')
+async def get_network() -> list[Page]:
+    """
+    Get a network of pages around a given center URL
+    :param center_url:
+    :param depth:
+    :return:
+    """
+
+    depth = 5
+    center_url = "https://hypertext.joodaloop.com/"
+
+    network = pg_client.get_network(center_url, depth)
+
+    return network
+
+
 @app.get("/inbox/{user_id}")
 async def get_inbox(user_id: UUID):
     messages = await get_inbox_messages(client, str(user_id))

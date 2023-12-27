@@ -133,6 +133,20 @@ class PostgresClient:
         self._cursor.execute(query, (url,))
         return self._cursor.fetchone() is not None
 
+    def get_network(self, center_url: str, depth: int) -> list[Page]:
+        query = sql.SQL("""--sql
+    WITH RECURSIVE PageGraph AS (
+    SELECT 1 as depth, p.id, p.title, p.outbound_urls, p.content, p.created_at, p.updated_at, p.url, p.content_hash
+    FROM "Page" p
+    WHERE p.url = %s
+    UNION ALL
+    SELECT pg.depth + 1, p.id, p.title, p.outbound_urls, p.content, p.created_at, p.updated_at, p.url, p.content_hash
+    FROM "Page" p
+    JOIN PageGraph pg ON p.url = ANY(pg.outbound_urls) AND pg.depth < %s
+) SELECT * FROM PageGraph;""")
+        self._cursor.execute(query, (center_url, depth))
+        return [Page(**p) for p in self._cursor.fetchall()]
+
     def get_page(self, **kwargs) -> Page | None:
         if 'id' in kwargs:
             where_field = 'id'
