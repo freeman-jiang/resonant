@@ -81,8 +81,6 @@ export const useGraph = (
             target: outboundLink,
             type: "outbound",
           });
-        } else {
-          console.log("Missing neighbor", outboundLink);
         }
       }
     }
@@ -95,6 +93,15 @@ export const useGraph = (
       nodes,
       links,
     };
+
+    // Get the max number of connections for a single node from 'links'
+    const maxConnections = d3.max(
+      graphData.nodes.map((node) => {
+        return graphData.links.filter((link) => {
+          return link.source === node.url || link.target === node.url;
+        }).length;
+      }),
+    );
 
     const simulation: d3.Simulation<NodeData, LinkData> = d3
       .forceSimulation(graphData.nodes)
@@ -109,7 +116,10 @@ export const useGraph = (
         "charge",
         d3.forceManyBody().strength((d) => {
           // TODO: Make strength as a function of the number of links
-          return -30;
+          const base = -30;
+          const multiplier = -5;
+
+          return base + multiplier * maxConnections;
         }),
       )
       .force("center", d3.forceCenter());
@@ -295,7 +305,7 @@ export const useGraph = (
           [500, 500],
           [width, height],
         ])
-        .scaleExtent([0.5, 2])
+        .scaleExtent([0.2, 2])
         .on("zoom", ({ transform }: any) => {
           svgLinks.attr("transform", transform);
           svgNodes.attr("transform", transform);
