@@ -12,6 +12,7 @@ import {
   fetchForYou,
   fetchGlobalFeed,
   fetchInbox,
+  fetchNetwork,
   fetchRandomFeed,
   fetchRecommendedFeed,
   findPage,
@@ -313,5 +314,14 @@ export const useForYou = (userId: string) => {
   return useQuery({
     queryKey: [FOR_YOU_KEY, userId],
     queryFn: () => fetchForYou(userId),
+  });
+};
+
+export const NETWORK_QUERY_KEY = "network";
+
+export const useNetwork = (centerUrl: string, depth: number) => {
+  return useQuery({
+    queryKey: [NETWORK_QUERY_KEY, centerUrl, depth],
+    queryFn: () => fetchNetwork(centerUrl, depth),
   });
 };

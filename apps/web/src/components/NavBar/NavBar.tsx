@@ -1,7 +1,8 @@
 import { UserBoundary } from "@/api/hooks";
+import { cn } from "@/lib/utils";
 import { getSupabaseServer } from "@/supabase/server";
 import Link from "next/link";
-import { Feedback } from "./Feedback";
+import { buttonVariants } from "../ui/button";
 import { RightButton } from "./RightButton";
 import { UserNav } from "./UserNav";
 
@@ -19,8 +20,13 @@ export async function NavBar({
           Resonant
         </Link>
 
-        <div className="flex items-center gap-2">
-          <Feedback />
+        <div className="flex items-center">
+          <Link
+            className={cn(buttonVariants({ variant: "link" }))}
+            href="/graph"
+          >
+            Graph
+          </Link>
           <UserBoundary session={session}>
             <UserNav />
             <RightButton />

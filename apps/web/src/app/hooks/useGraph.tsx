@@ -19,7 +19,7 @@ type LinkDatum = {
   type: "inbound" | "outbound";
 };
 
-const localGraph = {
+const old = {
   drag: true,
   zoom: true,
   depth: 1,
@@ -33,6 +33,20 @@ const localGraph = {
   removeTags: [],
 };
 
+const localGraph = {
+  drag: true,
+  zoom: true,
+  depth: -1,
+  scale: 0.9,
+  repelForce: 0.2,
+  centerForce: 0.5,
+  linkDistance: 100,
+  fontSize: 0.6,
+  opacityScale: 1,
+  removeTags: [],
+  showTags: true,
+};
+
 const defaultLinkColor = "#d8dee9"; // grey
 const inboundLinkColor = "#f56565"; // red
 const outboundLinkColor = "#38bdf8"; // blue
@@ -44,24 +58,36 @@ const GRAPH_SVG_ID = "graph-svg";
 const getLabelId = (id: number) => `labelfor-${id}`;
 
 // Expects there to be an empty div with the given id
-export const useGraph = (id: string, data: PageNodesResponse) => {
+export const useGraph = (
+  id: string,
+  data: PageNodesResponse,
+  isNetwork = false,
+) => {
   const router = useRouter();
 
   const renderGraph = () => {
     const graph = document.getElementById(id);
     const links: LinkData[] = [];
 
-    const { root, neighbors } = data;
+    const { root: rootUrl, adjacencyList } = data;
+
+    const neighbors = Object.values(adjacencyList);
 
     for (const neighbor of neighbors) {
-      links.push({
-        source: root.url,
-        target: neighbor.url,
-        type: "inbound",
-      });
+      for (const outboundLink of neighbor.outboundUrls) {
+        if (adjacencyList[outboundLink]) {
+          links.push({
+            source: neighbor.url,
+            target: outboundLink,
+            type: "outbound",
+          });
+        } else {
+          console.log("Missing neighbor", outboundLink);
+        }
+      }
     }
 
-    const nodes: NodeData[] = [root, ...neighbors].map((node) => {
+    const nodes: NodeData[] = [/*root, */ ...neighbors].map((node) => {
       return { ...node, title: node.title };
     });
 
@@ -73,17 +99,20 @@ export const useGraph = (id: string, data: PageNodesResponse) => {
     const simulation: d3.Simulation<NodeData, LinkData> = d3
       .forceSimulation(graphData.nodes)
       .force(
-        "charge",
-        d3.forceManyBody().strength(-100 * localGraph.repelForce),
-      )
-      .force(
         "link",
         d3
           .forceLink(graphData.links)
           .id((d: NodeData) => d.url) // custom id accessor
           .distance(localGraph.linkDistance),
       )
-      .force("center", d3.forceCenter().strength(localGraph.centerForce));
+      .force(
+        "charge",
+        d3.forceManyBody().strength((d) => {
+          // TODO: Make strength as a function of the number of links
+          return -30;
+        }),
+      )
+      .force("center", d3.forceCenter());
 
     const calculateHeight = () => {
       return Math.min(200 + neighbors.length * 20, 500);
@@ -128,21 +157,25 @@ export const useGraph = (id: string, data: PageNodesResponse) => {
       .enter();
 
     const drag = (simulation: d3.Simulation<NodeData, LinkData>) => {
-      function dragstarted(event: any, d: NodeData) {
-        if (!event.active) simulation.alphaTarget(0.7).restart();
-        d.fx = d.x;
-        d.fy = d.y;
+      // Reheat the simulation when drag starts, and fix the subject position.
+      function dragstarted(event) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        event.subject.fx = event.subject.x;
+        event.subject.fy = event.subject.y;
       }
 
-      function dragged(event: any, d: NodeData) {
-        d.fx = event.x;
-        d.fy = event.y;
+      // Update the subject (dragged node) position during drag.
+      function dragged(event) {
+        event.subject.fx = event.x;
+        event.subject.fy = event.y;
       }
 
-      function dragended(event: any, d: NodeData) {
-        if (!event.active) simulation.alphaTarget(1).restart();
-        d.fx = null;
-        d.fy = null;
+      // Restore the target alpha so the simulation cools after dragging ends.
+      // Unfix the subject position now that it’s no longer being dragged.
+      function dragended(event) {
+        if (!event.active) simulation.alphaTarget(0);
+        event.subject.fx = null;
+        event.subject.fy = null;
       }
 
       return d3
@@ -154,7 +187,7 @@ export const useGraph = (id: string, data: PageNodesResponse) => {
 
     // calculate color
     const nodeClass = (d: NodeData): string => {
-      const isCurrent = d.url === root.url;
+      const isCurrent = d.url === rootUrl;
       if (isCurrent) {
         return "graph-node-current";
       }
@@ -163,7 +196,7 @@ export const useGraph = (id: string, data: PageNodesResponse) => {
 
     // calculate node fill color
     const nodeFill = (d: NodeData): string => {
-      const isCurrent = d.url === root.url;
+      const isCurrent = d.url === rootUrl;
       if (isCurrent) {
         return activeNodeColor;
       }
@@ -171,7 +204,7 @@ export const useGraph = (id: string, data: PageNodesResponse) => {
     };
 
     const nodeRadius = (d: NodeData): number => {
-      const isCurrent = d.url === root.url;
+      const isCurrent = d.url === rootUrl;
       if (isCurrent) {
         return 5;
       }
@@ -179,7 +212,7 @@ export const useGraph = (id: string, data: PageNodesResponse) => {
     };
 
     const getInitialOpacity = (n: NodeData) => {
-      const isCurrent = n.url === root.url;
+      const isCurrent = n.url === rootUrl;
       if (isCurrent) {
         return 0.3;
       }

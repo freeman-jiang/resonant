@@ -20,7 +20,7 @@ export interface PageNode {
   title: string;
   url: string;
   id: number;
-  outboundLinks: string[]; // outbound urls
+  outboundUrls: string[]; // outbound urls
 }
 
 export interface Sender {
@@ -276,8 +276,8 @@ export const fetchRecommendedFeed = async (userId: string) => {
 };
 
 export interface PageNodesResponse {
-  root: PageNode;
-  neighbors: PageNode[];
+  root: string;
+  adjacencyList: { [x: string]: PageNode };
   // inbound: PageNode[]; // outbound
   // outbound: PageNode[];
 }
@@ -296,5 +296,12 @@ export const fetchInbox = async (userId: string) => {
 
 export const fetchForYou = async (userId: string) => {
   const { data } = await axios.get<Page[]>(`/similar/${userId}`);
+  return data;
+};
+
+export const fetchNetwork = async (centerUrl: string, depth: number) => {
+  const { data } = await axios.get<PageNodesResponse>(
+    `/network?center=${centerUrl}&depth=${depth}`,
+  );
   return data;
 };

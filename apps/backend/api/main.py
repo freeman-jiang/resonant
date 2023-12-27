@@ -916,8 +916,8 @@ class PageNode(BaseModel):
 
 
 class PageNodesResponse(BaseModel):
-    root: PageNode
-    neighbors: list[PageNode]
+    root: str  # url
+    adjacencyList: dict[str, PageNode]
 
 
 def deduplicate(root: PageNode, pages: list[PageNode]) -> list[PageNode]:
@@ -927,40 +927,38 @@ def deduplicate(root: PageNode, pages: list[PageNode]) -> list[PageNode]:
 
 @app.post("/pagenodes")
 async def get_outbound_nodes(body: UrlRequest):
-    page = pg_client.get_page(url=body.url)
+    root = pg_client.get_page(url=body.url)
 
-    if page is None:
+    if root is None:
         raise HTTPException(400, "Page does not exist")
 
-    outbound_pages = pg_client.get_pages_by_url(page.outbound_urls)
+    outbound_pages = pg_client.get_pages_by_url(root.outbound_urls)
     inbound_pages = pg_client.reverse_find_pages_by_url(body.url)
-
-    root = PageNode.from_page(page)
 
     # outbound = deduplicate(root, [PageNode.from_page(p)
     #                        for p in outbound_pages])
     # inbound = deduplicate(root, [PageNode.from_page(p) for p in inbound_pages])
-    neighbors = outbound_pages + inbound_pages
-    neighbors = deduplicate(root, [PageNode.from_page(p) for p in neighbors])
 
-    return PageNodesResponse(root=root, neighbors=neighbors)
+    adj = [root]
+    adj += outbound_pages + inbound_pages
+    adj = {p.url: PageNode.from_page(p) for p in adj}
+
+    return PageNodesResponse(root=root.url, adjacencyList=adj)
+
+# recursive structure
 
 
 @app.get('/network')
-async def get_network() -> list[Page]:
-    """
-    Get a network of pages around a given center URL
-    :param center_url:
-    :param depth:
-    :return:
-    """
+async def get_network(center, depth) -> PageNodesResponse:
+    pages = pg_client.get_network(center, depth)
 
-    depth = 5
-    center_url = "https://hypertext.joodaloop.com/"
+    if len(pages) == 0:
+        raise HTTPException(400, "Page does not exist")
 
-    network = pg_client.get_network(center_url, depth)
+    root = PageNode.from_page(pages[0])
+    neighbors = {p.url: PageNode.from_page(p) for p in pages}
 
-    return network
+    return PageNodesResponse(adjacencyList=neighbors, root=root.url)
 
 
 @app.get("/inbox/{user_id}")
