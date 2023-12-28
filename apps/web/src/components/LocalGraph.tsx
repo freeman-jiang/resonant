@@ -10,7 +10,7 @@ const graphId = "graph";
 // This is apparently actually idiomatic: https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application
 
 export function LocalGraph({ data }: Props) {
-  useGraph(graphId, data);
+  const { showLabels, setShowLabels } = useGraph(graphId, data);
 
   return (
     <div className="mt-4">

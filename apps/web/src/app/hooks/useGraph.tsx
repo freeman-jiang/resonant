@@ -2,7 +2,7 @@
 import { PageNode, PageNodesResponse } from "@/api";
 import * as d3 from "d3";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type NodeData = PageNode & d3.SimulationNodeDatum;
 
@@ -37,7 +37,7 @@ const localGraph = {
   drag: true,
   zoom: true,
   depth: -1,
-  scale: 0.9,
+  scale: 1,
   repelForce: 0.2,
   centerForce: 0.5,
   linkDistance: 100,
@@ -50,7 +50,7 @@ const localGraph = {
 const defaultLinkColor = "#d8dee9"; // grey
 const inboundLinkColor = "#f56565"; // red
 const outboundLinkColor = "#38bdf8"; // blue
-const activeLinkColor = "#34d399";
+const activeLinkColor = "#5b7cab";
 const defaultNodeColor = "#34d399"; // green
 const activeNodeColor = "#38d5f5"; // bright blue
 const GRAPH_SVG_ID = "graph-svg";
@@ -63,6 +63,7 @@ export const useGraph = (
   data: PageNodesResponse,
   isNetwork = false,
 ) => {
+  const [showLabels, setShowLabels] = useState(!isNetwork);
   const router = useRouter();
 
   const renderGraph = () => {
@@ -169,6 +170,7 @@ export const useGraph = (
     const drag = (simulation: d3.Simulation<NodeData, LinkData>) => {
       // Reheat the simulation when drag starts, and fix the subject position.
       function dragstarted(event) {
+        handleMouseover(event, event.subject);
         if (!event.active) simulation.alphaTarget(0.3).restart();
         event.subject.fx = event.subject.x;
         event.subject.fy = event.subject.y;
@@ -176,6 +178,9 @@ export const useGraph = (
 
       // Update the subject (dragged node) position during drag.
       function dragged(event) {
+        handleMouseover(event, event.subject);
+        // Set cursor to grabbing
+        // handleMouseover(event, event.subject);
         event.subject.fx = event.x;
         event.subject.fy = event.y;
       }
@@ -183,6 +188,7 @@ export const useGraph = (
       // Restore the target alpha so the simulation cools after dragging ends.
       // Unfix the subject position now that it’s no longer being dragged.
       function dragended(event) {
+        handleMouseout(event, event.subject);
         if (!event.active) simulation.alphaTarget(0);
         event.subject.fx = null;
         event.subject.fy = null;
@@ -216,12 +222,16 @@ export const useGraph = (
     const nodeRadius = (d: NodeData): number => {
       const isCurrent = d.url === rootUrl;
       if (isCurrent) {
-        return 5;
+        return 6;
       }
-      return 4;
+      return 5;
     };
 
     const getInitialOpacity = (n: NodeData) => {
+      if (!showLabels) {
+        return 0;
+      }
+
       const isCurrent = n.url === rootUrl;
       if (isCurrent) {
         return 0.3;
@@ -229,44 +239,135 @@ export const useGraph = (
       return 0.15;
     };
 
-    function handleMousover(event: MouseEvent, node: NodeData) {
-      const neighbors = d3
-        .selectAll<HTMLElement, NodeData>(`.graph-node`)
-        .filter((d) => d.id !== node.id);
-      const linkNodes = d3.selectAll(".graph-link").filter((d: LinkDatum) => {
-        return d.source.id === node.id || d.target.id === node.id;
-      }); // TODO: Only select links that are connected to this node
+    const getHoverNodes = (
+      node: NodeData,
+      directLinks: d3.Selection<HTMLElement, LinkDatum, HTMLElement, any>,
+    ) => {
+      // Adjacent to the root `node`
+      const directNodeIds = new Set();
+      directLinks.each((d) => {
+        directNodeIds.add(d.source.id);
+        directNodeIds.add(d.target.id);
+      });
+
+      // Select all nodes, and then filter out the connected nodes
+      const otherNodes = d3.selectAll(".graph-node").filter((d: NodeData) => {
+        return !directNodeIds.has(d.id);
+      });
+
+      const directNodes = d3.selectAll(".graph-node").filter((d: NodeData) => {
+        return directNodeIds.has(d.id);
+      });
+
+      // Get labels
+      const directLabels = labels.filter((d) => directNodeIds.has(d.id));
+
+      const otherLabels = labels.filter((d) => !directNodeIds.has(d.id));
+
+      return { otherNodes, directNodes, directLabels, otherLabels };
+    };
+
+    function handleMouseover(event: MouseEvent, node: NodeData) {
+      const directLinks = d3
+        .selectAll<HTMLElement, LinkDatum>(".graph-link")
+        .filter((d) => {
+          return d.source.id === node.id || d.target.id === node.id;
+        });
+      const otherLinks = d3
+        .selectAll<HTMLElement, LinkDatum>(".graph-link")
+        .filter((d: LinkDatum) => {
+          return d.source.id !== node.id && d.target.id !== node.id;
+        });
+      const { otherNodes, directLabels, otherLabels } = getHoverNodes(
+        node,
+        directLinks,
+      );
+
+      // Dim all other nodes and links
+      const dimOpacity = 0.4;
+      otherNodes.transition().duration(300).style("opacity", dimOpacity);
+      otherLinks.transition().duration(300).style("opacity", dimOpacity);
+
+      // Highlight the node's immediate links
+      directLinks.transition().duration(300).attr("stroke", activeLinkColor);
+
+      // Highlight direct labels
+      directLabels.transition().duration(300).style("opacity", 0.5);
+      otherLabels.transition().duration(300).style("opacity", 0);
+
+      // Highlight the label
       const label = boundingBox.select(`#${getLabelId(node.id)}`);
-
       label.transition().duration(300).style("opacity", 1);
-
-      // Highlight the links
-      linkNodes.transition().duration(300).attr("stroke", activeLinkColor);
     }
 
     const handleMouseout = (event: MouseEvent, node: NodeData) => {
-      const linkNodes = d3.selectAll(".graph-link"); // TODO: Only select links that are connected to this node
-      const label = boundingBox.select(`#${getLabelId(node.id)}`);
+      const directLinks = d3
+        .selectAll<HTMLElement, LinkDatum>(".graph-link")
+        .filter((d) => {
+          return d.source.id === node.id || d.target.id === node.id;
+        });
+      const otherLinks = d3
+        .selectAll<HTMLElement, LinkDatum>(".graph-link")
+        .filter((d: LinkDatum) => {
+          return d.source.id !== node.id && d.target.id !== node.id;
+        });
+      const { otherNodes, directLabels, otherLabels } = getHoverNodes(
+        node,
+        directLinks,
+      );
 
-      label
-        .transition()
-        .duration(300)
-        .style("opacity", getInitialOpacity(node));
+      // Undim all other nodes and links
+      otherNodes.transition().duration(300).style("opacity", 1);
+      otherLinks.transition().duration(300).style("opacity", 1);
 
-      // Return the links to normal
-      linkNodes
+      // Unhighlight the node's immediate links
+      directLinks
         .transition()
         .duration(300)
         .attr("stroke", (d: LinkDatum) => {
           return defaultLinkColor;
-          // return d.type === "inbound" ? inboundLinkColor : outboundLinkColor;
-        })
-        .attr("stroke-width", 1);
+        });
+
+      // Revert labels
+      directLabels
+        .transition()
+        .duration(300)
+        .style("opacity", (d) => getInitialOpacity(d));
+      otherLabels
+        .transition()
+        .duration(300)
+        .style("opacity", (d) => getInitialOpacity(d));
+
+      // Unhighlight the label
+      const label = boundingBox.select(`#${getLabelId(node.id)}`);
+      label
+        .transition()
+        .duration(300)
+        .style("opacity", getInitialOpacity(node));
     };
 
     const handleClick = (event: MouseEvent, node: NodeData) => {
       router.push(`/c?url=${node.url}`);
     };
+
+    // draw labels
+    const labels = graphNode
+      .append("text")
+      .attr("class", "graph-label")
+      .attr("dx", 0)
+      .attr("dy", (d) => nodeRadius(d) + 10)
+      .attr("text-anchor", "middle")
+      .text((d) => d.title)
+      .attr("id", (d) => getLabelId(d.id))
+      .style("opacity", getInitialOpacity)
+      .style("font-size", localGraph.fontSize + "em");
+    // .style("cursor", "pointer")
+    // .on("click", handleClick)
+    // .on("mouseover", handleMouseover)
+    // .on("mouseout", handleMouseout)
+    // .raise()
+    // @ts-ignore
+    // .call(drag(simulation));
 
     const svgNodes = graphNode
       .append("circle")
@@ -276,26 +377,8 @@ export const useGraph = (
       .attr("r", nodeRadius)
       .style("cursor", "pointer")
       .on("click", handleClick)
-      .on("mouseover", handleMousover)
+      .on("mouseover", handleMouseover)
       .on("mouseout", handleMouseout)
-      .call(drag(simulation));
-
-    // draw labels
-    const labels = graphNode
-      .append("text")
-      .attr("dx", 0)
-      .attr("dy", (d) => nodeRadius(d) + 10)
-      .attr("text-anchor", "middle")
-      .text((d) => d.title)
-      .attr("id", (d) => getLabelId(d.id))
-      .style("opacity", getInitialOpacity)
-      .style("font-size", localGraph.fontSize + "em")
-      .style("cursor", "pointer")
-      .on("click", handleClick)
-      .on("mouseover", handleMousover)
-      .on("mouseout", handleMouseout)
-      .raise()
-      // @ts-ignore
       .call(drag(simulation));
 
     boundingBox.call(
@@ -309,8 +392,9 @@ export const useGraph = (
         .on("zoom", ({ transform }: any) => {
           svgLinks.attr("transform", transform);
           svgNodes.attr("transform", transform);
-          const scaledOpacity = transform.k * 0.2;
-          labels.attr("transform", transform).style("opacity", scaledOpacity);
+          labels.attr("transform", transform);
+          // const scaledOpacity = transform.k * 0.2;
+          // labels.attr("transform", transform).style("opacity", scaledOpacity);
         }),
     );
 
@@ -342,4 +426,6 @@ export const useGraph = (
       }
     };
   }, [id, data]);
+
+  return { showLabels, setShowLabels };
 };
