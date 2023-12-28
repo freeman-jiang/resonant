@@ -133,6 +133,14 @@ class PostgresClient:
         self._cursor.execute(query, (url,))
         return self._cursor.fetchone() is not None
 
+    def get_random_url(self) -> list[Page]:
+        random_url_query = sql.SQL(
+            """--sql
+            SELECT url FROM "Page" WHERE depth < 1 ORDER BY RANDOM() LIMIT 1;""")
+        self._cursor.execute(random_url_query)
+        url = self._cursor.fetchone()['url']
+        return url
+
     def get_network(self, center_url: str, depth: int) -> list[Page]:
         query = sql.SQL("""--sql
     WITH RECURSIVE PageGraph AS (

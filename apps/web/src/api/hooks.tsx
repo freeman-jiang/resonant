@@ -14,6 +14,7 @@ import {
   fetchInbox,
   fetchNetwork,
   fetchRandomFeed,
+  fetchRandomNetwork,
   fetchRecommendedFeed,
   findPage,
   getLikedPages,
@@ -323,5 +324,14 @@ export const useNetwork = (centerUrl: string, depth: number) => {
   return useQuery({
     queryKey: [NETWORK_QUERY_KEY, centerUrl, depth],
     queryFn: () => fetchNetwork(centerUrl, depth),
+  });
+};
+
+export const RANDOM_NETWORK_QUERY_KEY = "random-network";
+
+export const useRandomNetwork = (depth: number) => {
+  return useQuery({
+    queryKey: [RANDOM_NETWORK_QUERY_KEY, depth],
+    queryFn: () => fetchRandomNetwork(depth),
   });
 };

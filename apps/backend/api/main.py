@@ -948,6 +948,12 @@ async def get_outbound_nodes(body: UrlRequest):
 # recursive structure
 
 
+@app.get('/random-network')
+async def get_random_network(depth) -> PageNodesResponse:
+    url = pg_client.get_random_url()
+    return await get_network(url, depth)
+
+
 @app.get('/network')
 async def get_network(center, depth) -> PageNodesResponse:
     pages = pg_client.get_network(center, depth)

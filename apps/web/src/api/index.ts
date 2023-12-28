@@ -305,3 +305,10 @@ export const fetchNetwork = async (centerUrl: string, depth: number) => {
   );
   return data;
 };
+
+export const fetchRandomNetwork = async (depth: number) => {
+  const { data } = await axios.get<PageNodesResponse>(
+    `/random-network?depth=${depth}`,
+  );
+  return data;
+};
