@@ -1,22 +1,26 @@
 // Heavily inspired by the Quartz graph view
-import { PageNode, PageNodesResponse } from "@/api";
+import { LinkData, NodePage, PageNodesResponse } from "@/api";
 import * as d3 from "d3";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-type NodeData = PageNode & d3.SimulationNodeDatum;
+interface GraphData {
+  nodes: NodeData[];
+  links: LinkData[];
+}
+// graph.json is in the public folder
+// @ts-ignore
+import graphdata from "public/graph.json";
+const globalGraphData = graphdata as GraphData;
+const globalRootUrl = "https://hypertext.joodaloop.com/";
 
-type LinkData = {
-  source: string;
-  target: string;
-  type: "inbound" | "outbound";
-};
+type NodeData = NodePage & d3.SimulationNodeDatum;
 
 type LinkDatum = {
   index: 0;
   source: NodeData;
   target: NodeData;
-  type: "inbound" | "outbound";
+  // type: "inbound" | "outbound";
 };
 
 const old = {
@@ -50,45 +54,18 @@ const GRAPH_SVG_ID = "graph-svg";
 const getLabelId = (id: number) => `labelfor-${id}`;
 
 // Expects there to be an empty div with the given id
-export const useGraph = (
-  id: string,
-  data: PageNodesResponse,
-  isNetwork = false,
-) => {
-  const [showLabels, setShowLabels] = useState(!isNetwork);
+export const useGraph = (id: string, data: PageNodesResponse | null) => {
+  const [showLabels, setShowLabels] = useState(!!data);
   const router = useRouter();
 
   const renderGraph = () => {
     const graph = document.getElementById(id);
-    const links: LinkData[] = [];
 
-    const { root: rootUrl, adjacencyList } = data;
-
-    const neighbors = Object.values(adjacencyList);
-
-    for (const neighbor of neighbors) {
-      for (const outboundLink of neighbor.outboundUrls) {
-        if (adjacencyList[outboundLink]) {
-          links.push({
-            source: neighbor.url,
-            target: outboundLink,
-            type: "outbound",
-          });
-        }
-      }
-    }
-
-    const nodes: NodeData[] = [/*root, */ ...neighbors].map((node) => {
-      return { ...node, title: node.title };
-    });
-
-    const graphData: { nodes: NodeData[]; links: LinkData[] } = {
-      nodes,
-      links,
-    };
+    const graphData = data || globalGraphData;
+    const rootUrl = data ? data.root_url : globalRootUrl;
 
     const simulation: d3.Simulation<NodeData, LinkData> = d3
-      .forceSimulation(graphData.nodes)
+      .forceSimulation(graphData.nodes as NodeData[])
       .force(
         "link",
         d3
@@ -109,7 +86,7 @@ export const useGraph = (
       .force("center", d3.forceCenter());
 
     const calculateHeight = () => {
-      return Math.min(200 + neighbors.length * 20, 500);
+      return Math.min(200 + graphData.nodes.length * 20, 500);
     };
 
     const height = calculateHeight();
@@ -206,15 +183,15 @@ export const useGraph = (
       // Determine radius based on number of links that node has
       const baseRadius = 5;
       const multiplier = 0.15;
-      const numLinks = Array.from(
-        new Set(
-          adjacencyList[d.url].outboundUrls.filter((url) => {
-            return !!adjacencyList[url];
-          }),
-        ),
-      ).length;
+      // const numLinks = Array.from(
+      //   new Set(
+      //     adjacencyList[d.url].outboundUrls.filter((url) => {
+      //       return !!adjacencyList[url];
+      //     }),
+      //   ),
+      // ).length;
 
-      return baseRadius + numLinks * multiplier;
+      return baseRadius;
     };
 
     const getInitialOpacity = (n: NodeData) => {
@@ -379,7 +356,7 @@ export const useGraph = (
           [500, 500],
           [width, height],
         ])
-        .scaleExtent([0.2, 2])
+        .scaleExtent([0.05, 2])
         .on("zoom", ({ transform }: any) => {
           svgLinks.attr("transform", transform);
           svgNodes.attr("transform", transform);

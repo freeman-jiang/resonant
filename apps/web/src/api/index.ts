@@ -16,11 +16,11 @@ export interface Page {
   linked_by: string[];
 }
 
-export interface PageNode {
+export interface NodePage {
   title: string;
   url: string;
   id: number;
-  outboundUrls: string[]; // outbound urls
+  outbound_urls: string[]; // outbound urls
 }
 
 export interface Sender {
@@ -275,11 +275,15 @@ export const fetchRecommendedFeed = async (userId: string) => {
   return data;
 };
 
+export interface LinkData {
+  source: string;
+  target: string;
+}
+
 export interface PageNodesResponse {
-  root: string;
-  adjacencyList: { [x: string]: PageNode };
-  // inbound: PageNode[]; // outbound
-  // outbound: PageNode[];
+  root_url: string;
+  nodes: NodePage[];
+  links: LinkData[];
 }
 
 export const getPageNodes = async (pageUrl: string) => {

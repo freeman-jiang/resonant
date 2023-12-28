@@ -6,6 +6,7 @@ from crawler.config import Config
 from prisma.enums import TaskStatus
 from prisma.errors import UniqueViolationError
 from prisma.models import CrawlTask, Page, User
+from prisma.partials import NodePage
 from psycopg import Connection, Cursor, sql
 from psycopg.rows import class_row, dict_row
 
@@ -178,18 +179,20 @@ class PostgresClient:
         # Remains in same order as ids list
         return sorted(pages, key=lambda p: index_hashmap[p.id])
 
-    def get_pages_by_url(self, urls: list[str]) -> list[Page]:
-        query = sql.SQL('SELECT * FROM "Page" WHERE url = ANY(%s);')
+    def get_pages_by_url(self, urls: list[str]) -> list[NodePage]:
+        query = sql.SQL(
+            'SELECT id, outbound_urls, title, url FROM "Page" WHERE url = ANY(%s);')
         self._cursor.execute(query, (urls,))
 
-        return [Page(**p) for p in self._cursor.fetchall()]
+        return [NodePage(**p) for p in self._cursor.fetchall()]
 
-    def reverse_find_pages_by_url(self, page_url: str) -> list[Page]:
+    def reverse_find_pages_by_url(self, page_url: str) -> list[NodePage]:
         # Find pages that contain the urls in their outbound_urls
-        query = sql.SQL('SELECT * FROM "Page" WHERE %s = ANY(outbound_urls);')
+        query = sql.SQL(
+            'SELECT id, outbound_urls, title, url FROM "Page" WHERE %s = ANY(outbound_urls);')
         self._cursor.execute(query, (page_url,))
 
-        return [Page(**p) for p in self._cursor.fetchall()]
+        return [NodePage(**p) for p in self._cursor.fetchall()]
 
     def get_pages_by_id(self, ids: list[int]) -> list[Page]:
         query = sql.SQL('SELECT * FROM "Page" WHERE id = ANY(%s);')

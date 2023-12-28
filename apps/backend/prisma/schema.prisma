@@ -102,10 +102,10 @@ enum TaskStatus {
 }
 
 model Rss {
-  id         Int      @id @default(autoincrement())
-  url        String   @unique
-  created_at DateTime @default(now()) @db.Timestamptz
-  last_crawled_at DateTime @default("2000-01-01T01:01:00.52Z")  @db.Timestamptz
+  id              Int      @id @default(autoincrement())
+  url             String   @unique
+  created_at      DateTime @default(now()) @db.Timestamptz
+  last_crawled_at DateTime @default("2000-01-01T01:01:00.52Z") @db.Timestamptz
 
   @@schema("public")
 }

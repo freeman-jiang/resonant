@@ -105,6 +105,9 @@ export const usePageNodes = (pageUrl: string) => {
   return useQuery({
     queryKey: [PAGE_NODES_KEY, pageUrl],
     queryFn: () => getPageNodes(pageUrl),
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 };
 

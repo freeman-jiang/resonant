@@ -20,6 +20,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from prisma import Prisma
 from prisma.models import Comment, Message, Page, User
+from prisma.partials import NodePage
 from pydantic import BaseModel, validator
 
 from .add_senders import add_senders, get_senders_for_pages
@@ -904,30 +905,45 @@ async def delete_comment(comment_id: int):
 #   outboundUrls: string[]; // outbound urls
 # }
 
-class PageNode(BaseModel):
-    title: str
-    url: str
-    id: int
-    outboundUrls: list[str]
+class D3Link(BaseModel):
+    source: str
+    target: str
 
-    @classmethod
-    def from_page(cls, page: Page):
-        return PageNode(title=page.title, url=page.url, id=page.id, outboundUrls=page.outbound_urls)
+
+def create_links(adjacency_list: dict[str, NodePage]) -> list[D3Link]:
+    links: list[D3Link] = []
+    seen = set()
+
+    for neighbor in adjacency_list.values():
+        for outbound_link in neighbor.outbound_urls:
+            if outbound_link in adjacency_list:
+                link = D3Link(source=neighbor.url, target=outbound_link)
+                if (neighbor.url, outbound_link) in seen or neighbor.url == outbound_link:
+                    continue
+                links.append(link)
+                seen.add((neighbor.url, outbound_link))
+
+    return links
 
 
 class PageNodesResponse(BaseModel):
-    root: str  # url
-    adjacencyList: dict[str, PageNode]
+    root_url: str  # url
+    nodes: list[NodePage]
+    links: list[D3Link]
 
 
-def deduplicate(root: PageNode, pages: list[PageNode]) -> list[PageNode]:
-    dedup = list({p.id: p for p in pages}.values())
-    return [p for p in dedup if p.id != root.id]
+def deduplicate(pages: list[NodePage]) -> list[NodePage]:
+    return list({p.url: p for p in pages}.values())
 
 
 @app.post("/pagenodes")
 async def get_outbound_nodes(body: UrlRequest):
     root = pg_client.get_page(url=body.url)
+    if not root:
+        raise HTTPException(400, "Page does not exist")
+
+    root = NodePage(id=root.id, title=root.title, url=root.url,
+                    outbound_urls=root.outbound_urls)
 
     if root is None:
         raise HTTPException(400, "Page does not exist")
@@ -939,32 +955,13 @@ async def get_outbound_nodes(body: UrlRequest):
     #                        for p in outbound_pages])
     # inbound = deduplicate(root, [PageNode.from_page(p) for p in inbound_pages])
 
-    adj = [root]
-    adj += outbound_pages + inbound_pages
-    adj = {p.url: PageNode.from_page(p) for p in adj}
+    nodes = [root]
+    nodes += outbound_pages + inbound_pages
+    nodes = deduplicate(nodes)
+    adjacency_list = {p.url: p for p in nodes}
+    links = create_links(adjacency_list)
 
-    return PageNodesResponse(root=root.url, adjacencyList=adj)
-
-# recursive structure
-
-
-@app.get('/random-network')
-async def get_random_network(depth) -> PageNodesResponse:
-    url = pg_client.get_random_url()
-    return await get_network(url, depth)
-
-
-@app.get('/network')
-async def get_network(center, depth) -> PageNodesResponse:
-    pages = pg_client.get_network(center, depth)
-
-    if len(pages) == 0:
-        raise HTTPException(400, "Page does not exist")
-
-    root = PageNode.from_page(pages[0])
-    neighbors = {p.url: PageNode.from_page(p) for p in pages}
-
-    return PageNodesResponse(adjacencyList=neighbors, root=root.url)
+    return PageNodesResponse(root_url=root.url, nodes=nodes, links=links)
 
 
 @app.get("/inbox/{user_id}")
