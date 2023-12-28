@@ -1,6 +1,6 @@
 "use client";
 import { PageNodesResponse } from "@/api";
-import { useGraph } from "@/app/hooks/useGraph";
+import { useGraph } from "@/hooks/useGraph";
 
 interface Props {
   data: PageNodesResponse;

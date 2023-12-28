@@ -1,5 +1,5 @@
 "use client";
-import { useGraph } from "@/app/hooks/useGraph";
+import { useGraph } from "@/hooks/useGraph";
 
 const graphId = "graph";
 // This is apparently actually idiomatic: https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application
