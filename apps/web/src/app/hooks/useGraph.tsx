@@ -34,17 +34,9 @@ const old = {
 };
 
 const localGraph = {
-  drag: true,
-  zoom: true,
-  depth: -1,
   scale: 1,
-  repelForce: 0.2,
-  centerForce: 0.5,
   linkDistance: 100,
   fontSize: 0.6,
-  opacityScale: 1,
-  removeTags: [],
-  showTags: true,
 };
 
 const defaultLinkColor = "#d8dee9"; // grey
@@ -293,7 +285,7 @@ export const useGraph = (
 
       // Highlight direct labels
       directLabels.transition().duration(300).style("opacity", 0.5);
-      otherLabels.transition().duration(300).style("opacity", 0);
+      otherLabels.transition().duration(300).style("opacity", 0.05);
 
       // Highlight the label
       const label = boundingBox.select(`#${getLabelId(node.id)}`);
@@ -360,7 +352,8 @@ export const useGraph = (
       .text((d) => d.title)
       .attr("id", (d) => getLabelId(d.id))
       .style("opacity", getInitialOpacity)
-      .style("font-size", localGraph.fontSize + "em");
+      .style("font-size", localGraph.fontSize + "em")
+      .style("background-color", "red");
     // .style("cursor", "pointer")
     // .on("click", handleClick)
     // .on("mouseover", handleMouseover)
