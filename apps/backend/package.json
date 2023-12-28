@@ -3,6 +3,7 @@
     "build": "poetry install && poetry run prisma generate",
     "dev": "poetry run uvicorn api.main:app --reload",
     "start": "poetry run uvicorn api.main:app",
-    "prod": "pkill -9 gunicorn; poetry run gunicorn api.main:app -b 0.0.0.0 -p 8000 -k uvicorn.workers.UvicornWorker --capture-output --log-file a.txt --daemon; sleep 2; tail -f a.txt"
+    "prod": "pkill -9 gunicorn; poetry run gunicorn api.main:app -b 0.0.0.0 -p 8000 -k uvicorn.workers.UvicornWorker --capture-output --log-file a.txt --daemon; sleep 2; tail -f a.txt",
+    "gen-graph": "poetry run python -m api.gen_graph"
   }
 }

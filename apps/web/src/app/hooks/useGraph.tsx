@@ -4,15 +4,10 @@ import * as d3 from "d3";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-interface GraphData {
-  nodes: NodeData[];
-  links: LinkData[];
-}
 // graph.json is in the public folder
 // @ts-ignore
 import graphdata from "public/graph.json";
-const globalGraphData = graphdata as GraphData;
-const globalRootUrl = "https://hypertext.joodaloop.com/";
+const globalGraphData = graphdata as PageNodesResponse;
 
 type NodeData = NodePage & d3.SimulationNodeDatum;
 
@@ -62,7 +57,7 @@ export const useGraph = (id: string, data: PageNodesResponse | null) => {
     const graph = document.getElementById(id);
 
     const graphData = data || globalGraphData;
-    const rootUrl = data ? data.root_url : globalRootUrl;
+    const rootUrl = graphData.root_url;
 
     const simulation: d3.Simulation<NodeData, LinkData> = d3
       .forceSimulation(graphData.nodes as NodeData[])
