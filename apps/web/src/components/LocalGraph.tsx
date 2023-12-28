@@ -15,7 +15,7 @@ export function LocalGraph({ data }: Props) {
   return (
     <div className="mt-4">
       <div className="text-lg font-semibold">Link Graph</div>
-      <div className="border border-slate-200" id={graphId} />
+      <div className="h-60 border border-slate-200" id={graphId} />
     </div>
   );
 }

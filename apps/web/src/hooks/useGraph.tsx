@@ -50,7 +50,8 @@ const getLabelId = (id: number) => `labelfor-${id}`;
 
 // Expects there to be an empty div with the given id
 export const useGraph = (id: string, data: PageNodesResponse | null) => {
-  const [showLabels, setShowLabels] = useState(!!data);
+  const isGlobalGraph = !data;
+  const [showLabels, setShowLabels] = useState(!isGlobalGraph);
   const router = useRouter();
 
   const renderGraph = () => {
@@ -80,19 +81,15 @@ export const useGraph = (id: string, data: PageNodesResponse | null) => {
       )
       .force("center", d3.forceCenter());
 
-    const calculateHeight = () => {
-      return Math.min(200 + graphData.nodes.length * 20, 500);
-    };
-
-    const height = calculateHeight();
+    const height = graph.offsetHeight;
     const width = graph.offsetWidth;
 
     const boundingBox = d3
       .select<HTMLElement, NodeData>(`#${id}`)
       .append("svg")
       .attr("id", GRAPH_SVG_ID)
-      .attr("width", width)
-      .attr("height", height)
+      // .attr("width", width)
+      // .attr("height", height)
       .attr("viewBox", [
         -width / 2 / localGraph.scale,
         -height / 2 / localGraph.scale,

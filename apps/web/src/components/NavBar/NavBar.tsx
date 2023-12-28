@@ -14,7 +14,7 @@ export async function NavBar({
 }: React.HTMLAttributes<HTMLElement>) {
   const { session } = await getSupabaseServer();
   return (
-    <div className="border-b">
+    <div className="border-b" id="navbar">
       <div className="flex h-16 items-center justify-between px-4">
         <Link href="/" className="text-xl font-semibold">
           Resonant
