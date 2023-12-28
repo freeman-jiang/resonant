@@ -87,15 +87,6 @@ export const useGraph = (
       links,
     };
 
-    // Get the max number of connections for a single node from 'links'
-    const maxConnections = d3.max(
-      graphData.nodes.map((node) => {
-        return graphData.links.filter((link) => {
-          return link.source === node.url || link.target === node.url;
-        }).length;
-      }),
-    );
-
     const simulation: d3.Simulation<NodeData, LinkData> = d3
       .forceSimulation(graphData.nodes)
       .force(
@@ -112,7 +103,7 @@ export const useGraph = (
           const base = -30;
           const multiplier = -5;
 
-          return base + multiplier * maxConnections;
+          return base;
         }),
       )
       .force("center", d3.forceCenter());
@@ -212,11 +203,18 @@ export const useGraph = (
     };
 
     const nodeRadius = (d: NodeData): number => {
-      const isCurrent = d.url === rootUrl;
-      if (isCurrent) {
-        return 6;
-      }
-      return 5;
+      // Determine radius based on number of links that node has
+      const baseRadius = 5;
+      const multiplier = 0.15;
+      const numLinks = Array.from(
+        new Set(
+          adjacencyList[d.url].outboundUrls.filter((url) => {
+            return !!adjacencyList[url];
+          }),
+        ),
+      ).length;
+
+      return baseRadius + numLinks * multiplier;
     };
 
     const getInitialOpacity = (n: NodeData) => {
@@ -265,31 +263,31 @@ export const useGraph = (
         .filter((d) => {
           return d.source.id === node.id || d.target.id === node.id;
         });
-      const otherLinks = d3
-        .selectAll<HTMLElement, LinkDatum>(".graph-link")
-        .filter((d: LinkDatum) => {
-          return d.source.id !== node.id && d.target.id !== node.id;
-        });
+      // const otherLinks = d3
+      //   .selectAll<HTMLElement, LinkDatum>(".graph-link")
+      //   .filter((d: LinkDatum) => {
+      //     return d.source.id !== node.id && d.target.id !== node.id;
+      //   });
       const { otherNodes, directLabels, otherLabels } = getHoverNodes(
         node,
         directLinks,
       );
 
-      // Dim all other nodes and links
-      const dimOpacity = 0.4;
-      otherNodes.transition().duration(300).style("opacity", dimOpacity);
-      otherLinks.transition().duration(300).style("opacity", dimOpacity);
+      // // Dim all other nodes and links
+      // const dimOpacity = 0.4;
+      // otherNodes.transition().duration(300).style("opacity", dimOpacity);
+      // otherLinks.transition().duration(300).style("opacity", dimOpacity);
 
-      // Highlight the node's immediate links
+      // // Highlight the node's immediate links
       directLinks.transition().duration(300).attr("stroke", activeLinkColor);
 
-      // Highlight direct labels
+      // // Highlight direct labels
       directLabels.transition().duration(300).style("opacity", 0.5);
       otherLabels.transition().duration(300).style("opacity", 0.05);
 
-      // Highlight the label
-      const label = boundingBox.select(`#${getLabelId(node.id)}`);
-      label.transition().duration(300).style("opacity", 1);
+      // // Highlight the label
+      // const label = boundingBox.select(`#${getLabelId(node.id)}`);
+      // label.transition().duration(300).style("opacity", 1);
     }
 
     const handleMouseout = (event: MouseEvent, node: NodeData) => {
