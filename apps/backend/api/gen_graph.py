@@ -8,7 +8,7 @@ from pydantic.json import pydantic_encoder
 pg_client.connect()
 print('Sending query')
 root_url = "https://hypertext.joodaloop.com/"
-pages = pg_client.get_network(root_url, 9)
+pages = pg_client.get_network(root_url, 11)
 print('Finished query')
 adjacency_list = {p.url: p for p in pages}
 
