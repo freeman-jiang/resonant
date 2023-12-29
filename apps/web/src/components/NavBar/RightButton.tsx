@@ -15,7 +15,7 @@ export const RightButton = () => {
     return null;
   }
 
-  if (path === "/login") {
+  if (path === "/login" || path === "/graph" || path === "/big-graph") {
     return (
       <Link className={cn(buttonVariants({ variant: "link" }))} href="/">
         Feed
