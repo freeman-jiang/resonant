@@ -361,7 +361,7 @@ export const useGraph = (id: string, data: PageNodesResponse | null) => {
           [500, 500],
           [width, height],
         ])
-        .scaleExtent([0.05, 2])
+        // .scaleExtent([0.05, 2])
         .on("zoom", ({ transform }: any) => {
           svgLinks.attr("transform", transform);
           svgNodes.attr("transform", transform);
