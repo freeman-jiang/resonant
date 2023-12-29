@@ -142,18 +142,47 @@ class PostgresClient:
         url = self._cursor.fetchone()['url']
         return url
 
+    def get_urls_by_depth(self, depth: int) -> list[str]:
+        query = sql.SQL(
+            """--sql
+            SELECT url FROM "Page" WHERE depth < %s;""")
+        self._cursor.execute(query, (depth,))
+        return [p['url'] for p in self._cursor.fetchall()]
+
     def get_network(self, center_url: str, depth: int) -> list[NodePage]:
-        query = sql.SQL("""--sql
-    WITH RECURSIVE PageGraph AS (
-    SELECT 1 as depth, p.id, p.title, p.outbound_urls, p.url
-    FROM "Page" p
-    WHERE p.url = %s
-    UNION ALL
-    SELECT pg.depth + 1, p.id, p.title, p.outbound_urls, p.url
-    FROM "Page" p
-    JOIN PageGraph pg ON p.url = ANY(pg.outbound_urls) AND pg.depth < %s
-) SELECT * FROM PageGraph;""")
-        self._cursor.execute(query, (center_url, depth))
+
+        # This does both inbound and outbound but is ungodly slow
+        wide_query = sql.SQL(
+            """--sql
+                WITH RECURSIVE PageGraph AS (
+                    SELECT 1 as depth, p.id, p.title, p.outbound_urls, p.url
+                    FROM "Page" p
+                    WHERE p.url = %s
+
+                    UNION ALL
+
+                    SELECT pg.depth + 1, p.id, p.title, p.outbound_urls, p.url
+                    FROM "Page" p
+                    JOIN PageGraph pg ON (p.url = ANY(pg.outbound_urls) OR pg.url = ANY(p.outbound_urls)) AND pg.depth < %s
+                ) SELECT DISTINCT * FROM PageGraph;
+                """
+        )
+
+        deep_query = sql.SQL("""--sql
+        WITH RECURSIVE PageGraph AS (
+            SELECT 1 as depth, p.id, p.title, p.outbound_urls, p.url
+            FROM "Page" p
+            WHERE p.url = %s
+
+            UNION ALL
+
+            SELECT pg.depth + 1, p.id, p.title, p.outbound_urls, p.url
+            FROM "Page" p
+            JOIN PageGraph pg ON p.url = ANY(pg.outbound_urls) AND pg.depth < %s
+        ) SELECT DISTINCT * FROM PageGraph;
+        """)
+        self._cursor.execute(deep_query, (center_url, depth))
+        # ok when is p None though that should not happen lol
         return [NodePage(**p) for p in self._cursor.fetchall()]
 
     def get_page(self, **kwargs) -> Page | None:

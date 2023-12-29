@@ -6,8 +6,12 @@ import { useEffect, useState } from "react";
 
 // graph.json is in the public folder
 // @ts-ignore
-import graphdata from "public/graph.json";
-const globalGraphData = graphdata as PageNodesResponse;
+import graphData from "public/graph.json";
+// @ts-ignore
+import massiveGraphData from "public/graph_multiple_urls.json";
+
+const globalGraphData = graphData as PageNodesResponse;
+const massiveGlobalGraphData = massiveGraphData as PageNodesResponse;
 
 type NodeData = NodePage & d3.SimulationNodeDatum;
 
