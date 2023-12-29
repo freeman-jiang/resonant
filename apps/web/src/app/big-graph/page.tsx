@@ -5,7 +5,7 @@ import { GraphType } from "@/hooks/useGraph";
 export default function Page() {
   return (
     <div>
-      <NetworkGraph graphType={GraphType.GLOBAL} />
+      <NetworkGraph graphType={GraphType.MASSIVE_GLOBAL} />
     </div>
   );
 }

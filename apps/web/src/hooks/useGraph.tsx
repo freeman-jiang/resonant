@@ -1,3 +1,4 @@
+"use client";
 // Heavily inspired by the Quartz graph view
 import { LinkData, NodePage, PageNodesResponse } from "@/api";
 import * as d3 from "d3";
@@ -52,8 +53,18 @@ const GRAPH_SVG_ID = "graph-svg";
 
 const getLabelId = (id: number) => `labelfor-${id}`;
 
+export enum GraphType {
+  LOCAL,
+  GLOBAL,
+  MASSIVE_GLOBAL,
+}
+
 // Expects there to be an empty div with the given id
-export const useGraph = (id: string, data: PageNodesResponse | null) => {
+export const useGraph = (
+  id: string,
+  data: PageNodesResponse | null,
+  graphType = GraphType.LOCAL,
+) => {
   const isGlobalGraph = !data;
   const [showLabels, setShowLabels] = useState(!isGlobalGraph);
   const router = useRouter();
@@ -61,7 +72,11 @@ export const useGraph = (id: string, data: PageNodesResponse | null) => {
   const renderGraph = () => {
     const graph = document.getElementById(id);
 
-    const graphData = data || globalGraphData;
+    const graphData =
+      data ||
+      (graphType === GraphType.GLOBAL
+        ? globalGraphData
+        : massiveGlobalGraphData);
     const rootUrl = graphData.root_url;
 
     const simulation: d3.Simulation<NodeData, LinkData> = d3
@@ -387,19 +402,29 @@ export const useGraph = (id: string, data: PageNodesResponse | null) => {
       svgNodes.attr("cx", (d: NodeData) => d.x).attr("cy", (d: any) => d.y);
       labels.attr("x", (d: any) => d.x).attr("y", (d: any) => d.y);
     });
+
+    return simulation;
   };
 
   useEffect(() => {
     // Check if the graph already exists
     const existingGraph = document.getElementById(GRAPH_SVG_ID);
+    let simulation: d3.Simulation<NodeData, LinkData> | null = null;
     if (!existingGraph) {
-      renderGraph();
+      simulation = renderGraph();
+    } else {
+      simulation.restart();
     }
 
     return () => {
       const existingGraph = document.getElementById(GRAPH_SVG_ID);
       if (existingGraph) {
         existingGraph.remove();
+      }
+
+      // Stop the simulation when the component is unmounted
+      if (simulation) {
+        simulation.stop();
       }
     };
   }, [id, data]);

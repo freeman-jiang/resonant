@@ -1,8 +1,15 @@
 import { UserBoundary } from "@/api/hooks";
-import { cn } from "@/lib/utils";
 import { getSupabaseServer } from "@/supabase/server";
+import { Share2, Waypoints } from "lucide-react";
 import Link from "next/link";
-import { buttonVariants } from "../ui/button";
+import { Button } from "../ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 import { RightButton } from "./RightButton";
 import { UserNav } from "./UserNav";
 
@@ -21,12 +28,41 @@ export async function NavBar({
         </Link>
 
         <div className="flex items-center">
-          <Link
+          {/* <Link
             className={cn(buttonVariants({ variant: "link" }))}
             href="/graph"
           >
             Graph
-          </Link>
+          </Link> */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary">Graphs</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {/* <DropdownMenuLabel>Select a graph</DropdownMenuLabel> */}
+              {/* <DropdownMenuSeparator /> */}
+              <DropdownMenuRadioGroup>
+                <Link href="/graph">
+                  <DropdownMenuRadioItem
+                    value="bottom"
+                    className="cursor-pointer p-1"
+                  >
+                    <Share2 className="mr-3 h-5 w-5" />
+                    Graph
+                  </DropdownMenuRadioItem>
+                </Link>
+                <Link href="/big-graph">
+                  <DropdownMenuRadioItem
+                    value="right"
+                    className="cursor-pointer p-1"
+                  >
+                    <Waypoints className="mr-3 h-5 w-5" />
+                    Big Graph
+                  </DropdownMenuRadioItem>
+                </Link>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <UserBoundary session={session}>
             <UserNav />
             <RightButton />

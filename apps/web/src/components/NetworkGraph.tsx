@@ -1,11 +1,15 @@
 "use client";
-import { useGraph } from "@/hooks/useGraph";
+import { GraphType, useGraph } from "@/hooks/useGraph";
 
 const graphId = "graph";
 // This is apparently actually idiomatic: https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application
 
-export function NetworkGraph() {
-  useGraph(graphId, null);
+interface Props {
+  graphType: GraphType;
+}
+
+export function NetworkGraph({ graphType }: Props) {
+  useGraph(graphId, null, graphType);
 
   return <div className="border border-slate-200" id={graphId} />;
 }
