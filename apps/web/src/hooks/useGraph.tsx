@@ -93,6 +93,8 @@ export const useGraph = (id: string, data: PageNodesResponse | null) => {
     const width = graph.offsetWidth;
     const height = calculateHeight();
 
+    const initialScale = isGlobalGraph ? 0.3 : 1;
+
     const boundingBox = d3
       .select<HTMLElement, NodeData>(`#${id}`)
       .append("svg")
@@ -100,10 +102,10 @@ export const useGraph = (id: string, data: PageNodesResponse | null) => {
       // .attr("width", width)
       .attr("height", height)
       .attr("viewBox", [
-        -width / 2 / localGraph.scale,
-        -height / 2 / localGraph.scale,
-        width / localGraph.scale,
-        height / localGraph.scale,
+        -width / 2 / initialScale,
+        -height / 2 / initialScale,
+        width / initialScale,
+        height / initialScale,
       ]);
     // .attr("class", "bg-black");
 
