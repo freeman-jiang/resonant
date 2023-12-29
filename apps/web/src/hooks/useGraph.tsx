@@ -81,15 +81,24 @@ export const useGraph = (id: string, data: PageNodesResponse | null) => {
       )
       .force("center", d3.forceCenter());
 
-    const height = graph.offsetHeight;
+    const calculateHeight = () => {
+      if (!isGlobalGraph) {
+        return graph.offsetHeight;
+      }
+
+      const navbarHeight = document.getElementById("navbar").offsetHeight;
+      return window.innerHeight - navbarHeight;
+    };
+
     const width = graph.offsetWidth;
+    const height = calculateHeight();
 
     const boundingBox = d3
       .select<HTMLElement, NodeData>(`#${id}`)
       .append("svg")
       .attr("id", GRAPH_SVG_ID)
       // .attr("width", width)
-      // .attr("height", height)
+      .attr("height", height)
       .attr("viewBox", [
         -width / 2 / localGraph.scale,
         -height / 2 / localGraph.scale,
