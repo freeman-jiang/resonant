@@ -87,10 +87,12 @@ export const useGraph = (id: string, data: PageNodesResponse | null) => {
       }
 
       const navbarHeight = document.getElementById("navbar").offsetHeight;
-      return window.innerHeight - navbarHeight;
+      // Random constants required to eliminate scrollbars
+      return window.innerHeight - navbarHeight - 5;
     };
 
-    const width = graph.offsetWidth;
+    // Random constants required to eliminate scrollbars
+    const width = graph.offsetWidth - 1;
     const height = calculateHeight();
 
     const initialScale = isGlobalGraph ? 0.3 : 1;
