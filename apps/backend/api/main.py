@@ -310,7 +310,6 @@ async def search_topic(body: SearchQuery) -> list[PageResponse]:
 async def search(body: SearchQuery) -> list[PageResponse]:
     if body.url:
         url = body.url
-        print("Searching for similar URLs to", url)
 
         contains_url = pg_client.query(
             'SELECT 1 FROM "Page" p INNER JOIN Embeddings e ON p.url = e.url WHERE p.url = %s', [url])

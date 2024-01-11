@@ -1,23 +1,21 @@
 import asyncio
 import os
 from multiprocessing import freeze_support
-from typing import Iterator, Optional, Callable
+from typing import Callable, Iterator, Optional
 
 import nltk
 import numpy as np
-import psycopg
-from psycopg import sql, Cursor
-
 from api.page_response import PageResponse
+from crawler.prismac import PostgresClient
 from dotenv import load_dotenv
 from prisma import Prisma, models
 from prisma.models import Page
+from psycopg import Cursor, sql
 from psycopg.rows import dict_row
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 
-from crawler.prismac import PostgresClient
-from ..dbaccess import db, DB
+from ..dbaccess import DB, db
 
 load_dotenv()
 
@@ -152,9 +150,10 @@ def _query_fts(query: str) -> list[PageResponse]:
     return [PageResponse.from_page_dict(x) for x in similar]
 
 
-
 def test_query_fts():
     print(_query_fts('"python language"'))
+
+
 def normalize_scores(pages: list[PageResponse], func: Optional[Callable] = None):
     """
     Normalize scores to be between 1 and 2
@@ -187,7 +186,8 @@ def _query_similar(query: NearestNeighboursQuery) -> list[PageResponse]:
     """
     embedding_results = _query_similar_embeddings(query)
 
-    if query.text_query:
+    # IGNORE FTS FOR NOW, takes too long
+    if query.text_query and "\"" in query.text_query:
         fts_results = _query_fts(query.text_query)
     else:
         fts_results = []
@@ -248,7 +248,7 @@ WITH want AS ({want_cte}),
  -- Scoring algorithm: (similarity * page_rank^0.5 * (amount of matching windows ^ 0.15))
  -- Higher is better
  COALESCE((1 - dist) ^ %(embedding_weight)s * (COALESCE("Page".page_rank, 1) ^ 1.0) * (domain_counts.num_matching_windows ^ (0.20 * %(embedding_weight)s)), -1) as score
-  from "Page" INNER JOIN domain_counts ON domain_counts.url = "Page".url  ORDER BY score DESC LIMIT 50
+  from "Page" INNER JOIN domain_counts ON domain_counts.url = "Page".url  ORDER BY score DESC LIMIT 20
     """, want_cte_dict).fetchall()
 
     similar_urls = [
