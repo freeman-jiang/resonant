@@ -55,5 +55,10 @@ const renderSkeletons = (count: number) => {
 };
 
 export const LoadingFeed = () => {
-  return <div className="mt-4 w-full space-y-4">{renderSkeletons(20)}</div>;
+  return (
+    <div className="mt-4 w-full space-y-4">
+      <div className="text-sm text-slate-400">This may take a bit...</div>
+      {renderSkeletons(20)}
+    </div>
+  );
 };
