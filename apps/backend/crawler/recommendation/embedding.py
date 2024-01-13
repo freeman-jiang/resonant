@@ -267,7 +267,8 @@ async def generate_feed_from_page(url: str) -> list[PageResponse]:
 async def store_embeddings_for_pages(pages: list[Page]):
     to_append = []
     print("Calculating embeddings for {} pages".format(len(pages)))
-    for p in pages:
+    for i, p in enumerate(pages):
+        print(f'{i}: Generating embeddings for {p.title} from ({p.url})',)
         data = model.generate_vecs(p.title, p.content, p.url)
         to_append.extend(data)
 
