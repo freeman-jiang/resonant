@@ -11,7 +11,7 @@ export const RelatedFeed = ({ url }: Props) => {
 
   return (
     <div className="mt-5">
-      <h2 className="text-2xl font-semibold text-slate-900">Related</h2>
+      <h2 className="text-2xl font-semibold text-slate-900">Similar</h2>
       <Feed feed={data} />;
     </div>
   );
