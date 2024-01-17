@@ -185,9 +185,10 @@ def _query_similar(query: NearestNeighboursQuery) -> list[PageResponse]:
     :return:
     """
     embedding_results = _query_similar_embeddings(query)
+    # embedding_results = []
 
     # IGNORE FTS FOR NOW, takes too long
-    if query.text_query:
+    if query.text_query and '"' in query.text_query:
         fts_results = _query_fts(query.text_query)
     else:
         fts_results = []
